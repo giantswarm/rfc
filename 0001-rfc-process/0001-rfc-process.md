@@ -28,9 +28,7 @@ This is both to allow a more natural process to evolve over time, as well as to 
 
 ## Visiblity
 
-The RFC repository (`giantswarm/rfc`) is private by default. This is understood to be contrary to Giant Swarm's default position of radical transparency. This is to allow for all ideas to be shared, without concerns of whether a concept is suitable for public discussion.
-
-In future, it should be possible to share select RFCs publicly (i.e: via rendering RFCs to PDF for distribution), to allow for cases where we would like to share them externally.
+The RFC repository (`giantswarm/rfc`) is public. This is a continuation of Giant Swarm's default position of radical transparency, with the aim to allow all ideas to be shared and discussed openly. Some reasonable efforts may need to be made to ensure sensitive information remains private.
 
 ## Sources
 
