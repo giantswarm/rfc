@@ -12,9 +12,8 @@ All ideas, thoughts, comments, suggestions, and eldritch ramblings, are valid an
 
 The following lists some basic formatting and housekeeping decisions concerning RFCs:
 
-- RFC numbers must be unique and increasing (i.e: take the next available number).
-- Each RFC must be in its own directory, with the directory name in the form `XXXX-$title`.
-- RFC filenames must be in the form `XXXX-$title.md`.
+- Each RFC must be in its own directory, with the directory name in the form `$title`.
+- RFC filenames must be in the form `$title`.
 - RFCs must be written in Markdown.
 
 The following lists some ideas towards RFC that are explicitly not presented:
