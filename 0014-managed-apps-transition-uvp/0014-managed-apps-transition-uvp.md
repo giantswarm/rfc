@@ -1,4 +1,4 @@
-# RFC 0014 - Giant Swarm Managed Apps as a transition between DIY and Upstream Enterprise 
+# RFC 0014 - Giant Swarm Managed Apps UVP is the transition between DIY and Upstream Enterprise 
 
 Thu, 25. Feb 2021
 
