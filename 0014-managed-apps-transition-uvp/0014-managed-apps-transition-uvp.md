@@ -20,4 +20,4 @@ Thinking from this perspective, questions for thought:
 - If the above is true, how does that inform the types of apps we should offer?
 - If the above is true, how does that inform our pricing?
 - Are we seeing the enterprise version of the consumer trend ‘subscription fatigue’?
-
+- Is this nonsense? ¯\_(ツ)_/¯
