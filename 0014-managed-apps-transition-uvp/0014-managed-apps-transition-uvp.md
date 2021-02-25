@@ -16,7 +16,7 @@ Timo said,
 
 Thinking from this perspective, questions for thought:
 
-- Could our ‘unique value proposition’ be that we are a transition phase between DIY and upstream enterprise? Until they are sure they have more data that they **need** and **could benefit** from the value upstream enterprise support?
+- Could our ‘unique value proposition’ (UVP) be that we are a transition phase between DIY and upstream enterprise? Until they are sure they have more data that they **need** and **could benefit** from the value upstream enterprise support?
 - If the above is true, how does that inform the types of apps we should offer?
 - If the above is true, how does that inform our pricing?
 - Are we seeing the enterprise version of the consumer trend ‘subscription fatigue’?
