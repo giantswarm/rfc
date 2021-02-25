@@ -11,7 +11,7 @@ I realized sth while talking about Falco/Sysdig Secure in the SIG Partner Sync.
 
 **The strategy of all companies w open source products is to upsell (expensive) enterprise support. I wonder how much this strategy makes sense for customers?**
 
-To illustrate, one customer would have a dozen apps (e.g. Kong, Aqua or Sysdig, Grafana Enterprise, Kafka, and I don’t know what else). **Doesn’t it seem too expensive and / or too inefficient to engage in enterprise contracts with each and every one of the companies behind each one?**
+To illustrate, one customer would have a few dozen apps (e.g. Kong, Aqua or Sysdig, Grafana Enterprise, Kafka, and I don’t know what else). **Doesn’t it seem too expensive and / or too inefficient to engage in enterprise contracts with each and every one of the companies behind each one?**
 
 I watched yesterday's [SIG Product Marketing Sync](https://gigantic.slack.com/archives/C95NTB55M/p1614169617017800?thread_ts=1614158491.014600&cid=C95NTB55M)
 
