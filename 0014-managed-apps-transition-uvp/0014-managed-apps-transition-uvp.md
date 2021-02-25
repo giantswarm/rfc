@@ -2,6 +2,8 @@
 
 Thu, 25. Feb 2021
 
+*What is a Unique Value Proposition (UVP)? It is a (1) distinctive value to (2) a chosen set of customers (3) at the right relative price?*
+
 I realized sth while talking about Falco/Sysdig Secure in the SIG Partner Sync.
 
 **The strategy of all companies w open source products is to upsell (expensive) enterprise support. I wonder how much this strategy makes sense for customers?**
