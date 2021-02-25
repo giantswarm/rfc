@@ -3,9 +3,9 @@
 Thu, 25. Feb 2021
 
 **What is a Unique Value Proposition (UVP)?** It is
-(1) a distinctive value
-(2) to a chosen set of customers
-(3) at the right relative price.
+- (1) a distinctive value
+- (2) to a chosen set of customers
+- (3) at the right relative price.
 
 I realized sth while talking about Falco/Sysdig Secure in the SIG Partner Sync.
 
