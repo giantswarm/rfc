@@ -2,7 +2,7 @@
 
 As a user, and also as KaaS team provider, I would like to have the clusters running in the latest version automatically, and not worry about CVEs or EOL of the cluster components.
 
-As a user I would like to define maintenance windows to ensure cluster are not upgraded out of these hours.
+As a user, I would like to define maintenance windows to ensure clusters are not upgraded outside of these hours.
 
 As a user I would like to mark a cluster as frozen and block upgrades for certain period of time.
 
@@ -58,4 +58,3 @@ The Solution engineer plan cluster upgrades based on cluster type (environment, 
 - Check health of the cluster previous the upgrade is triggered.
 
 - Perform automatic rollbacks when something goes wrong.
-
