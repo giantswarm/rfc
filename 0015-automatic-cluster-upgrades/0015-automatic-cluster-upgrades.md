@@ -34,7 +34,7 @@ The Solution engineer plan cluster upgrades based on cluster type (environment, 
 
 2. As part of the reconciliation loop, the operator checks if there is any cluster eligible for upgrade.
  - There is a new patch/minor version active available. 
- - There is clusters not in the latest version of a major release. 
+ - There are clusters not in the latest version of a major release. 
  - The cluster(s) match the window upgrade criteria to be upgraded.
  - The cluster(s) are not being upgraded. 
  - The cluster(s) are not marked as frozen.
