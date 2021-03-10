@@ -8,7 +8,7 @@
 
 - As a user I would like to mark a cluster as frozen and block upgrades for certain period of time.
 
-- As a user I want to define a policy that enforces some environments are upgraded before than others to an agreed version.
+- As a user I want to define a policy that enforces some environments are upgraded before others to an agreed version.
 
 - As a user I want to schedule a upgrade for a certain day/time.
 
