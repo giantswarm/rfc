@@ -60,6 +60,50 @@ The upgrade policy would contain
 
 We envision aforementioned concepts would become custom resource definitions and there will be additional controller that would enhance and ensure the correct behavior.
 
+### Resources
+
+#### Cluster Upgrade
+
+Example resource:
+
+\``` yaml
+apiVersion: 
+kind: ClusterUpgrade
+metadata:
+  name: upgrade-to-release-v20
+  namespace: default
+spec:
+  clusterRef:
+    apiVersion: cluster.x-k8s.io/v1alpha3
+    kind: Cluster
+    name: foo01
+  kubernetesVersion: 1.19.8
+\```
+
+#### Upgrade Policy
+
+Example resource:
+
+\``` yaml
+apiVersion: 
+kind: UpgradePolicy
+metadata:
+  name: working-hours-except-month-start
+  namespace: default
+spec:
+  maintenanceWindows:
+  - name: working-hours
+    startTime: 2021-03-10T07:00:00Z
+    endTime: 2021-03-10T17:00:00Z
+    recurrence: FREQ=WEEKLY;BYDAY=MO,TU,WE,TH,FR
+  maintenanceExclusions:
+  - name: month-start
+    startTime: 2021-03-01T00:00:00Z
+    endTime: 2021-03-10T23:59:59Z
+    recurrence: FREQ=MONTHLY
+\```
+
+This would allow upgrades to happen between 07:00 UTC and 17:00 UTC on Monday-Friday, except for days between 1st and 10th of a month.
 ### Controllers
 
 #### Cluster upgrade executor
