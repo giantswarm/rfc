@@ -16,7 +16,7 @@
 
 ## Reasoning
 
-Our customers need to plan every upgrade on their side and manage the upgrades for every GS version. Every customer has their own requirement when they need to schedule upgrades (freeze periods, maintenance windows,...). At the same time, Cloud Native projects and Giant Swarm are releasing more versions every time. It provokes a lot of time preparing and executing these upgrades which is not usually given much value to any of the stakeholders. 
+Our customers need to plan every upgrade on their side and manage the upgrades for every GS version. Every customer has their own requirement when they need to schedule upgrades (freeze periods, maintenance windows,...). At the same time, Cloud Native projects and Giant Swarm are continuously releasing new versions. This means a lot of time is consumed preparing and executing these upgrades which is not usually given much value by any of the stakeholders. 
 
 Giant Swarm designed a versioning schema (semver), which includes all components on the stack, to ensure idempotency and expose the level of impact that changes bring to the customer. Patches and Minor releases should have no impact on the customer workloads, which mean can be applied in the environments at any time. 
 
