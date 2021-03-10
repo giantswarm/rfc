@@ -10,7 +10,7 @@
 
 - As a user I want to define a policy that enforces some environments are upgraded before others to an agreed version.
 
-- As a user I want to schedule a upgrade for a certain day/time.
+- As a user I want to schedule an upgrade on a certain day/time.
 
 - As a user, and also as KaaS team provider, I want to capture the result of upgrade.
 
