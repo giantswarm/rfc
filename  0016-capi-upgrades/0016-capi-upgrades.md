@@ -6,7 +6,7 @@ As part of the Cluster API (CAPI) Hive Sprint, the `upgrades hive` decided to cr
 
 ## Scope
 
-This document only cover the action to upgrade the workload cluster without solving problems of versioning of the different CAPI controllers and/or deciding which controller reconcile a cluster.
+This document covers only the action to upgrade the workload cluster without solving problems related to the versioning of the different CAPI controllers and/or deciding which controller reconciles a cluster.
 
 At the same time all the automation on top of the upgrades, like freeze periods or maintainance windows, are out of the scope here ([include in RFC 0015](/0015-automatic-cluster--upgrades)).
 
@@ -27,8 +27,12 @@ The current approach to upgrade a workload cluster in CAPI world involves a seri
   - Generate a new infrastructure `MachineTemplate` resource (with new image ID if needed) and create it in the Management API.
   - Set the new Kubernetes version in `KubeadmControlPlane` resource.
   - Change the infrastructure `MachineTemplate` on the `KubeadmControlPlane` to the new one and apply the new version of `KubeadmControlPlane`.
+<<<<<<< HEAD
 - Upgrade machine pools. As default, we walk through all existing machine pools one by one:
   - Make sure there are no MachinePools being already upgraded.
+=======
+- Upgrade machine pools (workers):
+>>>>>>> b2fdb4eac5edebae4aa05d7a29cd77baca8a0f7c
   - Modify the infrastructure `MachinePool` resource (with new image ID) if needed.
   - Set the new Kubernetes version in `MachinePool` resource.
 
