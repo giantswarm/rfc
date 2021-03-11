@@ -66,7 +66,7 @@ We envision aforementioned concepts would become custom resource definitions and
 
 Example resource:
 
-\``` yaml
+```yaml
 apiVersion: 
 kind: ClusterUpgrade
 metadata:
@@ -78,7 +78,6 @@ spec:
     kind: Cluster
     name: foo01
   kubernetesVersion: 1.19.8
-\```
 
 #### Upgrade Policy
 
