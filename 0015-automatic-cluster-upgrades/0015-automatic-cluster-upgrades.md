@@ -76,7 +76,14 @@ spec:
     apiVersion: cluster.x-k8s.io/v1alpha3
     kind: Cluster
     name: foo01
-  kubernetesVersion: 1.19.8
+  release: v13.0.1
+status:
+  triggeredAt: 2021-03-10T10:00:00Z
+  state: finished
+  outcome: success
+  finishedAt: 2021-03-10T10:31:10Z
+  fromRelease: v13.0.0
+  toRelease: v13.0.1
 ```
 
 #### UpgradePolicy
