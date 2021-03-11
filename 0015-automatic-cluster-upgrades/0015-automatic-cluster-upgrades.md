@@ -16,7 +16,7 @@
 
 ## Reasoning
 
-Our customers need to plan every upgrade on their side and manage the upgrades for every GS version. Every customer has their own requirement when they need to schedule upgrades (freeze periods, maintenance windows,...). At the same time, Cloud Native projects and Giant Swarm are continuously releasing new versions. This means a lot of time is consumed preparing and executing these upgrades which is not usually given much value by any of the stakeholders. 
+Our customers need to plan every upgrade on their side and manage the upgrades for every workload cluster release. Each customer has their own requirements regarding when they need to schedule upgrades (freeze periods, maintenance windows, etc.). At the same time, cloud native projects and Giant Swarm are continuously providing new releases. The preparation and execution of upgrades is time and labor intensive, while the fact that they are executed manually does not add much value to stakeholders.
 
 Giant Swarm designed a versioning schema (semver), which includes all components on the stack, to ensure idempotency and expose the level of impact that changes bring to the customer. Patches and Minor releases should have no impact on the customer workloads, which mean can be applied in the environments at any time. 
 
@@ -30,11 +30,10 @@ Based on the fact Giant Swarm is moving to Cluster API this is story let us defi
 
 ## Concepts
 
-In cluster upgrade hive we have discuss around entities and ideas how this would look like.
 
-### Cluster Upgrade entity
+### Cluster upgrade entity
 
-There are different reason why we are interested in having a object to define the upgrade intent. 
+There are different reason why we are interested in having an object to define the upgrade intent. 
 
 - As we define in the user stories, we/customers would like to schedule upgrades on certain date from running version to a specific one. That way customer can plan upgrades ahead and so do we.
 
@@ -44,7 +43,7 @@ There are different reason why we are interested in having a object to define th
 
 - In theory we can include apps upgrades together or separately.
 
-### Upgrade Policy entity
+### Upgrade policy entity
 
 Our customer can have a different set of constraints when it comes to allow changes in their clusters. The upgrade policy would define those and then the clusters can rely on a policy to enforce the desired behavior.
 
@@ -62,7 +61,7 @@ We envision aforementioned concepts would become custom resource definitions and
 
 ### Resources
 
-#### Cluster Upgrade
+#### ClusterUpgrade
 
 Example resource:
 
@@ -79,7 +78,7 @@ spec:
     name: foo01
   kubernetesVersion: 1.19.8
 
-#### Upgrade Policy
+#### UpgradePolicy
 
 Example resource:
 
@@ -102,6 +101,7 @@ spec:
     recurrence: FREQ=MONTHLY
 
 This would allow upgrades to happen between 07:00 UTC and 17:00 UTC on Monday-Friday, except for days between 1st and 10th of a month.
+
 ### Controllers
 
 #### Cluster upgrade executor
