@@ -84,7 +84,7 @@ spec:
 
 Example resource:
 
-\``` yaml
+```yaml
 apiVersion: 
 kind: UpgradePolicy
 metadata:
@@ -101,7 +101,6 @@ spec:
     startTime: 2021-03-01T00:00:00Z
     endTime: 2021-03-10T23:59:59Z
     recurrence: FREQ=MONTHLY
-\```
 
 This would allow upgrades to happen between 07:00 UTC and 17:00 UTC on Monday-Friday, except for days between 1st and 10th of a month.
 ### Controllers
