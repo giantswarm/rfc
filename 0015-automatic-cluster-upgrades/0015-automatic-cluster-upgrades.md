@@ -18,7 +18,7 @@
 
 Our customers need to plan every upgrade on their side and manage the upgrades for every workload cluster release. Each customer has their own requirements regarding when they need to schedule upgrades (freeze periods, maintenance windows, etc.). At the same time, cloud native projects and Giant Swarm are continuously providing new releases. The preparation and execution of upgrades is time and labor intensive, while the fact that they are executed manually does not add much value to stakeholders.
 
-Giant Swarm designed a versioning schema (semver), which includes all components on the stack, to ensure idempotency and expose the level of impact that changes bring to the customer. Patches and Minor releases should have no impact on the customer workloads, which mean can be applied in the environments at any time. 
+Giant Swarm designed a versioning scheme (based on Semver), which includes all components on the stack, to ensure idempotence and expose the level of impact that changes bring to the customer. Patches and Minor releases should have no impact on the customer workloads, which means that they can be applied in the environments at any time.
 
 ## Current state
 
