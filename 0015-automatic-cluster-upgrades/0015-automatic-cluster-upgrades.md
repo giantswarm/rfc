@@ -12,7 +12,7 @@
 
 - As a user I want to schedule an upgrade on a certain day/time.
 
-- As a user, and also as KaaS team provider, I want to capture the result of upgrade.
+- As a customer, and also as Giant Swarm, we want to capture the result of an upgrade. Based on the result we can alert on a certain condition, track the history for certain cluster(s) or automate response based on the end state.
 
 ## Reasoning
 
