@@ -8,7 +8,7 @@
 
 - As a customer admin, I would like to mark a workload cluster as "frozen" in order to block upgrades for a certain time period.
 
-- As a user I want to define a policy that enforces some environments are upgraded before others to an agreed version.
+- As a customer admin, I want to define the upgrade order of clusters, so that certain workload clusters are upgraded to a distinct workload cluster release before others are.
 
 - As a user I want to schedule an upgrade on a certain day/time.
 
