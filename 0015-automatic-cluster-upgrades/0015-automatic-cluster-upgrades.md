@@ -6,7 +6,7 @@
 
 - As a customer admin, I would like to define maintenance windows to ensure workload clusters are only upgraded within these hours.
 
-- As a user I would like to mark a cluster as frozen and block upgrades for certain period of time.
+- As a customer admin, I would like to mark a workload cluster as "frozen" in order to block upgrades for a certain time period.
 
 - As a user I want to define a policy that enforces some environments are upgraded before others to an agreed version.
 
