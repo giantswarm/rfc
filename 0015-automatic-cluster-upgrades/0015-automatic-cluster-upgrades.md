@@ -2,7 +2,7 @@
 
 ## User stories
 
-- As a user, and also as KaaS team provider, I would like to have the clusters running in the latest version automatically, and not worry about CVEs or EOL of the cluster components.
+- As a Giant Swarm customer, and also as Giant Swarm, we would like to have workload clusters running in the latest version automatically, and not worry about patching security vulnerabilities or cluster components running out of updates (e. g. Kubernetes release end of life).
 
 - As a user, I would like to define maintenance windows to ensure clusters are not upgraded outside of these hours.
 
