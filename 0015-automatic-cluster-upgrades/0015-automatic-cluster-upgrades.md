@@ -115,9 +115,9 @@ This would allow upgrades to happen between 07:00 UTC and 17:00 UTC on Monday-Fr
 
 #### Cluster upgrade executor
 
-Thee will be a cluster that based on the `Cluster Upgrade` CRs will initiate the upgrades changing the labels on the specific CR(s), it could include Apps. 
+There will be an operator that based on the `Cluster Upgrade` CRs will initiate the upgrades changing the labels on the specific CR(s), it could include Apps at some point though ideally would detach apps. totally from the cluster and. apps metadata and App Platform enforce the requirements. 
 
-This operator can also check on the `Upgrade Policy` if the cluster can be done or not, and in case it cannot happen alert or set an appropriate status on the object status.
+This operator can also check on the `Upgrade Policy` to verify the upgrade fulfil or not the criteria, and in case it does not, alert or set an appropriate status on the object status.
 
 #### Cluster upgrade scheduler
 
