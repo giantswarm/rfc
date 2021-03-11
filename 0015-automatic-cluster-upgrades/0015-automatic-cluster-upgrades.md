@@ -1,4 +1,4 @@
-# RFC 0015 - Automatic Cluster Upgrades
+# RFC 0015 - Automatic workload cluster upgrades
 
 ## User stories
 
