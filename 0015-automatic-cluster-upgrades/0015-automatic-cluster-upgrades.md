@@ -30,7 +30,6 @@ Based on the fact Giant Swarm is moving to Cluster API this is story let us defi
 
 ## Concepts
 
-
 ### Cluster upgrade entity
 
 There are different reason why we are interested in having an object to define the upgrade intent. 
@@ -43,13 +42,13 @@ There are different reason why we are interested in having an object to define t
 
 - In theory we can include apps upgrades together or separately.
 
-### Upgrade policy entity
+### Maintenance schedule entity
 
-Our customer can have a different set of constraints when it comes to allow changes in their clusters. The upgrade policy would define those and then the clusters can rely on a policy to enforce the desired behavior.
+Our customer can have a different set of constraints when it comes to allow changes in their clusters. The maintenance schedule would define those and then the clusters can rely on a policy to enforce the desired behavior.
 
-The upgrade policy would be possible to be referenced from different cluster resources (Cluster,Machine Pool, KubeadmControlPlane, Apps,...) letting controllers to decide if the resource would be or not reconciled.
+The maintenance schedule would be possible to be referenced from different cluster resources (Cluster,Machine Pool, KubeadmControlPlane, Apps,...) letting controllers to decide if the resource would be or not reconciled.
 
-The upgrade policy would contain
+The maintenance schedule would contain
 
 - A way to define dates or times where clusters (or relatives) can be modified.
 
@@ -57,7 +56,7 @@ The upgrade policy would contain
 
 ## Technical aspects
 
-We envision aforementioned concepts would become custom resource definitions and there will be additional controller that would enhance and ensure the correct behavior.
+We envision aforementioned concepts would become custom resource definitions and there will be additional controllers that would enhance and ensure the correct behavior.
 
 ### Resources
 
@@ -77,6 +76,7 @@ spec:
     kind: Cluster
     name: foo01
   release: v13.0.1
+  startTime: 2021-03-10T07:00:00Z
 status:
   triggeredAt: 2021-03-10T10:00:00Z
   state: finished
@@ -86,13 +86,13 @@ status:
   toRelease: v13.0.1
 ```
 
-#### UpgradePolicy
+#### MaintenanceSchedule
 
 Example resource:
 
 ```yaml
 apiVersion: 
-kind: UpgradePolicy
+kind: MaintenanceSchedule
 metadata:
   name: working-hours-except-month-start
   namespace: default
@@ -117,11 +117,13 @@ This would allow upgrades to happen between 07:00 UTC and 17:00 UTC on Monday-Fr
 
 There will be an operator that based on the `Cluster Upgrade` CRs will initiate the upgrades changing the labels on the specific CR(s), it could include Apps at some point though ideally would detach apps. totally from the cluster and. apps metadata and App Platform enforce the requirements. 
 
-This operator can also check on the `Upgrade Policy` to verify the upgrade fulfil or not the criteria, and in case it does not, alert or set an appropriate status on the object status.
+This operator can also check on the `maintenance schedule` to verify the upgrade fulfil or not the criteria, and in case it does not, alert or set an appropriate status on the object status.
+
+Also the operator will handle the mechanics of the upgrade like which `MachinePool` is upgraded first or wait till one `MachinePool` is done successfully to continue with next one. There is already an [RFC](https://github.com/giantswarm/rfc/pull/17/files) up for this specific controller.
 
 #### Cluster upgrade scheduler
 
-Ideally to automate the whole process there will be an operator that creates all the `Cluster Upgrade` CRs when a new release of Giant Swarm is created.
+Ideally to automate the whole process there will be an operator that creates all the `Cluster Upgrade` CRs when a new release of Giant Swarm is created (and/or possibly other events).
 
 #### Existing CAPI controllers
 
@@ -131,7 +133,7 @@ There was [a proposal in CAPI upstream](https://github.com/kubernetes-sigs/clust
 
 - Do we scheduled automatic upgrades by default? or we let customer to scheduled them (maybe suggesting in our UI a cluster upgrade need to be scheduled)? 
 
-- Do we setup a default upgrade policy for cluster that does not have one defined/attached?
+- Do we setup a default maintenance schedule for cluster that does not have one defined/attached?
 
 - If we let customer to freeze the cluster we can apply for all type of upgrades? at some point it can be used for chart operator (or a new app upgrade operator) too to disable app upgrades?
 
