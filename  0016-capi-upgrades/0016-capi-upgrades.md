@@ -32,7 +32,7 @@ The current approach to upgrade a workload cluster in CAPI world involves a seri
   - Modify the infrastructure `MachinePool` resource (with new image ID) if needed.
   - Set the new Kubernetes version in `MachinePool` resource.
 
-Also our operators watch for changes on the Cluster CR's labels to trigger an upgrade. That functionality should be kept in the new operator we build.
+The upgrade operator watches for changes on the Cluster CR's labels to trigger an upgrade. In case the release does not bring an OS or k8s change the upgrade operator will not trigger the process.
 
 ## Open questions
 
