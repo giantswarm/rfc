@@ -130,7 +130,7 @@ Ideally to automate the whole process there will be an operator that creates all
 
 #### Existing CAPI controllers
 
-There was [a proposal in CAPI upstream](https://github.com/kubernetes-sigs/cluster-api/blob/master/docs/proposals/20191017-kubeadm-based-control-plane.md) for the KubeadmControlPlane (later included in CAPZ components) to add `upgradeAfter` parameter to influence on the upgrades. The idea would be to create a new proposal that allows to point a new entity (`UpgradePolicy`) to extend the possibilities more than a single timestamp. Later controllers could leverage on that to allow changes or not to their reconciled resources.
+There was [a proposal in CAPI upstream](https://github.com/kubernetes-sigs/cluster-api/blob/master/docs/proposals/20191017-kubeadm-based-control-plane.md) for the KubeadmControlPlane (later included in CAPZ components) to add `upgradeAfter` parameter to influence the upgrades. Though this field only means a cluster upgrade will be triggered after that date, to force an upgrade, it is related to the goal of controlling upgrades. The idea would be to create a new proposal that allows pointing a new entity (`MaintenanceSchedule `/`UpgradePolicy`)  to extend the possibilities more than a single timestamp. Later controllers could leverage on that to allow changes or not to their reconciled resources.
 
 ## Open questions
 
