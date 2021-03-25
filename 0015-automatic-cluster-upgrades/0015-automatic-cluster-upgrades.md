@@ -75,7 +75,10 @@ spec:
     apiVersion: cluster.x-k8s.io/v1alpha3
     kind: Cluster
     name: foo01
-  release: v13.0.1
+  releaseRef:
+    apiVersion: release.giantswarm.io/v1alpha1
+    kind: Release
+    name: v13.0.1
   startTime: 2021-03-10T07:00:00Z
 status:
   triggeredAt: 2021-03-10T10:00:00Z
