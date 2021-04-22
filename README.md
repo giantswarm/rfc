@@ -1,4 +1,4 @@
-# RFC Process
+# rfc
 
 This RFC describes the RFC process for Giant Swarm.
 
