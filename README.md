@@ -2,7 +2,7 @@
 
 This RFC describes the RFC process for Giant Swarm.
 
-Giant Swarm is a growing, distributed company, and we want to ensure that everyone continues to have the ability to bring their ideas and thoughts into the hivemind. While a large amount of our discussion currently happens successfully in chats and calls, a long-form writing process may provide some benefits: i.e: promoting deep thinking and discussion, creating a record of considered ideas and discussion, reducing number of meetings (and allowing easier management of timezones), and providing avenues for increasing the asynchronousity of our work.
+Giant Swarm is a growing, distributed company, and we want to ensure that everyone continues to have the ability to bring their ideas and thoughts into the hivemind. While a large amount of our discussion currently happens successfully in chats and calls, a long-form writing process may provide some benefits: i.e: promoting deep thinking and discussion, creating a record of considered ideas and discussion, reducing number of meetings (and allowing easier management of timezones), and providing avenues for increasing the asynchronicity of our work.
 
 Before scheduling a call, or starting a Slack thread, ask yourself whether you could be writing an RFC instead.
 
