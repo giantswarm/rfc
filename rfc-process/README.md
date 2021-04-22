@@ -1,4 +1,4 @@
-# RFC 0001 - RFC Process
+# RFC Process
 
 This RFC describes the RFC process for Giant Swarm.
 
@@ -12,9 +12,8 @@ All ideas, thoughts, comments, suggestions, and eldritch ramblings, are valid an
 
 The following lists some basic formatting and housekeeping decisions concerning RFCs:
 
-- RFC numbers must be unique and increasing (i.e: take the next available number).
-- Each RFC must be in its own directory, with the directory name in the form `XXXX-$title`.
-- RFC filenames must be in the form `XXXX-$title.md`.
+- Each RFC must be in its own directory, with the directory name in the form `$title`.
+- The main RFC filename within the directory should be in the form of `README.md`. This enables a preview on Github.
 - RFCs must be written in Markdown.
 
 The following lists some ideas towards RFC that are explicitly not presented:
