@@ -12,7 +12,7 @@ Different release versions of workload clusters are managed by running sets of r
 
 We were able to utilize a small number of nodes, run our own configuration of kubernetes and still manage a big number of workload clusters run on different versions.
 
-![Multi-version state](<image>)
+![Multi-version state](multiple_versions.png)
 
 ## Problems with the Giant Swarm approach
 
