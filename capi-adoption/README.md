@@ -6,7 +6,7 @@ This is a document to present some of the fundamental problems we have faced whe
 
 ## Present state of Giant Swarm platform
 
-The present state of Giant Swarm platform consists of a single management cluster on each installation. All workload clusters are managed from the same management cluster on a given installation.
+The present state of Giant Swarm platform consists of a single management cluster for each installation. All workload clusters are managed by the same management cluster in a given installation.
 
 Different release versions of workload clusters are managed by running sets of releases on every management cluster. Each release consists of a set of operators which are reconciling CRs that are labeled to use that given release. Most of the time this worked pretty well for us, given the cost savings that it brought. It also helped us to take control of the lifecycle of the different clusters living on those management clusters, allowing us to upgrade every cluster independently by just changing the label in the CRs.
 
