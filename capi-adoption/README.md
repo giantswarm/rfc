@@ -112,3 +112,48 @@ While working very well in the present configuration, it becomes problematic whe
 Currently it’s not possible to deploy basic core components on top of a vanilla Kubernetes cluster without access and dedicated configuration in installations repo and use of opsctl tool that is built to render the configuration for further steps in deployment.
 
 CAPI management clusters [are configured with a simple command.](https://cluster-api.sigs.k8s.io/clusterctl/commands/init.html) Similarly, we need to provide a way to install GiantSwarm core components.
+
+## Appendix
+
+### Risks & Mitigations
+
+#### Reducing risk by promoting upgrades through environment pipeline
+
+While general approach prefers running only one management cluster for all
+workload clusters, there might be situations where multiple permanent
+management clusters make sense.
+
+For some use cases it might be reasonable to separate _production, staging and
+development_ environments to be reconciled in distinct management clusters.
+
+This allows staged upgrades of MC components in such a way that in case the
+upgrade introduces any issues, they are caught early on before affecting
+critical production clusters.
+
+This approach involves increased costs from management clusters, but similar to
+high available configuration, it's a tradeoff being made for absolute
+stability. However, these costs can be reduced by utilizing cloud providers'
+managed kubernetes offerings instead of fully self-administered ones, because
+then there are no direct costs from the MC CP nodes.
+
+#### Reducing UX complexity through sensible defaulting
+
+While Cluster API approach opens extensive configurability, customizability and
+flexibility for workload cluster management, it also makes customizations
+explicit.
+
+The complexity it introduces is tackled by sensible defaulting in Giant Swarm
+tooling. The fact that there is a knob doesn't mean it **has** to be twisted
+but that it's possible when necessary. Primary reason for our tooling is to
+provide easy-to-use interface for cluster management and defaulting is the key
+to this.
+
+When customer needs to customize our defaults, the Cluster API CRs provide a
+way to do changes explicitly with the help of cluster management tooling. In
+present day setting it often happens that changes to cloud infrastructure are
+made outside of our reconciliation logic and this often breaks the cluster
+either in the reconciliation, monitoring or later during the next upgrade.
+
+With customizations explicitly done via CR configuration, the Giant Swarm
+personnel and running operators are aware of them and work *with* the
+customizations instead of over them.
