@@ -4,7 +4,7 @@
 
 This RFC arose from the idea to offer oauth2-proxy. It’s an app, which at least 2 of our customers really want (and I bet there are more), and I think we use. (See: [Slack](https://gigantic.slack.com/archives/CPC3M70UE/p1622729938024200))
 
-**Proposal: Offer managed apps, bottoms up, instead of top down. Get back to our ‘original intention'.**
+**Proposal: Offer managed apps, bottom-up, instead of top-down. Get back to our ‘original intention'.**
 
 Meaning:
 
