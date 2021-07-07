@@ -171,7 +171,7 @@ spec:
 #### KVMachineTemplate (control plane)
 
 ```yaml
-kind: KVMachineTemplate
+kind: KVMMachineTemplate
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
 metadata:
   name: example-control-plane
