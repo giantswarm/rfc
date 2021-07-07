@@ -106,7 +106,7 @@ While we want to avoid too many moving parts, this is a good opportunity to cont
 1. [pause reconciliation](https://github.com/giantswarm/operatorkit/blob/master/docs/pause_reconciliation.md): do not reconcile if there are specific pause annotations (**not used in `kvm-operator`**)
 1. setting per controller finalizer (`operatorkit.giantswarm.io/<controller.Name>`)
 1. allow delete events to get [replayed](https://github.com/giantswarm/operatorkit/blob/master/docs/using_finalizers.md#control-flow) (by setting `finalizerskeptcontext.SetKept(ctx)`
-1. when we boot the server we also add two additional endpoints: `healtz` (service availability) and `version` (info about the go runtime)
+1. when we boot the server we also add two additional endpoints: `healthz` (service availability) and `version` (info about the go runtime)
 
 ##### Alternatives in kubebuilder
 
