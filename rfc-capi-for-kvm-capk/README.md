@@ -158,7 +158,7 @@ spec:
 #### KVMCluster
 
 ```yaml
-kind: KVMCluser
+kind: KVMCluster
 apiVersion: infrastructure.cluster.x-k8s.io/v1alpha4
 metadata:
   name: example
