@@ -2,25 +2,40 @@
 
 ### Use cases
 
-- As a Giant Swarm (GS) Platform Engineer (PE), I want to implement Cluster API (CAPI) for KVM (CAPK) clusters so that I don't need to maintain legacy services and libraries (e.g. `k8scloudconfig`, `apiextensions`, `cert-operator`, `cluster-service`) for the foreseeable future.
-- As a GS PE, I want the operator(s) reconciling KVM clusters (collectively referred to as "KVM operators") to work independently of other GS components so I can add features more quickly and make usage by the wider community more feasible/possible.
-- As a GS PE, I want KVM operators to work in arbitrary Kubernetes clusters so we can stop maintaining our custom provisioning tooling for on-prem management clusters.
-- As a GS sales person, I want KVM operators to implement the CAPI provider contract so that we can be in the list of CAPI providers and find other potential customers.
-- As a GS on-premises (on-prem) customer, I want KVM operator to implement CAPI so that I have access to new provider-independent features developed by other GS teams.
-- As a GS oncall engineer, I want on-prem installations to be as similar as possible to the other providers so that I can share best practices, on call routines, and documentation with the other teams.
-- As a GS on-prem customer, I want GS to implement a migration strategy from current kvm clusters to CAPI KVM clusters so that I can access the new features without service disruption and workload migration.
-- As a GS on-prem customer, I want GS to implement a break out/migration strategy for on-prem installations so that I can use other CAPI on-prem providers in the future such as CAPV (Cluster API for VSphere (VMWare)) or metal3 (Cluster API for bare metal).
-- As a member of Team Rocket, I would like to have confidence in my changes to the platform through the use of reliable unit, integration, and e2e tests.
+- As a Giant Swarm (GS) Platform Engineer (PE), I want to implement Cluster API (CAPI) for KVM (CAPK) clusters so that I
+  don't need to maintain legacy services and libraries (e.g. `k8scloudconfig`, `apiextensions`, `cert-operator`,
+  `cluster-service`) for the foreseeable future.
+- As a GS PE, I want the operator(s) reconciling KVM clusters (collectively referred to as "KVM operators") to work 
+  independently of other GS components so I can add features more quickly and make usage by the wider community more
+  feasible/possible.
+- As a GS PE, I want KVM operators to work in arbitrary Kubernetes clusters so we can stop maintaining our custom
+  provisioning tooling for on-prem management clusters.
+- As a GS employee, I want KVM operators to implement the CAPI provider contract so that we can be in the list of
+  CAPI providers to improve the reputation of our company.
+- As a GS on-premises (on-prem) customer, I want KVM operator to implement CAPI so that I have access to new
+  provider-independent features developed by other GS teams.
+- As a GS oncall engineer, I want on-prem installations to be as similar as possible to the other providers so that I
+  can share best practices, on call routines, and documentation with the other teams.
+- As a GS on-prem customer, I want GS to implement a migration strategy from current kvm clusters to CAPI KVM clusters
+  so that I can access the new features without service disruption and workload migration.
+- As a GS on-prem customer, I want GS to implement a break out/migration strategy for on-prem installations so that I
+  can use other CAPI on-prem providers in the future such as CAPV (Cluster API for VSphere (VMWare)) or metal3 (Cluster
+  API for bare metal).
+- As a member of Team Rocket, I would like to have confidence in my changes to the platform through the use of reliable
+  unit, integration, and end-to-end tests.
 
 
 ### Rationale
 
-With the current move to full CAPI adoption in Team Firecracker and Team Celestial, Team Rocket would be the only user and therefore the only maintainer of the current components and code that would be legacy for the other teams.
+With the current move to full CAPI adoption in Team Firecracker and Team Celestial, Team Rocket would be the only user
+and therefore the only maintainer of the current components and code that would be legacy for the other teams.
 
-This would mean that we would need to put a lot of effort into understanding and owning this code fully in order to be able to fix bugs and maintain KVM installations
+This would mean that we would need to put a lot of effort into understanding and owning this code fully in order to be
+able to fix bugs and maintain KVM installations
 in the future.
 
-Instead of being the sole maintainer of a huge amount of legacy code, Team Rocket wants to invest this time in implementing CAPI for KVM operator and maintain relative platform parity with the other GS provider teams.
+Instead of being the sole maintainer of a huge amount of legacy code, Team Rocket wants to invest this time in
+implementing CAPI for KVM operator and maintain relative platform parity with the other GS provider teams.
 
 ### Goals
 
@@ -38,7 +53,9 @@ Instead of being the sole maintainer of a huge amount of legacy code, Team Rocke
 
 ### Scope
 
-We outlined all existing features in the GS KVM platform to define the scope of the implementation. Many features of platform can be provided by CAPI now. We therefore split the implementation into features that we must migrate to the new operator and those we must ensure are handled by CAPI as follows:
+We outlined all existing features in the GS KVM platform to define the scope of the implementation. Many features of
+platform can be provided by CAPI now. We therefore split the implementation into features that we must migrate to the
+new operator and those we must ensure are handled by CAPI as follows:
 
 #### Features to migrate to new operator
 
@@ -68,34 +85,53 @@ We outlined all existing features in the GS KVM platform to define the scope of 
 
 #### DNS
 
-The WC Kubernetes API is reachable externally (e.g., for GS engineers, customers) via an ingress in the MC of the form `https://<cluster id>.k8s.<installation base domain>`. This DNS name should resolve to the MC ingress IP.
+The WC Kubernetes API is reachable externally (e.g., for GS engineers, customers) via an ingress in the MC of the form
+`https://<cluster id>.k8s.<installation base domain>`. This DNS name should resolve to the external IP of the MC ingress
+controller.
 
-Inside the WC, control plane nodes should connect to etcd and k8s API via localhost. Workers should use a control plane endpoint of `https://<cluster id>.k8s.<installation base domain>` or `control-plane.<cluster id>.svc` depending on whether external DNS or MC CoreDNS is used for WC node DNS resolution (respectively). This will be determined during implementation.
+Inside the WC, control plane nodes should connect to etcd and k8s API via localhost. Workers should use a control plane
+endpoint of `https://<cluster id>.k8s.<installation base domain>` or `control-plane.<cluster id>.svc` depending on
+whether external DNS or MC CoreDNS is used for WC node DNS resolution (respectively). This will be determined during
+implementation.
 
 #### Machine OS Images
 
-The CAPI-native method for OS images is using an image builder to create a different image for each Kubernetes version. This implies a lot of complexity and is a big departure from our current approach of configuring nodes using ignition. During development we will use kubeadm pre- and post- commands to provision nodes and then decide if we want to go through the process of setting up an image building pipeline.
+The CAPI-native method for OS images is using an image builder to create a different image for each Kubernetes version.
+ This implies a lot of complexity and is a big departure from our current approach of configuring nodes using ignition.
+ During development, we will use kubeadm `pre-` and `post-` commands to provision nodes. There is upstream activity 
+around [image building](https://github.com/kubernetes-sigs/image-builder/blob/master/images/capi/README-flatcar.md) and 
+[ignition support in CAPI](https://github.com/kubernetes-sigs/cluster-api/pull/4172) which we will try to stay abreast of.
 
 #### Controller Framework (operatorkit vs kubebuilder)
 
-While we want to avoid too many moving parts, this is a good opportunity to continue aligning more closely with upstream operators and collaborate with the community by using `kubebuilder`. There are quite a few unknowns around this which we have summarized below:
+While we want to avoid too many moving parts, this is a good opportunity to continue aligning more closely with upstream
+operators and collaborate with the community by using `kubebuilder`. There are quite a few unknowns around this which we
+have summarized below:
 
 ##### Features in operatorkit
 
-1. expose `creation_timestamp`, `deletion_timestamp` and `last_reconciled` metrics for every object we reconcile over. We use them in the [following](https://github.com/giantswarm/prometheus-rules/blob/8142cac5f47be117ca428fc422d71afd2db3f5ee/helm/prometheus-rules/templates/alerting-rules/operatorkit.rules.yml#L1) alerts.
-1. create [kubernetes events](https://github.com/giantswarm/operatorkit/blob/master/docs/using_kubernetes_events.md) on reconciliation errors
+1. expose `creation_timestamp`, `deletion_timestamp` and `last_reconciled` metrics for every object we reconcile over.
+   We use them in the [following](https://github.com/giantswarm/prometheus-rules/blob/8142cac5f47be117ca428fc422d71afd2db3f5ee/helm/prometheus-rules/templates/alerting-rules/operatorkit.rules.yml#L1)
+   alerts.
+1. create [kubernetes events](https://github.com/giantswarm/operatorkit/blob/master/docs/using_kubernetes_events.md) on
+   reconciliation errors
 1. sentry client: (**not used in `kvm-operator`**)
-1. [pause reconciliation](https://github.com/giantswarm/operatorkit/blob/master/docs/pause_reconciliation.md): do not reconcile if there are specific pause annotations (**not used in `kvm-operator`**)
+1. [pause reconciliation](https://github.com/giantswarm/operatorkit/blob/master/docs/pause_reconciliation.md): do not
+   reconcile if there are specific pause annotations (**not used in `kvm-operator`**)
 1. setting per controller finalizer (`operatorkit.giantswarm.io/<controller.Name>`)
-1. allow deletion events to be [replayed](https://github.com/giantswarm/operatorkit/blob/master/docs/using_finalizers.md#control-flow) by setting `finalizerskeptcontext.SetKept(ctx)`
-1. when we boot the server we also add two additional endpoints: `healthz` (service availability) and `version` (info about the go runtime)
+1. allow deletion events to be [replayed](https://github.com/giantswarm/operatorkit/blob/master/docs/using_finalizers.md#control-flow)
+   by setting `finalizerskeptcontext.SetKept(ctx)`
+1. when we boot the server we also add two additional endpoints: `healthz` (service availability) and `version`
+   (info about the go runtime).
 
 ##### Alternatives in kubebuilder
 
-1. Metrics: `kubebuilder` already exposes a few metrics, and we can always add new ones ([link](https://book.kubebuilder.io/reference/metrics.html#publishing-additional-metrics))
-1. Events: manager has a `GetEventRecorderFor` method that can be passed to the controller to register events
-1. Finalizers: kubebuilder supports them so we can implement all the stuff we need (pause, replay)
-1. Extra endpoints: manager has `AddHealthzCheck` and `AddReadyzCheck` methods that feel similar to the `healthz` endpoint. Not sure if we actively use the second one still.
+1. Metrics: `kubebuilder` already exposes a few metrics, and we can always add new ones
+   ([link](https://book.kubebuilder.io/reference/metrics.html#publishing-additional-metrics)).
+1. Events: manager has a `GetEventRecorderFor` method that can be passed to the controller to register events.
+1. Finalizers: kubebuilder supports them so we can implement all the stuff we need (pause, replay).
+1. Extra endpoints: manager has `AddHealthzCheck` and `AddReadyzCheck` methods that feel similar to the `healthz`
+   endpoint.
 
 ### Milestones
 
@@ -323,11 +359,14 @@ spec:
 
 ## Appendix B: `clusterctl` provider contract
 
-We would like to support the `clusterctl` provider contract as defined in the [CAPI book](https://cluster-api.sigs.k8s.io/clusterctl/provider-contract.html). The specifics of this contract are outlined below.
+We would like to support the `clusterctl` provider contract as defined in the
+[CAPI book](https://cluster-api.sigs.k8s.io/clusterctl/provider-contract.html). The specifics of this contract are
+outlined below.
 
 #### Repository
 
-We will implement a new operator using the [giantswarm/cluster-api-provider-kvm](https://github.com/giantswarm/cluster-api-provider-kvm/) repository.
+We will implement a new operator using the
+[giantswarm/cluster-api-provider-kvm](https://github.com/giantswarm/cluster-api-provider-kvm/) repository.
 
 
 #### Variable Names for customization 
@@ -367,12 +406,14 @@ We will label all our CRDS with `cluster.x-k8s.io/provider=infrastructure-kvm`
 
 #### CI/CD
 
-We need a solution for attaching `infrastructure-components.yaml` and `cluster-template.yaml` files to CAPK GitHub releases. We can build this automation ourselves using GitHub actions or reuse what other infrastructure providers use.
+We need a solution for attaching `infrastructure-components.yaml` and `cluster-template.yaml` files to CAPK GitHub
+releases. We can build this automation ourselves using GitHub actions or reuse what other infrastructure providers use.
 
 
 ## Appendix C: Deprecated components
 
-Many components are already deprecated or in the process of being deprecated for AWS and Azure. Below is a list of these components and the general plan for migrating away from them or integrating them into maintained components.
+Many components are already deprecated or in the process of being deprecated for AWS and Azure. Below is a list of these
+components and the general plan for migrating away from them or integrating them into maintained components.
 
 Operators:
 - `kvm-operator` Updated for CAPI or replaced with new operator
