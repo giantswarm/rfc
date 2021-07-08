@@ -38,55 +38,37 @@ Instead of being the sole maintainer of a huge amount of legacy code, Team Rocke
 
 ### Scope
 
-To minimize the scope, we will start with a minimal feature set and add only features that are used by the current customers. Features that are currently not used by any customer will be dropped.
+We outlined all existing features in the GS KVM platform to define the scope of the implementation. Many features of platform can be provided by CAPI now. We therefore split the implementation into features that we must migrate to the new operator and those we must ensure are handled by CAPI as follows:
 
-Current features of `kvm-operator` (with a ✅ if we decided to keep it in CAPI):
-- [ ] configure the registry: we can set an auth token, domain and mirrors (we use that for quay for example I think); make the daemon run behind a proxy
-- [ ] configure workload cluster public key for ssh
-- [x] configure calico: CALICO_IPV4POOL_CIDR env var for calico container, CNI_MT env var for calico init container, clusterCIDR for kube-proxy)
-- [x] configure DOCKER_OPT_BIP (--bip flag) for docker daemon
-- [ ] configure domain and prefix for etcd
-- [ ] apiserver flags
-	- [ ] - configure oidc
-	- [ ] --etcd-prefix
-	- [ ] --service-cluster-ip-range
-	- [ ] --secure-port
-	- [ ] --requestheader-allowed-names
-- [ ] kubelet configuration
-	- [ ] clusterDNS
-	- [ ] clusterDomain
-	- [ ] --node-labels (flag)
-- [ ] kube-proxy
-	- [ ] conntrack.maxPerCore
-- [ ] ignition
-	- [x] dns and ntp servers
-	- [x] ssh user list
-- [ ] iscsi initiator name (masters)
-- [ ] configure storage type (host path/persistent)
-- [x] master and worker node pods: cpu and memory limits,
-- [x] size of kubelet and docker volume
-- [x] automatically delete TC node pods when NotReady for too long
-- [x] dead endpoints: don't route traffic to non-ready nodes
-- [x] vertical pod autoscaler for operator pod
+#### Features to migrate to new operator
 
-#### Features to drop
-- Done by the bootstrap provider in future: 
-    - kube-proxy configuration
-    - kubelet configuration
-    - api-server flags
-    - etcd configuration
-    - ssh server public keys
-    - registry configuration and prefix
-- Calico configuration
-    - Handled by cluster-apps-operator
-- Node IP range: Will be defined by the Manangment cluster POD IP range as we will use kubernetes native networking.
+- DNS and NTP configuration for WC nodes (OS level)
+- iSCSI initiator name (control plane nodes)
+- host volumes (worker nodes)
+- etcd storage (host path/persistent)
+- cpu and memory limits for control plane and worker node pods and QEMU VMs
+- size of kubelet and docker volume
+- automatic node termination: using liveness and readiness probes
+- drop dead endpoints (don't route traffic to non-ready nodes) using ReadinessGates
+- autoscaling for operator pod using VPA
 
+#### Features handled by other controllers
+
+- etcd domain and prefix: using `KubeadmControlPlane`
+- docker daemon (mirror, auth, bridge IP, and proxy): using a systemd drop-in unit via `files` in `KubeadmConfig`
+- SSH keys for WC nodes: using `KubeadmConfig`
+- Calico: using `cluster-apps-operator`
+- kube-proxy (conntrack, service IP range): using `KubeadmControlPlane`
+- apiserver flags (OIDC): using `KubeadmControlPlane`
+- kubelet (clusterDNS, clusterDomain, node labels): using `KubeadmConfig`
+- automatic node termination: using `MachineHealthCheck`
+- node IP range: will be defined by the MC pod IP range (VMs will use MC Calico network once we finish dropping Flannel)
 
 ### Implementation
 
 #### DNS
 
-The WC Kubernetes API is reachable externally (i.e. for GS engineers or customers) via an ingress in the MC of the form `https://<cluster id>.k8s.<installation base domain>`. This DNS name should resolve to the MC ingress IP.
+The WC Kubernetes API is reachable externally (e.g., for GS engineers, customers) via an ingress in the MC of the form `https://<cluster id>.k8s.<installation base domain>`. This DNS name should resolve to the MC ingress IP.
 
 Inside the WC, control plane nodes should connect to etcd and k8s API via localhost. Workers should use a control plane endpoint of `https://<cluster id>.k8s.<installation base domain>` or `control-plane.<cluster id>.svc` depending on whether external DNS or MC CoreDNS is used for WC node DNS resolution (respectively). This will be determined during implementation.
 
@@ -94,46 +76,46 @@ Inside the WC, control plane nodes should connect to etcd and k8s API via localh
 
 The CAPI-native method for OS images is using an image builder to create a different image for each Kubernetes version. This implies a lot of complexity and is a big departure from our current approach of configuring nodes using ignition. During development we will use kubeadm pre- and post- commands to provision nodes and then decide if we want to go through the process of setting up an image building pipeline.
 
-#### Controller Template (operatorkit vs kubebuilder)
+#### Controller Framework (operatorkit vs kubebuilder)
 
-While we want to avoid too many moving parts, this is a good opportunity to continue aligning more closely with upstream operators and use kubebuilder. There are quite a few unknowns around this which we have summarized below:
+While we want to avoid too many moving parts, this is a good opportunity to continue aligning more closely with upstream operators and collaborate with the community by using `kubebuilder`. There are quite a few unknowns around this which we have summarized below:
 
 ##### Features in operatorkit
 
 1. expose `creation_timestamp`, `deletion_timestamp` and `last_reconciled` metrics for every object we reconcile over. We use them in the [following](https://github.com/giantswarm/prometheus-rules/blob/8142cac5f47be117ca428fc422d71afd2db3f5ee/helm/prometheus-rules/templates/alerting-rules/operatorkit.rules.yml#L1) alerts.
-1. create [kubernetes events](https://github.com/giantswarm/operatorkit/blob/master/docs/using_kubernetes_events.md) on reconcilation errors
+1. create [kubernetes events](https://github.com/giantswarm/operatorkit/blob/master/docs/using_kubernetes_events.md) on reconciliation errors
 1. sentry client: (**not used in `kvm-operator`**)
 1. [pause reconciliation](https://github.com/giantswarm/operatorkit/blob/master/docs/pause_reconciliation.md): do not reconcile if there are specific pause annotations (**not used in `kvm-operator`**)
 1. setting per controller finalizer (`operatorkit.giantswarm.io/<controller.Name>`)
-1. allow delete events to get [replayed](https://github.com/giantswarm/operatorkit/blob/master/docs/using_finalizers.md#control-flow) (by setting `finalizerskeptcontext.SetKept(ctx)`
+1. allow deletion events to be [replayed](https://github.com/giantswarm/operatorkit/blob/master/docs/using_finalizers.md#control-flow) by setting `finalizerskeptcontext.SetKept(ctx)`
 1. when we boot the server we also add two additional endpoints: `healthz` (service availability) and `version` (info about the go runtime)
 
 ##### Alternatives in kubebuilder
 
-1. Metrics: `kubebuilder` already exposes a few metrics and we can always add new ones ([link](https://book.kubebuilder.io/reference/metrics.html#publishing-additional-metrics))
+1. Metrics: `kubebuilder` already exposes a few metrics, and we can always add new ones ([link](https://book.kubebuilder.io/reference/metrics.html#publishing-additional-metrics))
 1. Events: manager has a `GetEventRecorderFor` method that can be passed to the controller to register events
-1. Finalizers: kubebuilder supports them too so we can implement all the stuff we need (pause, replay)
-1. Extra endpoints: manager has `AddHealthzCheck` and `AddReadyzCheck` methods that feel similar to the `healtz` endpoint. Not sure if we actively use the second one still.
+1. Finalizers: kubebuilder supports them so we can implement all the stuff we need (pause, replay)
+1. Extra endpoints: manager has `AddHealthzCheck` and `AddReadyzCheck` methods that feel similar to the `healthz` endpoint. Not sure if we actively use the second one still.
 
 ### Milestones
 
 #### MVP
 
-- Create Cluster
-- Delete Cluster
-- Scale Cluster
-- Upgrade Cluster
-- Pivoting 
-- Cofigure node size for Worker and Control Plane Nodes
+- Create cluster using manual templates
+- Delete cluster
+- Scale cluster
+- Upgrade cluster
+- Pivoting
+- Calico CNI via App CR
+- Configure Kubernetes version, OS version, and resources for worker and control plane nodes
 
 #### Production-readiness
 
 - Configure docker volume size
 - Configure kubelet volume size
 - Vertical pod autoscaler for operator pod
-- Configure DNS and NTP Servers
-- Docker bridge IP and network range 
-    This is needed by some customers due to conflicting IP ranges
+- Configure DNS and NTP servers
+- Docker network CIDR (this is needed by some customers due to conflicting IP ranges)
 - Configure CIDRs for pod and service IPs 
 
 ### Appendix A: Full Example Cluster
@@ -339,7 +321,7 @@ spec:
   state: active
 ```
 
-## Appendix B: Clusterctl provider contract
+## Appendix B: `clusterctl` provider contract
 
 We would like to support the `clusterctl` provider contract as defined in the [CAPI book](https://cluster-api.sigs.k8s.io/clusterctl/provider-contract.html). The specifics of this contract are outlined below.
 
@@ -350,8 +332,9 @@ We will implement a new operator using the [giantswarm/cluster-api-provider-kvm]
 
 #### Variable Names for customization 
 
-#####  
-We have nothing to customize  in the  `infrastructure-components.yaml`.
+##### Infrastructure components configuration
+
+We have nothing to customize in the `infrastructure-components.yaml`.
 
 
 ##### Workload cluster configuration 
@@ -384,13 +367,13 @@ We will label all our CRDS with `cluster.x-k8s.io/provider=infrastructure-kvm`
 
 #### CI/CD
 
-We need a solution for attaching `infrastructure-components.yaml` and `cluster-template.yaml` files to  CAPK GitHub releases. We can build this automation ourselves using GitHub actions or reuse what other infrastructure providers use.
+We need a solution for attaching `infrastructure-components.yaml` and `cluster-template.yaml` files to CAPK GitHub releases. We can build this automation ourselves using GitHub actions or reuse what other infrastructure providers use.
 
 
 ## Appendix C: Deprecated components
 
 Many components are already deprecated or in the process of being deprecated for AWS and Azure. Below is a list of these components and the general plan for migrating away from them or integrating them into maintained components.
-relase
+
 Operators:
 - `kvm-operator` Updated for CAPI or replaced with new operator
 - `node-operator`: Integrated into `kvm-operator`
