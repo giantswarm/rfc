@@ -51,7 +51,7 @@ The workflow for a developer to add a new default configuration is then the foll
 2. `Developer` adds templating to the app (e.g. [kyverno policies for aws](https://github.com/giantswarm/kyverno-policies/blob/main/helm/policies-aws/values.yaml) with local defaults in `values.yaml`.
 3. `Developer` adds global and installation specific defaults through the [config](https://github.com/giantswarm/config) repository.
 
-The workflow for a developer to then update update the default configuration is simple:
+The workflow for a developer to then update the default configuration is simple:
 1. `Developer` updates configuration through the [config](https://github.com/giantswarm/config) repository.
 2. `Developer` tags the `config` repository.
 3. `Automation` rolls out the new config across installations.
