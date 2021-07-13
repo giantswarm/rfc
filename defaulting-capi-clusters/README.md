@@ -5,7 +5,7 @@ This RFC describes a pattern for defaulting of CAPI clusters by utilizing Kubern
 ## Problem statement
 
 We want clusters to be created with defaulted values.
-These values should match the clusters in our current product reasonably well.
+These values should match the clusters in our [current product reasonably well](https://intranet.giantswarm.io/docs/product/pdr/006_capi-product-guidelines-values/).
 Therefore we will need to default some values differently from upstream Cluster-API.
 
 We do not expect to have full control of the method of cluster creation in the future.
