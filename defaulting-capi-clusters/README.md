@@ -9,7 +9,7 @@ These values should match the clusters in our current product reasonably well.
 Therefore we will need to default some values differently from upstream Cluster-API.
 
 We do not expect to have full control of the method of cluster creation in the future.
-Therefore we have to account for different methods of cluster creation ( e.g. kubectl, kubectl-gs, happa, ...) while keeping defaulting consistent between those methods.
+Therefore we have to account for different methods of cluster creation ( e.g. kubectl, kubectl-gs, happa, gitops, ...) while keeping defaulting consistent between those methods.
 
 ## Defaulting with webhooks
 
@@ -41,6 +41,17 @@ From this overview we can deduct a set requirements for our admission webhooks:
 
 Defining the source of truth for default values will be hard in the future with different CAPI versions and other needs for configurability.
 We want to iterate faster at first and therefore a simple source of truth which might be inflexible is needed.
+Versioning of configuration as releases for cluster upgrades is out of scope for this initial iteration.
 
 Webhooks can utilize the already existing configuration options through `config-controller` to have access to global and installation specific defaults.
 It will be necessary to package webhooks (such as `Kyverno policies`) as apps which have their configuration managed through the [config](https://github.com/giantswarm/config) repository.
+
+The workflow for a developer to add a new default configuration is then the following:
+1. `Developer` adds logic to new defaulting.
+2. `Developer` adds templating to the app with local defaults in `values.yaml`.
+3. `Developer` adds global and installation specific defaults through the [config](https://github.com/giantswarm/config) repository.
+
+The workflow for a developer to then update update the default configuration is simple:
+1. `Developer` updates configuration through the [config](https://github.com/giantswarm/config) repository.
+2. `Developer` tags the `config` repository.
+3. `Automation` rolls out the new config across installations.
