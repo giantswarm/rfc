@@ -1,55 +1,71 @@
-# RFC: CAPI for KVM (CAPK)
+# RFC: Cluster API for KVM (CAPK)
 
-### Use cases
+## Glossary
+The lexicon used in this document is described in more detail
+[here](https://github.com/kubernetes-sigs/cluster-api/blob/master/docs/book/src/reference/glossary.md).
+Any discrepancies should be rectified in the main Cluster API glossary.
 
-- As a Giant Swarm (GS) Platform Engineer (PE), I want to implement Cluster API (CAPI) for KVM (CAPK) clusters so that I
-  don't need to maintain legacy services and libraries (e.g. `k8scloudconfig`, `apiextensions`, `cert-operator`,
-  `cluster-service`) for the foreseeable future.
-- As a GS PE, I want the operator(s) reconciling KVM clusters (collectively referred to as "KVM operators") to work 
-  independently of other GS components so I can add features more quickly and make usage by the wider community more
-  feasible/possible.
-- As a GS PE, I want KVM operators to work in arbitrary Kubernetes clusters so we can stop maintaining our custom
-  provisioning tooling for on-prem management clusters.
-- As a GS employee, I want KVM operators to implement the CAPI provider contract so that we can be in the list of
-  CAPI providers to improve the reputation of our company.
-- As a GS on-premises (on-prem) customer, I want KVM operator to implement CAPI so that I have access to new
-  provider-independent features developed by other GS teams.
-- As a GS oncall engineer, I want on-prem installations to be as similar as possible to the other providers so that I
-  can share best practices, on call routines, and documentation with the other teams.
-- As a GS on-prem customer, I want GS to implement a migration strategy from current kvm clusters to CAPI KVM clusters
-  so that I can access the new features without service disruption and workload migration.
-- As a GS on-prem customer, I want GS to implement a break out/migration strategy for on-prem installations so that I
-  can use other CAPI on-prem providers in the future such as CAPV (Cluster API for VSphere (VMWare)) or metal3 (Cluster
-  API for bare metal).
-- As a member of Team Rocket, I would like to have confidence in my changes to the platform through the use of reliable
-  unit, integration, and end-to-end tests.
+- **CAPK** - Cluster API infrastructure provider for KVM
+- **on-prem** - Short for on-premises, hardware running on the premises of an enterprise rather than in a public cloud.
+- **Management API** - The Kubernetes API of the management cluster (sometimes abbreviated as MAPI)
+- **KVM Operators** - The operators that reconcile KVM cluster resources. Currently `kvm-operator` and `cluster-operator`.
 
-
-### Rationale
+## Motivation
 
 With the current move to full CAPI adoption in Team Firecracker and Team Celestial, Team Rocket would be the only user
 and therefore the only maintainer of the current components and code that would be legacy for the other teams.
 
 This would mean that we would need to put a lot of effort into understanding and owning this code fully in order to be
-able to fix bugs and maintain KVM installations
-in the future.
+able to fix bugs and maintain KVM installations in the future.
 
 Instead of being the sole maintainer of a huge amount of legacy code, Team Rocket wants to invest this time in
 implementing CAPI for KVM operator and maintain relative platform parity with the other GS provider teams.
 
+This also brings obvious advantages for customers to benefit from developements and automation provided by Cluster API
+as elaborated upon in the use cases below.
+
+### User Stories
+
+#### External
+
+- As a GS on-prem customer, I want to use the Management API to manage clusters and applications via GitOps.
+- As a GS on-prem customer, I want to use the Management API to have more fine grained control over permissions and
+  roles of API users.
+- As a GS on-prem customer, I want would like for the KVM platform to use Cluster API so that I have access to new
+  provider-independent features developed by other GS teams.
+- As a GS on-prem customer, I want GS to implement a migration strategy from current KVM clusters to CAPK clusters
+  so that I can access the new features without service disruption and workload migration.
+
+#### Internal
+
+- As a GS Platform Engineer (PE), I want to implement CAPI for KVM clusters so that I don't need to maintain legacy
+  services and libraries (e.g. `k8scloudconfig`, `apiextensions`, `cert-operator`, `cluster-service`) for the
+  foreseeable future.
+- As a GS PE, I want the operators reconciling KVM clusters to work independently of other GS components so I can
+  add features more quickly and make usage by the wider community more feasible/possible.
+- As a GS PE, I want KVM operators to work in arbitrary Kubernetes clusters so we can stop maintaining our custom
+  provisioning tooling for on-prem management clusters.
+- As a GS employee, I want KVM operators to implement the CAPI provider contract so that we can be in the list of
+  CAPI providers to improve the visibility of our company.
+- As a member of Team Rocket, I would like to have confidence in my changes to the platform through the use of reliable
+  unit, integration, and end-to-end tests.
+- As a GS oncall engineer, I want on-prem installations to be as similar as possible to the other providers so that I
+  can share best practices, on call routines, and documentation with other teams.
+
 ### Goals
 
-- Customers can upgrade existing clusters to CAPK without significant workload downtime.
-- Existing CAPI-compatible tools such as kubectl-gs, happa, GS api, and clusterctl work with CAPK clusters.
+- Customers can upgrade existing KVM clusters to CAPI without significant workload downtime.
+- Existing CAPI-compatible tools such as `kubectl-gs`, `happa`, GS `api`, and `clusterctl` work with CAPK clusters.
 - Team Rocket is responsible for a significantly reduced number of repos and lines of code.
 
-### Non-goals
+### Non-goals/Future Work
 
-- Get CAPK accepted as a CNCF project.
+- Get CAPI for KVM accepted as a CNCF project.
 - Support mixed CAPK/CAPV clusters.
 - Support mixed management clusters (e.g. CAPK on AWS).
-- Support `MachineSet` or `MachinePool`.
-- Support CAPI <=v1alpha3.
+- Support high availability control planes (might "just work").
+- Support node pools (might "just work").
+- Support CAPI versions before `v1alpha4`.
 
 ### Scope
 
@@ -59,8 +75,7 @@ new operator and those we must ensure are handled by CAPI as follows:
 
 #### Features to migrate to new operator
 
-- DNS and NTP configuration for WC nodes (OS level)
-- iSCSI initiator name (control plane nodes)
+- DNS and NTP configuration for WC nodes (OS level config)
 - host volumes (worker nodes)
 - etcd storage (host path/persistent)
 - cpu and memory limits for control plane and worker node pods and QEMU VMs
@@ -89,7 +104,7 @@ The WC Kubernetes API is reachable externally (e.g., for GS engineers, customers
 `https://<cluster id>.k8s.<installation base domain>`. This DNS name should resolve to the external IP of the MC ingress
 controller.
 
-Inside the WC, control plane nodes should connect to etcd and k8s API via localhost. Workers should use a control plane
+Inside the WC, control plane nodes should connect to etcd and k8s API via `localhost`. Workers should use a control plane
 endpoint of `https://<cluster id>.k8s.<installation base domain>` or `control-plane.<cluster id>.svc` depending on
 whether external DNS or MC CoreDNS is used for WC node DNS resolution (respectively). This will be determined during
 implementation.
@@ -133,26 +148,54 @@ have summarized below:
 1. Extra endpoints: manager has `AddHealthzCheck` and `AddReadyzCheck` methods that feel similar to the `healthz`
    endpoint.
 
-### Milestones
+## Development phases
 
-#### MVP
+### Alpha
 
-- Create cluster using manual templates
-- Delete cluster
-- Scale cluster
-- Upgrade cluster
-- Pivoting
-- Calico CNI via App CR
-- Configure Kubernetes version, OS version, and resources for worker and control plane nodes
+- Initial API structure defined (i.e. CRDs), released as `v1alphaX`
+- KVMCluster controller (CRUD operations)
+- KVMMachine controller (CRUD operations)
+- Basic running cluster without CNI using YAML templates for CRs
 
-#### Production-readiness
+### Beta
 
-- Configure docker volume size
-- Configure kubelet volume size
-- Vertical pod autoscaler for operator pod
-- Configure DNS and NTP servers
-- Docker network CIDR (this is needed by some customers due to conflicting IP ranges)
-- Configure CIDRs for pod and service IPs 
+- API structure refined, released as `v1betaX`
+- Calico CNI installed via App CR
+- Kubernetes version, OS version, and resources for worker and control plane nodes
+
+### RC
+
+- API structure finalized, released as `v1`
+- Clusters can be managed by `kubectl-gs`, `gsctl`, `Happa`, and `clusterctl`
+- Core logic covered by unit tests
+- Operator tested by integration tests
+- Cluster operations tested by end-to-end tests
+
+### GA
+
+- Migration solution working
+- All tests passing
+- Documentation published including version compatibility matrix
+
+## Alternatives
+
+The primary alternative would be to not invest the time and energy into this at all. We could instead work on our CAPV solution
+while continuing to support existing clusters with bug fixes and small feature requests. We chose not to do this because the
+maintenance burden is becoming increasingly large for Team Rocket and other teams. Additionally, we determined that the
+implementation will not be overly difficult thanks to previous prototyping work and knowledge gained from CAPI implementations
+for other providers.
+
+Another alternative is to leverage existing CAPI-compatible operators as part of our in-house solution such as Metal3 or Sidero.
+These both manage bare-metal provisioning well, but would require an additional operator similar to kvm-operator to set up VMs to
+be managed by these operators keeping much of the current complexity in place while also adding more operators which we don't
+own or participate in the development of.
+
+## Migration strategy
+
+Our current plan for allowing existing KVM clusters to be upgraded to CAPK clusters is to create one or more transitional releases
+of `kvm-operator` which create the corresponding CAPI resources without actually reconciling them. For example, for each `KVMConfig`,
+it will create a `Cluster` and `KVMCluster` CR. With these in place, we can progressively begin reconciling the new CRs with the
+new controllers until everything is fully transitioned and we can delete the legacy CRs (e.g. `KVMClusterConfig`, `KVMConfig`).
 
 ### Appendix A: Full Example Cluster
 
