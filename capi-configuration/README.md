@@ -195,7 +195,7 @@ aws:
       ...
       net-exporter.yaml # configmap containing version information for defaulting!
     overlay:
-      special-overlay.yaml # Added by customer to e.g. overlay a different flatcar version!
+      special-overlay.yaml # Added by customer/AE/SA to e.g. overlay a different flatcar version!
   v22.0.0:
     base:
       ...
