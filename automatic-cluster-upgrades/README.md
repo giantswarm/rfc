@@ -4,7 +4,7 @@
 
 - As a Giant Swarm customer, and also as a Giant Swarm maintainer, we would like to have workload clusters running in the latest version automatically, and not worry about patching security vulnerabilities or cluster components running out of updates (e. g. Kubernetes release end of life).
 
-- As a customer admin, I would like to define maintenance windows to ensure workload clusters are only upgraded within these hours.
+- As a customer admin, I would like to define upgrade windows, to ensure that upgrades happen when disruption is most permittable and impact on production traffic is minimal.
 
 - As a customer admin, I would like to mark a workload cluster as "frozen" in order to block upgrades for a certain time period.
 
