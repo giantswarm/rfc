@@ -22,7 +22,7 @@ Giant Swarm designed a versioning scheme (based on Semver), which includes all c
 
 ## Current state
 
-Right now the automatic upgrades are carried by Solution Engineers agreeing with the customer on upgrade windows and environments selection. The idea is to automate all this behavior and information under a Kubernetes operator(s) and Custom Resource(s).
+Right now the automatic upgrades are carried by Solution Engineers agreeing with the customer on upgrade windows and environments selected. The idea is to automate all this behaviour and information under a Kubernetes operator(s) and Custom Resource(s).
 
 The Solution engineer plans cluster upgrades based on cluster type (environment, team,...) and maintenance windows offered by the customers. The upgrade is just a change on the cluster version field on the cluster Custom Resource (CR).
 
