@@ -24,7 +24,7 @@ Giant Swarm designed a versioning scheme (based on Semver), which includes all c
 
 Right now the automatic upgrades are carried by Solution Engineers agreeing with the customer on upgrade windows and environments selected. The idea is to automate all this behaviour and information under a Kubernetes operator(s) and Custom Resource(s).
 
-The Solution engineer plans cluster upgrades based on cluster type (environment, team,...) and maintenance windows offered by the customers. The upgrade is just a change on the cluster version field on the cluster Custom Resource (CR).
+The Solution Engineer plans cluster upgrades based on cluster type (environment, team,...) and maintenance windows offered by the customers. The upgrade is just a change on the cluster version field on the cluster Custom Resource (CR).
 
 Based on the fact Giant Swarm is moving to Cluster API this is story let us define a new greenfield scenario where we can design a model that can be more generic and not focus only in Giant Swarm platform. The idea would be contribute as much as possible with upstream due the fact most of this functionality would be useful for everyone that manages clusters.
 
