@@ -2,7 +2,7 @@
 
 ## User stories
 
-- As a Giant Swarm customer, and also as Giant Swarm, we would like to have workload clusters running in the latest version automatically, and not worry about patching security vulnerabilities or cluster components running out of updates (e. g. Kubernetes release end of life).
+- As a Giant Swarm customer, and also as a Giant Swarm maintainer, we would like to have workload clusters running in the latest version automatically, and not worry about patching security vulnerabilities or cluster components running out of updates (e. g. Kubernetes release end of life).
 
 - As a customer admin, I would like to define maintenance windows to ensure workload clusters are only upgraded within these hours.
 
