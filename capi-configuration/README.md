@@ -1,6 +1,6 @@
 # Configuration management with Cluster API
 
-This RFC describes how we can handle configuration management with Cluster API - focussing on defaulting, upgrades and interactions.
+This RFC describes how we can handle configuration management with Cluster API - focusing on defaulting, upgrades and interactions.
 
 ## Context
 
@@ -11,15 +11,15 @@ An example to show this changed approach is the following:
 - `capi-controller` is updated to version `1.2.0`. Cluster `deu01` remains completely unchanged.
 - A new cluster `peu01` with configuration `X` is exactly the same as `deu01`.
 - The configuration of `deu01` is changed to `Y` which causes the cluster to upgrade.
-The lifecycle of the cluster is therefor fully determined by its configuration and no longer determined by the operator reconciling it.
+The lifecycle of the cluster is therefore fully determined by its configuration and no longer determined by the operator reconciling it.
 
-_A new concept for Giant Swarm releases is completely decoupled from the operators and only consists of cluster configuration!_
+_A new concept for Giant Swarm: releases are completely decoupled from the operators and only consist of cluster configuration!_
 
 ## Problem Statement
 
 We need to ...
 1. be able to define Giant Swarm releases as sets of configuration.
-2. be able to create Giant Swarm clusters in a repeatable and reliably way.
+2. be able to create Giant Swarm clusters in a repeatable and reliable way.
 3. be able to upgrade Giant Swarm clusters in a repeatable way with `cluster-api`.
 4. be able to default Giant Swarm clusters through all our user interfaces consistently.
 
@@ -47,7 +47,7 @@ The goal here is to provide one way that we think _can_ work and then iterating 
 
 There are some links between and some fields in `cluster-api` custom resources which are essential.
 These fields can not be inferred from a webhook without context knowledge.
-It is therefor necessary to supply these values _immediately_ when the custom resource is created (e.g. `kubectl-gs` or `happa` needs to fill them).
+It is therefore necessary to supply these values _immediately_ when the custom resource is created (e.g. `kubectl-gs` or `happa` needs to fill them).
 
 We can look at a valid `MachinePool` custom resource to determine its fundamental structure:
 ```yaml
@@ -81,7 +81,7 @@ spec:
 
 All other values can either be inferred from other information in the custom resource or from default values.
 
-Therefor the **minimal** custom resource which would have to be submitted by a client should be:
+Therefore the **minimal** custom resource which would have to be submitted by a client should be:
 ```yaml
 apiVersion: cluster.x-k8s.io/v1alpha3
 kind: MachinePool
@@ -169,19 +169,19 @@ data:
       spec:
         version: v1.21.4
 ```
-It is important to note that a assumption is that **no** values in the base file are immutable!
+It is important to note that an assumption is that **no** values in the base file are immutable!
 
 ### Cluster-api context dependent values
 
 We have some cases in `cluster-api` where a value in a custom resource is neither part of the fundamental structure nor is it easy to statically default.
 
-These values are usually highly dependent on the context in which the cluster is created in.
+These values are usually highly dependent on the context in which the cluster is created.
 For example the `CIDR` in which the cluster is created.
 We currently assume that these values will be defaulted by custom webhooks or operators with significant provider specific domain knowledge.
 
 ### Putting together a Giant Swarm release
 
-A Giant Swarm releases is just a set of `cluster-api` base files as defined previously with added `apps`.
+A Giant Swarm release is just a set of `cluster-api` base files as defined previously with added `apps`.
 
 The following folder structure would be contained in `giantswarm/example-customer`:
 ```yaml
@@ -210,7 +210,7 @@ As shown in previous examples these configmaps would contain the release in thei
 Any in-cluster webhook or operator can then easily navigate to these configmaps to look up defaults for a cluster.
 
 A cluster creation workflow can now look as follows:
-1. Client (e.g. `happa`) submits `--dry-run` with `fundamental` custom resources to management cluster.
+1. Client (e.g. `happa`) submits `--dry-run` with `minimal` custom resources to management cluster.
 2. Mutating webhooks take information from `base file` configmaps to default.
 3. Client receives fully defaulted custom resources and allows users to make manual changes.
 4. Client submits custom resources
