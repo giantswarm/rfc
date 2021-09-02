@@ -1,5 +1,7 @@
 # Sharing responsibility and customization with customers
 
+**THIS IS WIP AND LATER IN THE FUTURE**
+
 ## Problem Statement
 
 We want to ...
