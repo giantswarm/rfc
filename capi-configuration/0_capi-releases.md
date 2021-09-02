@@ -37,7 +37,7 @@ We can look at a valid `MachinePool` custom resource to determine its fundamenta
 apiVersion: cluster.x-k8s.io/v1alpha3
 kind: MachinePool
 metadata:
-  name: capa-mp-0
+  name: capa-mp-0 # This is taken from upstream, Giant Swarm would use an ID like `eump1`.
 spec:
   clusterName: capa
   replicas: 2
