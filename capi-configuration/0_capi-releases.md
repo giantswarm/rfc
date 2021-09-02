@@ -16,7 +16,7 @@ We want to ...
 We have already taken steps to manage configuration for our components in management clusters through open source gitops tools.
 This has set a precedent for gitops management for configuration in other areas as well.
 
-Our customers generally desire to work with an `Infrastructure As Code` approach which is extendended by currently available open source gitops tooling.
+Our customers generally desire to work with an `Infrastructure As Code` approach which is extended by currently available open source gitops tooling.
 
 **This RFC will exclusively deal with the impact of using a gitops driven approach in the following sections.**
 
