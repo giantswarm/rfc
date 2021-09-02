@@ -86,16 +86,16 @@ This minimal custom resource can also be represented as a template which will re
 apiVersion: cluster.x-k8s.io/v1alpha3
 kind: MachinePool
 metadata:
-  name: {{clusterID}}-mp-{{i}}
+  name: {{machinePoolID}}
 spec:
   clusterName: {{clusterID}}
   template:
     spec:
       bootstrap:
         configRef:
-          name: {{clusterID}}-mp-{{i}}
+          name: {{machinePoolID}}
       infrastructureRef:
-        name: {{clusterID}}-mp-{{i}}
+        name: {{machinePoolID}}
 ```
 This template is going to be stable for any `v1alpha3` cluster and would only need minimal changes to be stable for `v1alpha4`.
 
@@ -113,7 +113,7 @@ A valid `MachinePool` CR in `v1alpha3` can look like this:
 apiVersion: cluster.x-k8s.io/v1alpha3
 kind: MachinePool
 metadata:
-  name: capa-mp-0
+  name: eump1
 spec:
   clusterName: capa
   replicas: 2
@@ -123,12 +123,12 @@ spec:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1alpha3
           kind: KubeadmConfig
-          name: capa-mp-0
+          name: eump1
       clusterName: capa
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1alpha3
         kind: AWSMachinePool
-        name: capa-mp-0
+        name: eump1
       version: v1.16.8
 ```
 From this custom resource we can now extract the values which are static and configurable.
@@ -177,6 +177,8 @@ aws:
       awsmachinepool.yaml
       ...
       net-exporter.yaml # configmap containing version information for defaulting!
+    overlay:
+      ... # For easier templating of shared values!
   v22.0.0:
     base:
       ...
