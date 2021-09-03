@@ -42,6 +42,7 @@ apiVersion: cluster.x-k8s.io/v1alpha3
 kind: MachinePool
 metadata:
   name: peu01-mp-0
+  namespace: my-org
 spec:
   clusterName: peu01
   replicas: 2
@@ -81,6 +82,7 @@ apiVersion: cluster.x-k8s.io/v1alpha3
 kind: MachinePool
 metadata:
   name: peu01-mp-0
+  namespace: my-org
 spec:
   clusterName: peu01
   replicas: 3

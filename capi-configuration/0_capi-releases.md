@@ -38,6 +38,7 @@ apiVersion: cluster.x-k8s.io/v1alpha3
 kind: MachinePool
 metadata:
   name: capa-mp-0 # This is taken from upstream, Giant Swarm would use an ID like `eump1`.
+  namespace: my-org
 spec:
   clusterName: capa
   replicas: 2
@@ -70,6 +71,7 @@ apiVersion: cluster.x-k8s.io/v1alpha3
 kind: MachinePool
 metadata:
   name: capa-mp-0
+  namespace: my-org
 spec:
   clusterName: capa
   template:
@@ -87,6 +89,7 @@ apiVersion: cluster.x-k8s.io/v1alpha3
 kind: MachinePool
 metadata:
   name: {{machinePoolID}}
+  namespace: {{orgNamespace}}
 spec:
   clusterName: {{clusterID}}
   template:
@@ -114,6 +117,7 @@ apiVersion: cluster.x-k8s.io/v1alpha3
 kind: MachinePool
 metadata:
   name: eump1
+  namespace: my-org
 spec:
   clusterName: capa
   replicas: 2
