@@ -11,7 +11,7 @@ We need to ...
 We want to ...
 1. decouple managed applications from strict release flows.
 
-## Git-Ops approach
+## gitops approach
 
 We have already taken steps to manage configuration for our components in management clusters through open source gitops tools.
 This has set a precedent for gitops management for configuration in other areas as well.
