@@ -134,15 +134,15 @@ There was [a proposal in CAPI upstream](https://github.com/kubernetes-sigs/clust
 
 ## Open questions
 
-- Do we scheduled automatic upgrades by default? or we let customer to scheduled them (maybe suggesting in our UI a cluster upgrade need to be scheduled)? 
+- Do we schedule automatic upgrades by default? Or do we let customer schedule them (maybe suggesting in our UI a cluster upgrade need to be scheduled)?
 
-- Do we setup a default maintenance schedule for cluster that does not have one defined/attached?
+- Do we set up a default maintenance schedule for a cluster that does not have one defined/attached?
 
-- If we let customer to freeze the cluster we can apply for all type of upgrades? at some point it can be used for chart operator (or a new app upgrade operator) too to disable app upgrades?
+- If we allow a customer to freeze the cluster, can apply all types of upgrades? Can this mechanism also be used at some point by chart-operator (or a new app upgrade operator) to disable app upgrades?
 
 ## Additional actions
 
-- Adapt our monitoring to not trigger false positive during upgrades. Right now, the upgrades usually trigger alerts (like `ServiceLevelBurnRateTooHigh`) which are false positives (all nodes are rolled during upgrade, so it should be omitted). At the same time having specific alerts for upgrades can be valuable (like one when master is not coming up after X minutes)
+- Adapt our monitoring to not trigger false positives during upgrades. Right now, the upgrades usually trigger alerts (like `ServiceLevelBurnRateTooHigh`) which are false positives (all nodes are rolled during upgrade, so it should be omitted). At the same time having specific alerts for upgrades can be valuable (like one when master is not coming up after X minutes)
 
 ## Out of scope
 
