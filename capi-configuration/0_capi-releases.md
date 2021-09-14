@@ -61,7 +61,7 @@ spec:
 - We can not infer `metadata.name` as it's required to create the custom resource.
 - We can not infer `spec.clusterName` as it's unique to the created cluster.
 - We can not infer `spec.template.spec.bootstrap.configRef.name` as it's unique to the cluster.
-- We can not infer `spec.template.spec.infrastructureRef.configRef.name` as it's unique to the cluster.
+- We can not infer `spec.template.spec.infrastructureRef.name` as it's unique to the cluster.
 
 All other values can either be inferred from other information in the custom resource or from default values.
 
