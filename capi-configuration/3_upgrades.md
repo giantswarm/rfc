@@ -4,11 +4,12 @@
 
 We want to ...
 1. Make all changes transparent for the user before application
-2. Continue supporting the current workflow of upgrading a cluster (Through GS staff, customers and automation)
-3. Integrate the process into the proposed gitops-management
-4. Utilize the managed-configmap approach to ensure clusters adhere to the definition in their release at all times
-5. Ensure that an upgrade to a cluster is decoupled from upgrades of other components
-6. Allow easy integration into other pipelines and formats users might want to utilize for cluster management.
+2. Continue supporting the upgrade of clusters by pressing a single button / writing a single command
+3. Continue supporting a scheduled upgrade of a cluster
+4. Integrate the process into the proposed gitops-management
+5. Utilize the managed-configmap approach to ensure clusters adhere to the definition in their release at all times
+6. Ensure that an upgrade to a cluster is decoupled from upgrades of other components
+7. Allow easy integration into other pipelines and formats users might want to utilize for cluster management.
 
 ## Triggering an Upgrade
 
@@ -16,7 +17,9 @@ Our current method to trigger an upgrade is to change the release-version label 
 This change will trigger the actual upgrade by letting a newer set of components manage the cluster.
 However, when introducing the [new structure for releases](0_capi-releases), this process will be different. The release will no longer be tied to the components.
 Instead, each release version will relate to a set of configmaps, defining the defaults and basic structure for the cluster resources.
-So, triggering an upgrade in the future will mean to request the change of certain values within the CR itself. This is a breaking change. (changing the release version label alone will no longer trigger an upgrade)
+So, triggering an upgrade in the future will mean to request the change of certain values within the CR itself. This is a breaking change since changing the release version label alone will no longer trigger an upgrade.
+The reason for this is that we want to move towards a gitops-centered management of the cluster lifecycle.
+Changes to the Cluster resources should ideally not be triggered inside kubernetes, but inside the source repository.
 
 ## Upgrade Mechanism
 
