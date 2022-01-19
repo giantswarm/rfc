@@ -51,6 +51,33 @@ Let's consider customer `shiba`. We can create a dedicated email address `shiba@
 
 - we have to manage the different combinations and one inbox per customer
 
-#### Questions
+### Proposal #2: just two email addresses
 
-- can this be automated somehow? Maybe using a [Google Apps Script](https://script.google.com/)
+This proposal relies on using the `+` sign trick to correctly redirect requests.
+
+We can define two email addresses: `urgent@giantswarm.io` and `support@giantswarm.io`.
+
+Let's consider customer `shiba`. We can discern between their requests depending on the additional information present after the first `+` sign. Some examples could be:
+
+- `deliveredto:"urgent+shiba+aws@giantswarm.io"`
+- `deliveredto:"support+shiba+apps@giantswarm.io"` (or *packs* :) )
+
+#### Pros
+
+- no additional inboxes with respect to now
+- no alias logic involved: these are a real email addresses
+
+#### Cons
+
+- we have to manage all the different combinations in the same inbox
+- when a customer leaves, we may need to go and modify some rules
+
+## Questions
+
+The following questions arise for both proposals:
+
+- having the customer in the email is not really useful at the moment. Should we still go for it "just in case"?
+- can we choose the action to be taken (forward to slack/opsgenie) depending on the `deliveredto` address?
+- can the various processes be automated somehow? Maybe using a [Google Apps Script](https://script.google.com/)?
+  - (scenario 1) email address creation/deletion
+  - (both scenarios) "routes": support to slack vs. urgent to opsgenie; different areas
