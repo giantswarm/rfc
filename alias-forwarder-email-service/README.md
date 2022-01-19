@@ -23,3 +23,34 @@ A possible format could be the following: `customer-priority-area@giantswarm.io`
 - would customers find this solution helpful and clear?
 - which service could we use to deploy such a setup? For instance, would it be smart to exploit the plus `+` sign in email addresses or should we create real email addresses? In the former case, how could we trigger different actions depending on the portions of the address? Should we rely on Google or some other provider?
 - is the current proposal for the structure of the email address fine? Should we include something else? Should we exclude something?
+
+## Some proposals
+
+Here are some proposals for satisfying our goal.
+These are by no means to be considered the *best* proposals for any definition of "best". These are just proposals.
+
+### Proposal #1: an email address per customer
+
+This proposal merges the concepts of:
+-
+- having a dedicated email address for each customer
+- using the `+` sign trick to correctly redirect requests
+
+Let's consider customer `shiba`. We can create a dedicated email address `shiba@giantswarm.io` and then use the `deliveredto` Gmail filter to filter emails out. Some examples could be:
+
+- `deliveredto:"shiba+urgent+aws@giantswarm.io"`
+- `deliveredto:"shiba+support+apps@giantswarm.io"` (or *packs* :) )
+
+#### Pros
+
+- when a customer joins/leaves we can simply create/remove the email address
+- "low" price? One inbox per customer
+- no alias logic involved: this is a real email address
+
+#### Cons
+
+- we have to manage the different combinations and one inbox per customer
+
+#### Questions
+
+- can this be automated somehow? Maybe using a [Google Apps Script](https://script.google.com/)
