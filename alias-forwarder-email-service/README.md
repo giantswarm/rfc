@@ -70,14 +70,29 @@ Let's consider customer `shiba`. We can discern between their requests depending
 #### Cons
 
 - we have to manage all the different combinations in the same inbox
-- when a customer leaves, we may need to go and modify some rules
+- when a customer leaves, we may need to go and modify some rules rather than simply deleting an inbox
+  - admittedly, we think and hope there won't be that many customers leaving us
 
 ## Questions
 
 The following questions arise for both proposals:
 
 - having the customer in the email is not really useful at the moment. Should we still go for it "just in case"?
+  - it doesn't hurt
 - can we choose the action to be taken (forward to slack/opsgenie) depending on the `deliveredto` address?
+  - YES, we can!
 - can the various processes be automated somehow? Maybe using a [Google Apps Script](https://script.google.com/)?
   - (scenario 1) email address creation/deletion
   - (both scenarios) "routes": support to slack vs. urgent to opsgenie; different areas
+  I haven't been able to find a sensible solution so far, but we can dig into this a bit more.
+
+# Final thoughts
+
+Considering the pros and cons of each solution, I believe we can proceed as follows:
+
+- Only use the support@giantswarm.io and urgent@giantswarm.io email addresses
+- Specify area and customer using the + symbol, e.g. support+adidas+kaas@giantswarm.io
+  - the customer is not really useful at the moment, but we can keep it in case some use cases arise in the future
+- Using Gmail filters, either forward that email to Slack or Opsgenie
+  - as far as Slack is concerned, we can simply use the Email app
+  - as far as Opsgenie is concerned, the Email integration allows for creating numerous email addresses, each of which will assign the ticket to a specific team
