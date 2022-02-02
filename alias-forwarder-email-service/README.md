@@ -14,7 +14,7 @@ While this works -also thanks to the fact that the tickets are broadcast- we rec
 
 We would like to be able to configure email aliases (where *alias*="some smart way to express and parse a composite email address") with different formats. These aliases should follow an easily parsable and standardized structure, which allows us to redirect the emails to the appropriate target.
 
-For instance, some emails (`urgent`) could be ridirected to Opsgenie, while others (`support`) could be redirected to Slack.
+For instance, some emails (`urgent`) could be redirected to Opsgenie, while others (`support`) could be redirected to Slack.
 
 A possible format could be the following: `customer-priority-area@giantswarm.io`. This would allow us to correctly address an email received from e.g. `adidas-urgent-aws@giantswarm.io` vs. `vodafone-support-security@giantswarm.io`. 
 
