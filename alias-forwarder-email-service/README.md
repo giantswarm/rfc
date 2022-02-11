@@ -85,14 +85,29 @@ The following questions arise for both proposals:
   - (scenario 1) email address creation/deletion
   - (both scenarios) "routes": support to slack vs. urgent to opsgenie; different areas
   I haven't been able to find a sensible solution so far, but we can dig into this a bit more.
+- can we use wildcards in Gmail filters?
+  - no, we can't
+# Final decisions
 
-# Final thoughts
-
-Considering the pros and cons of each solution, I believe we can proceed as follows:
+Considering the pros and cons of each solution and the number of comments received, I believe we can proceed as follows:
 
 - Only use the support@giantswarm.io and urgent@giantswarm.io email addresses
-- Specify area and customer using the + symbol, e.g. support+adidas+kaas@giantswarm.io
-  - the customer is not really useful at the moment, but we can keep it in case some use cases arise in the future
+- With `support`, we only specify the customer name, so that the message is forwarded to the customer's Slack channel: `support+customer@giantswarm.io`
+- With `urgent`, we only specify the area, so that the message is forwarded to the correct area in Opsgenie: `urgent+area@giantswarm.io`. The areas are the following:
+
+  Cloud providers:
+    - `aws`
+    - `azure`
+    - `gcp`
+    - `kvm`
+    - `openstack`
+    - `vmware`
+  
+  Cloud native packs:
+    - `devex`
+    - `connectivity`
+    - `observability`
+    - `security`
 - Using Gmail filters, either forward that email to Slack or Opsgenie
   - as far as Slack is concerned, we can simply use the Email app
   - as far as Opsgenie is concerned, the Email integration allows for creating numerous email addresses, each of which will assign the ticket to a specific team
