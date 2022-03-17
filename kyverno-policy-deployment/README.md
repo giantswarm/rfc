@@ -42,7 +42,7 @@ Each app gets delivered directly with its policies.
 - Some policies can not be matched to any app
 
 ## Repository per app and per team
-Have one repository per team as well as delivering policies with apps.
+Have one repository per team as well as delivering policies with apps (essentially combine the previous 2 approaches).
 ### Pros
 - All benefits of packaging apps with policies
 - Policies which can not be matched to any app, can live in the team repository
