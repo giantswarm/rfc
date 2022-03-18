@@ -2,13 +2,15 @@
 
 Our Kyverno policies have the following properties:
 1. They are owned by different teams
-2. The need to be deployed to different environments
+2. The need to be deployed to different environments & on different providers
 3. They required different testing setups according to 1. and 2.
 
 Up until now we kept these policies in the same repository called `kyverno-policies`.
 Now that we will have to rename the repository to upgrade Kyverno is an opportune time to discuss the future structure of our Kyverno policies.
 
 ## Proposals
+
+These proposals are roughly ordered by the amount of repositories they would introduce by increasing order.
 
 ## Keep all policies in the same repository
 It's simple, everything stays the same and `kyverno-policies` is just renamed.
@@ -32,6 +34,22 @@ Each team has one repository where it can put all its policies.
 - Teams often own multiple components and therefore adding complexity to the repo
 - Teams need to maintain parallel test and delivery pipelines
 
+## Have one repository per domain
+Policies would be clustered by having one repository per domain.
+A possible split of domains could be:
+- Securiy
+- Cluster Management
+- App Management
+- User Management
+- Provider X specific
+### Pros
+- Domains can be matched to teams
+- Manageable amount of repositories
+- Clear separation of concerns
+### Cons
+- Defining domains is difficult
+- Multiple teams likely feel responsible for the same domain (e.g. KaaS teams for Cluster Management)
+
 ## Keep policies together with application
 Each app gets delivered directly with its policies.
 ### Pros
@@ -50,3 +68,4 @@ Have one repository per team as well as delivering policies with apps (essential
 ### Cons
 - There are a lot or repositories
 - Policies are split across many repositories
+- Some policies can not be matched to any app
