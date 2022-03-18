@@ -30,6 +30,7 @@ Each team has one repository where it can put all its policies.
 ### Cons
 - Components might change ownership and then policies need to be moved as well
 - Teams often own multiple components and therefore adding complexity to the repo
+- Teams need to maintain parallel test and delivery pipelines
 
 ## Keep policies together with application
 Each app gets delivered directly with its policies.
