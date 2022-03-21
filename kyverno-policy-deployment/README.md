@@ -2,7 +2,7 @@
 
 Our Kyverno policies have the following properties:
 1. They are owned by different teams
-2. The need to be deployed to different environments & on different providers
+2. They need to be deployed to different environments & on different providers
 3. They require different testing setups according to 1. and 2.
 
 Up until now we kept these policies in the same repository called `kyverno-policies`.
