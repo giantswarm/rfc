@@ -69,3 +69,11 @@ Have one repository per team as well as delivering policies with apps (essential
 - There are a lot or repositories
 - Policies are split across many repositories
 - Some policies can not be matched to any app
+
+
+## Decision
+We go forward with the `Have one repository per domain` proposal.
+
+### Next steps
+- Marcel (+ Zach) will work on removing policies from kyverno-policies and put them into domain buckets. Review from people and teams will follow then. Initial buckets will roughly fit team domains.
+- We want to push testing policies together on a per environment basis. For WC this is test-infra, for MC this is a bigger story which intersects with other ongoing stories. Still we shouldn't forget this.
