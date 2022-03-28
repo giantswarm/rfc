@@ -63,7 +63,7 @@ spec:
       namespace: org-some
 ```
 This functionality means that values in `config` will be overlaid by values from `userConfig`.
-So far we only used this functionality to supply Giant Swarm offered configuration through `config` and encouraged end users to only use the `userconfig` field.
+So far we have only been using this functionality to supply Giant Swarm offered configuration through `config` and encouraged end users to only use the `userConfig` field.
 
 The proposal is to use `config` for cases in gitops where we can not merge configmaps through `kustomize`.
 From preliminary testing this works without any issues **but** is a change to how we treated this feature so far in the app platform.
