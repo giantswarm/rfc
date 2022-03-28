@@ -5,7 +5,7 @@ Our app platform utilizes configmaps / secrets heavily to pass configuration int
 *The following RFC will focus on configmaps but the same problem and solution are also applicable for secrets!*
 
 These configmaps are often either shared between multiple instances of the same app or have shared values between apps.
-In gitops the intended solution for both of these cases is to use `bases` and `overwrites` which is achieved through `kustomize`.
+In gitops the [intended solution](https://kubectl.docs.kubernetes.io/guides/introduction/kustomize/#2-create-variants-using-overlays) for both of these cases is to use `bases` and `overwrites` which is achieved through `kustomize`.
 
 ## Problem Statement
 
@@ -80,5 +80,5 @@ From preliminary testing this works without any issues **but** is a change to ho
 ## Future work
 
 The ideal solution would be to support the desired usecase in `kustomize` directly.
-The maintainers of `kustomize` have already stated that they would approve of several proposals for this feature.
+The maintainers of `kustomize` have already stated that they would approve of [several proposals for this feature](https://github.com/kubernetes-sigs/kustomize/issues/3787).
 Unfortunately the maintainers do not have the resources to handle the implementation currently, so we should check from our side if we can help in the future.
