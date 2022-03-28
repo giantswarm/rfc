@@ -62,7 +62,7 @@ spec:
       name: flux01-userconfig
       namespace: org-some
 ```
-The functionality means that values in `config` will be overlayed by values from `userconfig`.
+This functionality means that values in `config` will be overlaid by values from `userConfig`.
 So far we only used this functionality to supply Giant Swarm offered configuration through `config` and encouraged end users to only use the `userconfig` field.
 
 The proposal is to use `config` for cases in gitops where we can not merge configmaps through `kustomize`.
