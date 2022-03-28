@@ -9,7 +9,7 @@ In gitops the intended solution for both of these cases is to use `bases` and `o
 
 ## Problem Statement
 
-The content of a configmap is a list of key-value pairs.
+The `data` section of a configmap is a mapping of keys to values.
 Therefore configuration (especially nested configuration) is usually grouped under a single key (e.g. `values`).
 
 It is currently not possible to merge any `overwrite` into a configmap key because the associated value is **always** treated as a string.
