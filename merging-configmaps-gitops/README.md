@@ -71,6 +71,7 @@ From preliminary testing this works without any issues **but** is a change to ho
 ### Pros
 - Easy to just use
 - Easy to explain to customers
+
 ### Cons
 - Change in the intended design in app platform
 - Only sidestepping the issue, not really resolving it
