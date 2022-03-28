@@ -75,3 +75,9 @@ From preliminary testing this works without any issues **but** is a change to ho
 - Change in the intended design in app platform
 - Only sidestepping the issue, not really resolving it
 - Only one layer of overwrites possible
+
+## Future work
+
+The ideal solution would be to support the desired usecase in `kustomize` directly.
+The maintainers of `kustomize` have already stated that they would approve of several proposals for this feature.
+Unfortunately the maintainers do not have the resources to handle the implementation currently, so we should check from our side if we can help in the future.
