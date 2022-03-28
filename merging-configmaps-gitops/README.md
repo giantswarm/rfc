@@ -1,8 +1,10 @@
-# Merging Configmaps in a gitops context
+# Merging config in a gitops context
 
-Our app platform utilizes configmaps heavily to pass configuration into apps.
+Our app platform utilizes configmaps / secrets heavily to pass configuration into apps.
+
+*The following RFC will focus on configmaps but the same problem and solution is also applicable for secrets!*
+
 These configmaps are often either shared between multiple instances of the same app or have shared values between apps.
-
 In gitops the intended solution for both of these cases is to use `bases` and `overwrites` which is achieved through `kustomize`.
 
 ## Problem Statement
