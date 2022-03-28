@@ -36,7 +36,7 @@ The only way to overwrite would be to overwrite the entire content of the `value
 
 ## Context
 
-We ran into this issue hard when we made cluster-API releases more DRY by using bases.
+This problem became most apparent while working to make Cluster API releases more DRY by using bases.
 All parts of our setup currently rely on `app` CRs and their configuration through configmaps.
 
 Full context of the PR can be found here: https://github.com/giantswarm/workload-clusters-fleet/pull/130
