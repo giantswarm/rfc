@@ -5,14 +5,14 @@ Our app platform utilizes configmaps / secrets heavily to pass configuration int
 *The following RFC will focus on configmaps but the same problem and solution are also applicable for secrets!*
 
 These configmaps are often either shared between multiple instances of the same app or have shared values between apps.
-In gitops the [intended solution](https://kubectl.docs.kubernetes.io/guides/introduction/kustomize/#2-create-variants-using-overlays) for both of these cases is to use `bases` and `overwrites` which is achieved through `kustomize`.
+In gitops the [intended solution](https://kubectl.docs.kubernetes.io/guides/introduction/kustomize/#2-create-variants-using-overlays) for both of these cases is to use `bases` and `overlays` which is achieved through `kustomize`.
 
 ## Problem Statement
 
 The `data` section of a configmap is a mapping of keys to values.
 Therefore configuration (especially nested configuration) is usually grouped under a single key (e.g. `values`).
 
-It is currently not possible to merge any `overwrite` into a configmap key because the associated value is **always** treated as a string.
+It is currently not possible to merge any `overlay` into a configmap key because the associated value is **always** treated as a string.
 
 Example:
 ```yaml
@@ -32,7 +32,7 @@ data:
       replicas: 3
 ```
 All fields under `values` will be grouped into a simple `string` even though they are valid `yaml`.
-The only way to overwrite would be to overwrite the entire content of the `values` key.
+The only way to overlay would be to overlay the entire content of the `values` key.
 
 ## Context
 
@@ -75,7 +75,7 @@ From preliminary testing this works without any issues **but** is a change to ho
 ### Cons
 - Change in the intended design in app platform
 - Only sidestepping the issue, not really resolving it
-- Only one layer of overwrites possible
+- Only one layer of overlays possible
 
 ## Future work
 
