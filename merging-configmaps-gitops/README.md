@@ -43,7 +43,7 @@ Full context of the PR can be found here: https://github.com/giantswarm/workload
 
 ## Solution Proposal
 
-Our app platform offers a layerd configuration approach already which we can utilize to enable us here.
+Our app platform offers a layered configuration approach already which we can utilize to enable us here.
 
 An app CR has two fields where configuration can be supplied:
 ```yaml
