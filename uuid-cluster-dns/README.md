@@ -10,8 +10,8 @@ This approach has a few drawbacks:
 
 1. The workload cluster is tied to the management cluster, making migration messy
 2. Workload clusters cannot be "promoted" to management clusters as the domain would no longer make sense
-3. Several customers have their own domain set up, leading to inconsistency between MCs
-4. The provider (and region) is baked into the domain
+3. Several customers have their own domain set up, leading to inconsistency between MCs (e.g. `eu-central-1.aws.cps.customer.com` vs. `gauss.eu-west-1.aws.gigantic.io`)
+4. The provider (and region) is baked into the domain, effectively preventing multi-region (or multi-cloud)
 
 An alternative "flat" DNS structure has been proposed that removes the link between WC and MC. E.g.:
 
