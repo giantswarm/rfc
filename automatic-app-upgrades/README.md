@@ -24,6 +24,8 @@ We could set up rules for Flux controllers to update App CRs in a repository whe
 
 We acknowledge some of the Apps could have specific requirements regarding versioning, be it freezing the version, following just one major release's minors and patches, etc. It is solvable by having a custom automation setting, as permitted by [ImagePolicy's Policy section](https://fluxcd.io/docs/components/image/imagepolicies/#policy).
 
+![Graph showcasing the described solution](https://user-images.githubusercontent.com/4587658/163184967-d8fa5e6b-18ac-42e5-bf6c-7fd8e7df3ab6.png)
+
 ## Future work
 
 As mentioned previously, `app-operator` and `chart-operator` are ready to interact with OCI registries. Various registry providers have been tested as part of [OCI registry support for App Platform](https://github.com/giantswarm/roadmap/issues/391) issue. The viability of the proposed solution has been tested and confirmed as [a part of the same issue](https://github.com/giantswarm/roadmap/issues/391#issuecomment-1096522248).
