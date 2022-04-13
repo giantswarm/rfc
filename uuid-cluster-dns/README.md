@@ -44,7 +44,7 @@ This approach is also the same as used by many of the cloud providers for their 
 
 The benefits of this approach:
 
-* Clusters are no longer associated with a specific management cluster
+* Clusters are no longer permanently associated with a specific management cluster
 * Clusters can be "renamed" (e.g. a cluster that was previously a dev enviroment being promoted to production) and moved (e.g. between cloud provider regions) without changes needed to the domain
 * Infrastructure / environment details are no longer needed/exposed in the domain
 * No potentially sensitive information can be leaked from the domain alone (so should be safe to use in GitHub tickets and similar)
