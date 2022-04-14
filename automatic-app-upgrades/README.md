@@ -20,7 +20,7 @@ We are currently using CircleCI to publish Helm charts to designated GitHub repo
 
 Flux operators, specifically Image Reflector Controller and Image Automation Controller, can monitor image registries for new tags. Then, based on automation rules, they can update Git repositories by making commits to a specified branch. This allows us to monitor OCI registries and update Git repositories with a new version automatically.
 
-We could set up rules for Flux controllers to update App CRs in a repository whenever a new chart version (matching the automation rule) is pushed to the Azure Container Registry. Then Flux GitOps controllers would see the update in the repository and apply it to the cluster, effectively updating the App CR with the new version. All of this would be triggered automatically after a new release is crafted for any of the apps.
+We could set up rules for Flux controllers to update App CRs in a repository whenever a new chart version (matching the automation rule) is pushed to the Azure Container Registry. Then Flux GitOps controllers would see the update in the repository and apply it to the cluster, effectively updating the App CR with the new version. All of this would be triggered automatically after a new release is crafted for any of the apps. The updated App version would be committed to the branch watched by GitOps controllers so that the update happens automatically.
 
 We acknowledge some of the Apps could have specific requirements regarding versioning, be it freezing the version, following just one major release's minors and patches, etc. It is solvable by having a custom automation setting, as permitted by [ImagePolicy's Policy section](https://fluxcd.io/docs/components/image/imagepolicies/#policy). For example:
 
