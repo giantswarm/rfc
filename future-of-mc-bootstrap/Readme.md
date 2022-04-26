@@ -10,8 +10,8 @@ management clusters. Goals were
 - Use Kubernetes native tooling instead of terraform and virtual machines
 - Create a reliable way to recreate the management cluster from scratch if it
   is messed up by our tests
-- Have a freshly created managment cluster every beginning of the week to avoid
-  configuration drift and manual changes sneeking in.
+- Have a freshly created management cluster every beginning of the week to avoid
+  configuration drift and manual changes sneaking in.
 
 ## Current state
 
@@ -22,9 +22,10 @@ management clusters. Goals were
   issues surfaced
   - No automated tests and CI, so that it is easy to mess it up for the other
     team
-  - Bash / Make is not apreciated as a tool of choice by a some people
+  - Bash / Make is not appreciated as a tool of choice by a some people
   - Secret management is hard to fully automate in its current starte
   - Credential creation is hard to automate as well (OIDC, Github, etc)
+  - Manual CI by recreating test MCs on a weekly basis does not scale.
 
 ## Suggesstions to move on
 
@@ -32,7 +33,7 @@ management clusters. Goals were
 
 - Separate build targets for different providers
 - work on automated tests even if they are not perfect
-- replace kubectl apply by our own tooloing step by step
+- replace kubectl apply by our own tooling step by step
 
 ### Long term
 
