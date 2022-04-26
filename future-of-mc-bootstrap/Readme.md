@@ -33,12 +33,25 @@ management clusters. Goals were
 
 - Separate build targets for different providers
 - work on automated tests even if they are not perfect
-- replace kubectl apply by our own tooling step by step
+- Only keep SOPS encryption key and shared secrets  in lastpass
+- Move all infrastructure configuration and installation secrets into a separate
+  repository encrypted with SOPS
+- Use kubectl apply to get started, move to flux as soon as we have a clear picture
+  on how to use it.  
+- Move provider / installation specific stuff to gitops as well, like
+  organization creation v
+
 
 ### Long term
 
+- generate CA in advance and store it in config repo so that we can create
+  access certificates (kubeconfig) in advance
 - Split configuration management and secret creation out and create separate
   tooling for this
-- Use zops instead of vault for secret Management
+- Use SOPS instead of vault for config repo
 - Make bootstrap part as small as possible and hand over to flux as soon as
   possible
+
+### Dependencies
+
+- konfigure should support SOPS so that we don't need vault in the long term
