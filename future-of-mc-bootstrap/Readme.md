@@ -39,7 +39,7 @@ management clusters. Goals were
 - Use kubectl apply to get started, move to flux as soon as we have a clear picture
   on how to use it.  
 - Move provider / installation specific stuff to gitops as well, like
-  organization creation v
+  organization creation
 
 
 ### Long term
