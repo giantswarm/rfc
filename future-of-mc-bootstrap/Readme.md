@@ -33,12 +33,12 @@ management clusters. Goals were
 
 - Separate build targets for different providers
 - Work on automated tests even if they are not perfect
-- Only keep SOPS encryption key and shared secrets  in lastpass
+- Only keep SOPS encryption key and shared secrets in lastpass
 - Move all infrastructure configuration and installation secrets into a separate
   repository encrypted with SOPS
 - Use kubectl apply to get started, move to flux as soon as we have a clear picture
   on how to use it.  
-- Move provider / installation specific stuff to gitops as well, like
+- Move provider/installation specific stuff to gitops as well, like
   organization creation
 
 
