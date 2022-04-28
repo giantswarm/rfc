@@ -18,8 +18,7 @@ management clusters. Goals were
 - Implemented with bash and make.
 - Automation still involves some manual steps for secret management and
   last pass access.
-- With increased usage and accelerated growth of multiple teams using it some
-  issues surfaced
+- Some problems have appeared due to developing new providers and lack of previous design
   - No automated tests and CI, so that it is easy to mess it up for the other
     team
   - Bash / Make is not appreciated as a tool of choice by a some people
