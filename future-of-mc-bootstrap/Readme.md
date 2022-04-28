@@ -32,7 +32,7 @@ management clusters. Goals were
 ### Short Term
 
 - Separate build targets for different providers
-- work on automated tests even if they are not perfect
+- Work on automated tests even if they are not perfect
 - Only keep SOPS encryption key and shared secrets  in lastpass
 - Move all infrastructure configuration and installation secrets into a separate
   repository encrypted with SOPS
