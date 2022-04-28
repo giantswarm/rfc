@@ -44,13 +44,10 @@ management clusters. Goals were
 
 ### Long term
 
-- generate CA in advance and store it in config repo so that we can create
-  access certificates (kubeconfig) in advance
-- Split configuration management and secret creation out and create separate
-  tooling for this
-- Use SOPS instead of vault for config repo
-- Make bootstrap part as small as possible and hand over to flux as soon as
-  possible
+- Generate the CA in advance and store it in the config repo so that we can create certificates (kubeconfig) in advance
+- Split configuration management and secret creation out and create separate tooling for this
+- Use SOPS instead of Vault for the config repo
+- Make the bootstrap part as small as possible and hand it over to flux as soon as possible
 
 ### Dependencies
 
