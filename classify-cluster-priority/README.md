@@ -58,7 +58,7 @@ If the label is used with a value different from the well-defined ones, the labe
 
 - Customers that already have a classification scheme implemented should be encouraged to also implement the system proposed here. Several systems can co-exist side by side, however in that case Giant Swarm staff will be instructed to consider the system described here as the authoritative one.
 
-- The label, by default, has no effect on monitoring, alerting, support, usage cost etc. of the cluster.
+- The label, by default, has no effect on monitoring, alerting, support, usage cost, routing priority, workload quality of service (QoS) etc. of the cluster. However it MAY serve as an input for such automation in the future.
 
 - The `kubectl gs template cluster` command SHOULD be extended to include the proposed label, with the default value being `production` and the other well-defined labels to be set via flags. This will help give the system more visibility and increase adoption.
 
