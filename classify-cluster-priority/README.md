@@ -52,7 +52,7 @@ If the label is used with a value different from the well-defined ones, the labe
 
 ## Additional considerations and explanations
 
-- Understand this system by Giant Swarm staff is crucial. We have to make sure that everybody in operations know about the system.
+- Understanding of this system by Giant Swarm staff is crucial. We have to make sure that everybody in operations know about the system.
 
 - Individual customers may or may not use the system. It is not required that all customers adopt it for it to become usable.
 
