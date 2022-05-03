@@ -10,7 +10,7 @@ Contents:
 
 ## User stories
 
-- As a cluster admin, I want to easily communicate the purpose and importance of a cluster to those interactig with it, so that they can act accordingly.
+- As a cluster admin, I want to easily communicate the purpose and importance of a cluster to those interacting with it, so that they can act accordingly.
 - As Giant Swarm operations staff I want to understand the importance of clusters so I can make appropriate decisions, e. g. when prioritizing problem mitigation in an incident affecting multiple clusters.
 
 ## Current practice
