@@ -62,7 +62,7 @@ If the label is used with a value different from the well-defined ones, the labe
 
 - The `kubectl gs template cluster` command SHOULD be extended to include the proposed label, with the default value being `production` and the other well-defined labels to be set via flags. This will help give the system more visibility and increase adoption.
 
-- While it is possible to set labels on clusters via the Management API or in a cluster manifests, it is also recommendable to extend the web UI to set the proposed label and choose a well-defined value on cluster creation.
+- While it is possible to set labels on clusters via the Management API or in cluster manifests, it is also recommendable to extend the web UI to set the proposed label and choose a well-defined value on cluster creation.
 
 - While it is already possible to set, modify, and delete cluster labels via the web UI, it is also recommended to make it simpler for end users to specify the proposed label with a well-defined value for a given cluster.
 
