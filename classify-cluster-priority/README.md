@@ -17,7 +17,7 @@ Contents:
 
 - One customer uses the first character of the cluster name to distinguish between production (`p`), development (`d`), and staging (`s`). This customer also has clusters which don't fall into either of these categories and their names start with arbitrary letters.
 - Many customers use specific terms and phrases in the cluster description, e. g. "Production", "test", "testing", "ignore alerts", "prd", "prod", "nonprod".
-- Some customers use labels on the `clusters.cluster.x-k8s.io` resource (the cluster's main resource) indicating the importance. E. g.
+- Some customers use labels on the `clusters.cluster.x-k8s.io` resource (the cluster's main resource) indicating the importance, e.g:
     - `odp/environment: development`
     - `odp/environment: staging`
     - `odp/environment: production`.
