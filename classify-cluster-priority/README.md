@@ -30,7 +30,7 @@ Label name: `giantswarm.io/service-priority`
 
 The label is to be used on the main resource defining the cluster, usually of resource type `clusters.cluster.x-k8s.io`.
 
-To simplify maintenance and avoid logical conflicts, this label SHOULD NOT be applied on other resources of the cluster. Systems MUST ignore the label used on other resources in the same cluster. This means that it is not possible, for example, to differentiate between the importance of sevewral node pools within the same cluster.
+To simplify maintenance and avoid logical conflicts, this label SHOULD NOT be applied on other resources of the cluster. Systems MUST ignore the label used on other resources in the same cluster. This means that it is not possible, for example, to differentiate between the importance of several node pools within the same cluster.
 
 ### Well-defined label values
 
