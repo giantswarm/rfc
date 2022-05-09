@@ -67,7 +67,6 @@ The benefits of this approach:
 * No potentially sensitive information can be leaked from the domain alone (so should be safe to use in GitHub tickets and similar)
 * Conflicts in names are avoided by the use of UUIDs, even across customers and providers
 * Workload clusters can more easily be "promoted" to management clusters by just installing the required Giant Swarm applications
-* The generation process for the flexible part (the UUID part) is well documented. Also creation can be done on any tier and does not have to be done by a centralized authority. This enables a workflow where the cluster creator determines the endpoint URL upfront if desired.
 
 The drawbacks:
 
