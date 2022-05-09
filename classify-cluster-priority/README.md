@@ -36,15 +36,15 @@ To simplify maintenance and avoid logical conflicts, this label SHOULD NOT be ap
 
 There are three well-defined label values to be used.
 
-- `giantswarm.io/service-priority: critical`: This is the highest priority class. Clusters with this label value are considered the most important ones, relative to other clusters not carrying this label. We expect customers to use this class for clusters serving user-facing applications, production traffic, etc.
+- `giantswarm.io/service-priority: highest`: This is the highest priority class. Clusters with this label value are considered the most important ones, relative to other clusters not carrying this label. We expect customers to use this class for clusters serving user-facing applications, production traffic, etc.
 
-- `giantswarm.io/service-priority: important`: Clusters carrying this label are considered less important than `critical`, but still more important than clusters classified as `unimportant`. Typical use cases would be staging clusters, clusters handling batch workloads, or development clusters that cannot be replaced easily by creating a new cluster.
+- `giantswarm.io/service-priority: medium`: Clusters carrying this label are considered less important than `highest`, but still more important than clusters classified as `lowest`. Typical use cases would be staging clusters, clusters handling batch workloads, or development clusters that cannot be replaced easily by creating a new cluster.
 
-- `giantswarm.io/service-priority: unimportant`: The lowest priority class. Customers are expected to use this class for clusters that isn't relied on, or which can be replaced easily and quickly.
+- `giantswarm.io/service-priority: lowest`: The lowest priority class. Customers are expected to use this class for clusters that isn't relied on, or which can be replaced easily and quickly.
 
 ### Absence of the label
 
-The absence of the label SHOULD be interpreted as if the label was present with the value `critical`.
+The absence of the label SHOULD be interpreted as if the label was present with the value `highest`.
 
 ### Using undefined values
 
@@ -60,7 +60,7 @@ Undefined values will not be allowed to avoid confusion and for potential future
 
 - The label, by default, has no effect on monitoring, alerting, support, usage cost, routing priority, workload quality of service (QoS) etc. of the cluster. However it MAY serve as an input for such automation in the future.
 
-- The `kubectl gs template cluster` command SHOULD be extended to include the proposed label, with the default value being `critical` and the other well-defined labels to be set via flags. This will help give the system more visibility and increase adoption.
+- The `kubectl gs template cluster` command SHOULD be extended to include the proposed label, with the default value being `highest` and the other well-defined labels to be set via flags. This will help give the system more visibility and increase adoption.
 
 - While it is possible to set labels on clusters via the Management API or in cluster manifests, it is also recommendable to extend the web UI to set the proposed label and choose a well-defined value on cluster creation.
 
@@ -72,13 +72,13 @@ To help interpreting the proposal and judge its significance, here we suggest so
 
 - In the web UI there are several places where the proposed label can be displayed as useful information for users:
 
-    - In the cluster list, as an indicator especially for clusters classified as `critical` and `important`.
+    - In the cluster list, as an indicator especially for clusters classified as `highest` and `medium`.
 
     - On the cluster details page.
 
-    - When deleting a cluster, especially in case the cluster is classified as `critical` and `important`, to highlight the purpose of the cluster.
+    - When deleting a cluster, especially in case the cluster is classified as `highest` and `medium`, to highlight the purpose of the cluster.
 
-- In kubectl-gs, when listing clusters using the `get clusters` command, an additional column `SERVICE PRIORITY` can be added to display the value based on the label (or the default value `critical`, in case of absence).
+- In kubectl-gs, when listing clusters using the `get clusters` command, an additional column `SERVICE PRIORITY` can be added to display the value based on the label (or the default value `highest`, in case of absence).
 
 - We could add the label to our monitoring, to include the priority information as a criterium in visualization or alerting.
 
