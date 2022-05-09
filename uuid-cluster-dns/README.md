@@ -46,7 +46,7 @@ While this solves some of the above drawbacks (1 & 2) it introduces its own comp
 
 ## Updated Proposal
 
-The flat DNS structure can be improved to avoid the potential conflicts by leveraging a UUID for the cluster domain and dissasociate the cluster ID/Name from URLs.
+The flat DNS structure can be improved to avoid the potential conflicts by leveraging a UUID (v1) for the cluster domain and dissasociate the cluster ID/Name from URLs.
 
 E.g.
 
@@ -54,7 +54,7 @@ E.g.
 https://api.4c6aba87-061c-458d-91b6-62ad07979728.eu-west-1.aws.gigantic.io
 ```
 
-For this to work we'd need to enforce creation of a new UUID for every cluster on creation.
+For this to work we'd need to enforce creation of a new UUID for every cluster on creation. The use of UUID v1 ensure uniqueness.
 
 Cluster names and descriptions can still be used for labels and annotations to provide human-recognisable identifiers when using tools like Happa and kubectl.
 
