@@ -23,7 +23,7 @@ The domain contains several parts:
 
 This approach has a few drawbacks:
 
-1. The workload cluster is tied to the management cluster (belonging to it via domain heirarchy) which is problamatic if the cluster needs migrating to another management cluster.
+1. The workload cluster is tied to the management cluster (belonging to it via domain hierarchy) which is problematic if the cluster needs migrating to another management cluster.
 2. Similar to above, workload clusters cannot be "promoted" to management clusters as the domain would no longer make sense.
 3. Several customers have their own domain set up, leading to inconsistency between MCs (e.g. `eu-central-1.aws.cps.customer.com` vs. `gauss.eu-west-1.aws.gigantic.io`).
 4. The provider (and region) is baked into the domain. While not a major problem today, it does make possibility of multi-region clusters slightly more complex.
