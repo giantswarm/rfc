@@ -25,7 +25,7 @@ This approach has a few drawbacks:
 
 1. The workload cluster is tied to the management cluster (belonging to it via domain hierarchy) which is problematic if the cluster needs migrating to another management cluster.
 2. Similar to above, workload clusters cannot be "promoted" to management clusters as the domain would no longer make sense.
-3. Several customers have their own domain set up, leading to inconsistency between MCs (e.g. `eu-central-1.aws.cps.customer.com` vs. `gauss.eu-west-1.aws.gigantic.io`).
+3. Several customers have their own domain set up, leading to inconsistency between MCs (e.g. `eu-central-1.aws.cps.customer.com` vs. `gauss.eu-west-1.aws.gigantic.io`). This is mostly considered legacy now and new installations don't have custom domains.
 4. The provider (and region) is baked into the domain. While not a major problem today, it does make possibility of multi-region clusters slightly more complex.
 5. DNS Hosted Zones are currently set up in different ways between management clusters and workload clusters (Terraform and `dns-operator-[provider]` respectively)
 
@@ -69,9 +69,13 @@ The benefits of this approach:
 * Workload clusters can more easily be "promoted" to management clusters by just installing the required Giant Swarm applications
 
 The drawbacks:
-* For customers that require / desire the use of their own domains, some additional setup will be required to ensure the Kubernetes API's certificate is also valid for the customers domain (and then a CNAME can be set up to point to the UUID-based domain)
+
 * The domain name no longer resembles to the human-friendly name of a cluster
 * The domain alone doesn't give any indication of which customer it belongs
+
+## Non-goals
+
+* This approach will not aim to support custom domains.
 
 ## Topics that need expanding
 
