@@ -48,7 +48,7 @@ The absence of the label SHOULD be interpreted as if the label was present with 
 
 ### Using undefined values
 
-If the label is used with a value different from the well-defined ones, the label SHOULD be interpreted as if the value was `development`.
+Undefined values will not be allowed to avoid confusion and for potential future use cases to integrate with tooling, like incident management. Customers can still add any other labels they need.
 
 ## Additional considerations and explanations
 
