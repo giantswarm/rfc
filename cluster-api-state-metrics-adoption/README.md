@@ -6,11 +6,8 @@
 - [Cluster API state metrics](#cluster-api-state-metrics)
   - [Infrastructure provider specific metrics](#infrastructure-provider-specific-metrics)
     - [all providers in one binary](#all-providers-in-one-binary)
-      - [Pros](#pros)
-      - [Cons](#cons)
     - [code separation per provider](#code-separation-per-provider)
-      - [Pros](#pros-1)
-      - [Cons](#cons-1)
+    - [Conclusion](#conclusion)
 - [Tasks and Stories](#tasks-and-stories)
   - [Story 1](#story-1)
   - [Story 2](#story-2)
@@ -206,7 +203,7 @@ index 0000000..a93993b
 ##### Cons
 
 - As different CAPI versions might exist on different kind of MCs we have to ensure that CASM is downwards compatible over multiple providers/teams.
-- Transient dependencies from multiple providers will cause issues.
+- Transitive dependencies from multiple providers will cause issues.
 
 #### code separation per provider
 
@@ -220,6 +217,10 @@ To separate the code of different providers it's possible to create an own fork 
 
 - Handling different kind of CASM versions (version means CASM + provider specific implementation) in one App not easily possible.
 - Some code maintenance must be done multiple times.
+
+#### Conclusion
+
+As CASM isn't part of Cluster API yet and open questions like how to deal with infrastructure provider are still in discussion with the upstream community, we decided to continue with <PLACEHOLDER - ToDo>
 
 ## Tasks and Stories
 
