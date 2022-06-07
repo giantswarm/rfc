@@ -21,6 +21,7 @@ This RFC motivates the adoption of the existing Cluster API state metrics projec
 - Infrastructure providers - Cluster API infrastructure implementation for e.g. AWS (CAPA), OpenStack (CAPO), Google Compute Platorm (CAPG), ...
 - `cluster-api-state-metrics` (CASM)
 - `kube-state-metrics` (KSM)
+- `CustomResourceStateMetrics` configuration is the format which KSM accept to understand how metrics from CRs have to be interpreted ([upstream documentation](https://github.com/kubernetes/kube-state-metrics/blob/master/docs/customresourcestate-metrics.md))
 - Management Cluster (MC) is the Kubernetes Cluster where CAPI components are deployed and which is responsible for creating new Kubernetes Clusters (WCs)
 - Workload Cluster (WC)
 
@@ -268,9 +269,11 @@ As `kube-state-metrics` is already deployed in each cluster (no matter if manage
 
 ### Variant 2: dedicated `kube-state-metrics` on management cluster
 
-As `kube-state-metrics` is already deployed in each cluster, it's also possible to create a dedicated CAPI scoped KSM-App to only monitor Cluster API + infrastructure specific custom resources.
+As `kube-state-metrics` is already deployed in each cluster with a well defined scope, it's also possible to create a dedicated CAPI scoped KSM-App to only monitor Cluster API plus infrastructure specific custom resources.
 
-#### Variant 2.1: dedicated `kube-state-metrics` on management cluster for all CAPI providers
+#### Variant 2.1: dedicated `kube-state-metrics` instance on management cluster for all CAPI providers
+
+One generic KSM instance which bundles all the Cluster API specific `CustomResourceStateMetrics` configuration plus infrastructure specific specific `CustomResourceStateMetrics` configuration.
 
 ##### Pros
 
@@ -279,17 +282,32 @@ As `kube-state-metrics` is already deployed in each cluster, it's also possible 
 
 ##### Cons
 
-#### Variant 2.2: dedicated `kube-state-metrics` on management cluster per CAPI providers
+- Cluster API versions must be reflect in the `CustomResourceStateMetrics` configuration. We will potentially diverge on the used Cluster API versions per infrastructure provider.
 
-#### Variant 2.3: two dedicated `kube-state-metrics` on management cluster per CAPI providers
+#### Variant 2.2: dedicated `kube-state-metrics` instance on management cluster per CAPI providers
 
--
+Each infrastructure specific installation has an own KSM instance which bundles Cluster API and the infrastructure specific `CustomResourceStateMetrics` configuration.
+
+##### Pros
+
+- As the App is only used by one specific infrastructure implementation, the `CustomResourceStateMetrics` configuration doesn't have to support different Cluster API versions at one time.
+
+##### Cons
+
+- New generic Cluster API specific `CustomResourceStateMetrics` configurations must be adopted/imported into each provider specific repository.
+
+#### Variant 2.3: two dedicated `kube-state-metrics` instances on management cluster per CAPI providers
+
+As the `CustomResourceStateMetrics` configurations mostly correlate with the used Cluster API version and the used infrastructure provider specific version it might make sense to have one KSM for Cluster API and one KSM for the infrastructure provider specific implementation.
 
 #### Pros
 
-- KSM
+- KSM plus the corresponding `CustomResourceStateMetrics` configurations could be bundled in the Apps `cluster-api-app` and `cluster-api-<provider>-app`.
+- Additional CRDs, which belong to ClusterAPI or the infrastructure specific implementation could be monitored in via the corresponding `CustomResourceStateMetrics` configurations
 
 #### Cons
+
+- Waste of resources as two additional (small) KSM instances are running per management cluster
 
 ## Tasks and Stories
 
