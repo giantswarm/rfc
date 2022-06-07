@@ -20,6 +20,7 @@ This RFC motivates the adoption of the existing Cluster API state metrics projec
 
 - Infrastructure providers - Cluster API infrastructure implementation for e.g. AWS (CAPA), OpenStack (CAPO), Google Compute Platorm (CAPG), ...
 - `cluster-api-state-metrics` (CASM)
+- `kube-state-metrics` (KSM)
 - Management Cluster (MC) is the Kubernetes Cluster where CAPI components are deployed and which is responsible for creating new Kubernetes Clusters (WCs)
 - Workload Cluster (WC)
 
@@ -78,120 +79,114 @@ index f61a556..2892387 100644
  }   
 ```
 
-```diff
-diff --git a/pkg/store/openstackcluster.go b/pkg/store/openstackcluster.go
-new file mode 100644
-index 0000000..a93993b
---- /dev/null
-+++ b/pkg/store/openstackcluster.go
-@@ -0,0 +1,106 @@
-+package store
-+
-+import (
-+ "context"
-+
-+ metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-+ "k8s.io/apimachinery/pkg/runtime"
-+ "k8s.io/apimachinery/pkg/watch"
-+ "k8s.io/client-go/tools/cache"
-+ "k8s.io/kube-state-metrics/v2/pkg/metric"
-+ generator "k8s.io/kube-state-metrics/v2/pkg/metric_generator"
-+ infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha4"
-+ "sigs.k8s.io/cluster-api/util/annotations"
-+ "sigs.k8s.io/controller-runtime/pkg/client"
-+)
-+
-+var descOpenStackClusterLabelsDefaultLabels = []string{"namespace", "openstackcluster"}
-+
-+type OpenStackClusterFactory struct {
-+ *ControllerRuntimeClientFactory
-+}
-+
-+func (f *OpenStackClusterFactory) Name() string {
-+ return "openstackcluster"
-+}
-+
-+func (f *OpenStackClusterFactory) ExpectedType() interface{} {
-+ return &infrav1.OpenStackCluster{}
-+}
-+
-+func (f *OpenStackClusterFactory) MetricFamilyGenerators(allowAnnotationsList, allowLabelsList []string) []generator.FamilyGenerator {
-+
-+ return []generator.FamilyGenerator{
-+  *generator.NewFamilyGenerator(
-+   "capi_openstackcluster_created",
-+   "Unix creation timestamp",
-+   metric.Gauge,
-+   "",
-+   wrapOpenStackClusterFunc(func(osc *infrav1.OpenStackCluster) *metric.Family {
-+    metrics := []*metric.Metric{}
-+
-+    if !osc.CreationTimestamp.IsZero() {
-+     metrics = append(metrics, &metric.Metric{
-+      LabelKeys:   []string{},
-+      LabelValues: []string{},
-+      Value:       float64(osc.CreationTimestamp.Unix()),
-+     })
-+    }
-+
-+    return &metric.Family{
-+     Metrics: metrics,
-+    }
-+   }),
-+  ),
-+  *generator.NewFamilyGenerator(
-+   "capi_openstackcluster_paused",
-+   "The openstackcluster is paused and not reconciled.",
-+   metric.Gauge,
-+   "",
-+   wrapOpenStackClusterFunc(func(osc *infrav1.OpenStackCluster) *metric.Family {
-+    paused := annotations.HasPausedAnnotation(osc)
-+    return &metric.Family{
-+     Metrics: []*metric.Metric{
-+      {
-+       LabelKeys:   []string{},
-+       LabelValues: []string{},
-+       Value:       boolFloat64(paused),
-+      },
-+     },
-+    }
-+   }),
-+  ),
-+ }
-+}
-+
-+func (f *OpenStackClusterFactory) ListWatch(customResourceClient interface{}, ns string, fieldSelector string) cache.ListerWatcher {
-+ ctrlClient := customResourceClient.(client.WithWatch)
-+ return &cache.ListWatch{
-+  ListFunc: func(opts metav1.ListOptions) (runtime.Object, error) {
-+   openStackClusterList := infrav1.OpenStackClusterList{}
-+   opts.FieldSelector = fieldSelector
-+   err := ctrlClient.List(context.TODO(), &openStackClusterList, &client.ListOptions{Raw: &opts, Namespace: ns})
-+   return &openStackClusterList, err
-+  },
-+  WatchFunc: func(opts metav1.ListOptions) (watch.Interface, error) {
-+   openStackClusterList := infrav1.OpenStackClusterList{}
-+   opts.FieldSelector = fieldSelector
-+   return ctrlClient.Watch(context.TODO(), &openStackClusterList, &client.ListOptions{Raw: &opts, Namespace: ns})
-+  },
-+ }
-+}
-+
-+func wrapOpenStackClusterFunc(f func(*infrav1.OpenStackCluster) *metric.Family) func(interface{}) *metric.Family {
-+ return func(obj interface{}) *metric.Family {
-+  openStackCluster := obj.(*infrav1.OpenStackCluster)
-+
-+  metricFamily := f(openStackCluster)
-+
-+  for _, m := range metricFamily.Metrics {
-+   m.LabelKeys = append(descOpenStackClusterLabelsDefaultLabels, m.LabelKeys...)
-+   m.LabelValues = append([]string{openStackCluster.Namespace, openStackCluster.Name}, m.LabelValues...)
-+  }
-+
-+  return metricFamily
-+ }
-+}
+```go
+package store
 
+import (
+ "context"
+
+ metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+ "k8s.io/apimachinery/pkg/runtime"
+ "k8s.io/apimachinery/pkg/watch"
+ "k8s.io/client-go/tools/cache"
+ "k8s.io/kube-state-metrics/v2/pkg/metric"
+ generator "k8s.io/kube-state-metrics/v2/pkg/metric_generator"
+ infrav1 "sigs.k8s.io/cluster-api-provider-openstack/api/v1alpha4"
+ capierrors "sigs.k8s.io/cluster-api/errors"
+ "sigs.k8s.io/cluster-api/util/annotations"
+ "sigs.k8s.io/controller-runtime/pkg/client"
+)
+
+var descOpenStackClusterLabelsDefaultLabels = []string{"namespace", "openstackcluster"}
+
+type OpenStackClusterFactory struct {
+ *ControllerRuntimeClientFactory
+}
+
+func (f *OpenStackClusterFactory) Name() string {
+ return "openstackcluster"
+}
+
+func (f *OpenStackClusterFactory) ExpectedType() interface{} {
+ return &infrav1.OpenStackCluster{}
+}
+
+func (f *OpenStackClusterFactory) MetricFamilyGenerators(allowAnnotationsList, allowLabelsList []string) []generator.FamilyGenerator {
+
+ return []generator.FamilyGenerator{
+  *generator.NewFamilyGenerator(
+   "capi_openstackcluster_created",
+   "Unix creation timestamp",
+   metric.Gauge,
+   "",
+   wrapOpenStackClusterFunc(func(osc *infrav1.OpenStackCluster) *metric.Family {
+    metrics := []*metric.Metric{}
+
+    if !osc.CreationTimestamp.IsZero() {
+     metrics = append(metrics, &metric.Metric{
+      LabelKeys:   []string{},
+      LabelValues: []string{},
+      Value:       float64(osc.CreationTimestamp.Unix()),
+     })
+    }
+
+    return &metric.Family{
+     Metrics: metrics,
+    }
+   }),
+  ),
+  *generator.NewFamilyGenerator(
+   "capi_openstackcluster_paused",
+   "The openstackcluster is paused and not reconciled.",
+   metric.Gauge,
+   "",
+   wrapOpenStackClusterFunc(func(osc *infrav1.OpenStackCluster) *metric.Family {
+    paused := annotations.HasPausedAnnotation(osc)
+    return &metric.Family{
+     Metrics: []*metric.Metric{
+      {
+       LabelKeys:   []string{},
+       LabelValues: []string{},
+       Value:       boolFloat64(paused),
+      },
+     },
+    }
+   }),
+  ),
+ }
+}
+
+func (f *OpenStackClusterFactory) ListWatch(customResourceClient interface{}, ns string, fieldSelector string) cache.ListerWatcher {
+ ctrlClient := customResourceClient.(client.WithWatch)
+ return &cache.ListWatch{
+  ListFunc: func(opts metav1.ListOptions) (runtime.Object, error) {
+   openStackClusterList := infrav1.OpenStackClusterList{}
+   opts.FieldSelector = fieldSelector
+   err := ctrlClient.List(context.TODO(), &openStackClusterList, &client.ListOptions{Raw: &opts, Namespace: ns})
+   return &openStackClusterList, err
+  },
+  WatchFunc: func(opts metav1.ListOptions) (watch.Interface, error) {
+   openStackClusterList := infrav1.OpenStackClusterList{}
+   opts.FieldSelector = fieldSelector
+   return ctrlClient.Watch(context.TODO(), &openStackClusterList, &client.ListOptions{Raw: &opts, Namespace: ns})
+  },
+ }
+}
+
+func wrapOpenStackClusterFunc(f func(*infrav1.OpenStackCluster) *metric.Family) func(interface{}) *metric.Family {
+ return func(obj interface{}) *metric.Family {
+  openStackCluster := obj.(*infrav1.OpenStackCluster)
+
+  metricFamily := f(openStackCluster)
+
+  for _, m := range metricFamily.Metrics {
+   m.LabelKeys = append(descOpenStackClusterLabelsDefaultLabels, m.LabelKeys...)
+   m.LabelValues = append([]string{openStackCluster.Namespace, openStackCluster.Name}, m.LabelValues...)
+  }
+
+  return metricFamily
+ }
+}
 ```
 
 #### all providers in one binary
@@ -221,6 +216,80 @@ To separate the code of different providers it's possible to create an own fork 
 #### Conclusion
 
 As CASM isn't part of Cluster API yet and open questions like how to deal with infrastructure provider are still in discussion with the upstream community, we decided to continue with <PLACEHOLDER - ToDo>
+
+## kube state metrics
+
+With version [`v2.5.0`](https://github.com/kubernetes/kube-state-metrics/releases/tag/v2.5.0) of `kube-state-metrics` it's now possible to create metrics from custom resources by defining a configuration per metric.
+
+As of now (`v2.5.0`) it's not possible to create metrics for non-numbered fields, e.g.:
+
+```yaml
+kind: CustomResourceStateMetrics
+spec: 
+  resources: 
+    - groupVersionKind: 
+        group: cluster.x-k8s.io
+        kind: Machine
+        version: v1beta1
+      metrics: 
+        - each: 
+            path: 
+              - status
+              - phase
+          help: "machine phase"
+          name: phase
+```
+
+will lead to following error:
+
+```
+E0607 09:12:00.168168  126676 registry_factory.go:469] "kube_cluster_x-k8s_io_v1beta1_Machine_phase" err="[status,phase]: []: strconv.ParseFloat: parsing \"Running\": invalid syntax"
+```
+
+This behavior got already addressed to Cluster API community in [issue #6458](https://github.com/kubernetes-sigs/cluster-api/issues/6458#issuecomment-1148293873). The current discussion together with the KSM folks is one in [this slack thread](https://kubernetes.slack.com/archives/CJJ529RUY/p1654593034854759).
+
+With the assumption, that `kube-state-metrics` accept patches which might make CASM obsolete, this section will cover the integration of Cluster API infrastructure provider specific `CustomResourceStateMetrics` configuration.
+
+### Variant 1: specific `kube-state-metrics` configuration for the already existing `kube-state-metrics-app`
+
+As `kube-state-metrics` is already deployed in each cluster (no matter if management- or workload cluster), a condition has to be implemented to detect, if the current KSM instance is running on a management- or a workload cluster. With this condition in place, we can provide a CAPI generic `CustomResourceStateMetrics` configuration plus one `CustomResourceStateMetrics` configuration per infrastructure provider.
+
+#### Pros
+
+- CAPI generic `CustomResourceStateMetrics` configuration could be easily re-used on different providers
+- KSM-App already exists
+
+#### Cons
+
+- Scope of KSM between management- and workload cluster differs
+  - resource requirements
+  - permissions
+- Changes in KSM-App affect all clusters, even if changes are only done for management clusters (e.g. version bump)
+
+### Variant 2: dedicated `kube-state-metrics` on management cluster
+
+As `kube-state-metrics` is already deployed in each cluster, it's also possible to create a dedicated CAPI scoped KSM-App to only monitor Cluster API + infrastructure specific custom resources.
+
+#### Variant 2.1: dedicated `kube-state-metrics` on management cluster for all CAPI providers
+
+##### Pros
+
+- Scope of this KSM instance is clearly focused on everything CAPI
+- Any further management cluster CR specific monitoring clearly goes there
+
+##### Cons
+
+#### Variant 2.2: dedicated `kube-state-metrics` on management cluster per CAPI providers
+
+#### Variant 2.3: two dedicated `kube-state-metrics` on management cluster per CAPI providers
+
+-
+
+#### Pros
+
+- KSM
+
+#### Cons
 
 ## Tasks and Stories
 
