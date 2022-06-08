@@ -1,20 +1,27 @@
-# Cluster API state metrics
+# Cluster API custom resource monitoring
 
 <!-- toc -->
 - [Glossary](#glossary)
 - [Problem statement](#problem-statement)
 - [Cluster API state metrics](#cluster-api-state-metrics)
   - [Infrastructure provider specific metrics](#infrastructure-provider-specific-metrics)
-    - [all providers in one binary](#all-providers-in-one-binary)
-    - [code separation per provider](#code-separation-per-provider)
-    - [Conclusion](#conclusion)
-- [Tasks and Stories](#tasks-and-stories)
-  - [Story 1](#story-1)
-  - [Story 2](#story-2)
-  - [Story 3](#story-3)
+    - [Variant 1: all providers in one generic CASM instance](#variant-1-all-providers-in-one-generic-casm-instance)
+    - [Variant 2: one CASM instance per infrastructure provider](#variant-2-one-casm-instance-per-infrastructure-provider)
+    - [Variant 2: one CASM instance per infrastructure provider plus one CASM instance for CAPI core](#variant-2-one-casm-instance-per-infrastructure-provider-plus-one-casm-instance-for-capi-core)
+- [kube state metrics](#kube-state-metrics)
+  - [Variant 1: specific <code>kube-state-metrics</code> configuration for the already existing <code>kube-state-metrics-app</code>](#variant-1-specific-kube-state-metrics-configuration-for-the-already-existing-kube-state-metrics-app)
+    - [Pros](#pros)
+    - [Cons](#cons)
+  - [Variant 2: dedicated <code>kube-state-metrics</code> on management cluster](#variant-2-dedicated-kube-state-metrics-on-management-cluster)
+    - [Variant 2.1: dedicated <code>kube-state-metrics</code> instance on management cluster for all CAPI providers](#variant-21-dedicated-kube-state-metrics-instance-on-management-cluster-for-all-capi-providers)
+    - [Variant 2.2: dedicated <code>kube-state-metrics</code> instance on management cluster per CAPI providers](#variant-22-dedicated-kube-state-metrics-instance-on-management-cluster-per-capi-providers)
+    - [Variant 2.3: two dedicated <code>kube-state-metrics</code> instances on management cluster per CAPI providers](#variant-23-two-dedicated-kube-state-metrics-instances-on-management-cluster-per-capi-providers)
+    - [Pros](#pros-1)
+    - [Cons](#cons-1)
+- [Conclusion](#conclusion)
 <!-- /toc -->
 
-This RFC motivates the adoption of the existing Cluster API state metrics project into our own workflow.
+This RFC motivates the setup of a monitoring solution for Cluster API related CRs.
 
 ## Glossary
 
@@ -38,7 +45,7 @@ All these states might lead to different kind of troubleshooting sessions and po
 
 ## Cluster API state metrics
 
-As per design `kube-state-metrics` only takes care of Kubernetes resources and all existing Cluster API controllers don't have object related metrics yet, [`cluster-api-state-metrics`](https://github.com/mercedes-benz/cluster-api-state-metrics) was created by Mercedes-Benz.
+As in the past `kube-state-metrics` only takes care of Kubernetes resources and not about `CustomResources` and all existing Cluster API controllers don't have object related metrics yet, [`cluster-api-state-metrics`](https://github.com/mercedes-benz/cluster-api-state-metrics) was created by Mercedes-Benz.
 
 The CASM code will be contributed to the Cluster API project (Process can be tracked in [issue #6458](https://github.com/kubernetes-sigs/cluster-api/issues/6458)).
 
@@ -190,7 +197,7 @@ func wrapOpenStackClusterFunc(f func(*infrav1.OpenStackCluster) *metric.Family) 
 }
 ```
 
-#### all providers in one binary
+#### Variant 1: all providers in one generic CASM instance
 
 ##### Pros
 
@@ -201,22 +208,28 @@ func wrapOpenStackClusterFunc(f func(*infrav1.OpenStackCluster) *metric.Family) 
 - As different CAPI versions might exist on different kind of MCs we have to ensure that CASM is downwards compatible over multiple providers/teams.
 - Transitive dependencies from multiple providers will cause issues.
 
-#### code separation per provider
+#### Variant 2: one CASM instance per infrastructure provider
 
 To separate the code of different providers it's possible to create an own fork per infrastructure provider or setup different main-branches per provider.
 
 ##### Pros
 
 - Code ownership is handled per provider, which reflects the separation of our current teams.
+- Every CAPI related CR is monitored by one single App.
 
 ##### Cons
 
-- Handling different kind of CASM versions (version means CASM + provider specific implementation) in one App not easily possible.
 - Some code maintenance must be done multiple times.
 
-#### Conclusion
+#### Variant 2: one CASM instance per infrastructure provider plus one CASM instance for CAPI core
 
-As CASM isn't part of Cluster API yet and open questions like how to deal with infrastructure provider are still in discussion with the upstream community, we decided to continue with <PLACEHOLDER - ToDo>
+##### Pros
+
+- Cross-provider related components (CAPI core) are shared via one dedicated app.
+
+##### Cons
+
+- Waste of resources as two versions of CASM are deployed in management clusters.
 
 ## kube state metrics
 
@@ -309,16 +322,6 @@ As the `CustomResourceStateMetrics` configurations mostly correlate with the use
 
 - Waste of resources as two additional (small) KSM instances are running per management cluster
 
-## Tasks and Stories
+## Conclusion
 
-### Story 1
-
-As a (AWS|OpenStack|GCP|VMWareVCD) platform team i would like to get known the state of relevant Cluster API infrastructure provider specific object, exposed as metric.
-
-### Story 2
-
-As a (AWS|OpenStack|GCP|VMWareVCD) platform team i would like to have alerts on all Cluster API related objects if they are not in a desired state.
-
-### Story 3
-
-CASM should be managed and rolled out via our own App platform.
+// tbd
