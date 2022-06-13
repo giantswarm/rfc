@@ -7,7 +7,7 @@
   - [Infrastructure provider specific metrics](#infrastructure-provider-specific-metrics)
     - [Variant 1: all providers in one generic CASM instance](#variant-1-all-providers-in-one-generic-casm-instance)
     - [Variant 2: one CASM instance per infrastructure provider](#variant-2-one-casm-instance-per-infrastructure-provider)
-    - [Variant 2: one CASM instance per infrastructure provider plus one CASM instance for CAPI core](#variant-2-one-casm-instance-per-infrastructure-provider-plus-one-casm-instance-for-capi-core)
+    - [Variant 3: one CASM instance per infrastructure provider plus one CASM instance for CAPI core](#variant-3-one-casm-instance-per-infrastructure-provider-plus-one-casm-instance-for-capi-core)
 - [kube state metrics](#kube-state-metrics)
   - [Variant 1: specific <code>kube-state-metrics</code> configuration for the already existing <code>kube-state-metrics-app</code>](#variant-1-specific-kube-state-metrics-configuration-for-the-already-existing-kube-state-metrics-app)
     - [Pros](#pros)
@@ -221,7 +221,7 @@ To separate the code of different providers it's possible to create an own fork 
 
 - Some code maintenance must be done multiple times.
 
-#### Variant 2: one CASM instance per infrastructure provider plus one CASM instance for CAPI core
+#### Variant 3: one CASM instance per infrastructure provider plus one CASM instance for CAPI core
 
 ##### Pros
 
@@ -268,6 +268,8 @@ With the assumption, that `kube-state-metrics` accept patches which might make C
 
 As `kube-state-metrics` is already deployed in each cluster (no matter if management- or workload cluster), a condition has to be implemented to detect, if the current KSM instance is running on a management- or a workload cluster. With this condition in place, we can provide a CAPI generic `CustomResourceStateMetrics` configuration plus one `CustomResourceStateMetrics` configuration per infrastructure provider.
 
+![](crd_monitoring_via_existing_ksm.svg)
+
 #### Pros
 
 - CAPI generic `CustomResourceStateMetrics` configuration could be easily re-used on different providers
@@ -288,6 +290,8 @@ As `kube-state-metrics` is already deployed in each cluster with a well defined 
 
 One generic KSM instance which bundles all the Cluster API specific `CustomResourceStateMetrics` configuration plus infrastructure specific specific `CustomResourceStateMetrics` configuration.
 
+![](crd_monitoring_via_dedicated_ksm_crd_monitor_instance.svg)
+
 ##### Pros
 
 - Scope of this KSM instance is clearly focused on everything CAPI
@@ -301,6 +305,10 @@ One generic KSM instance which bundles all the Cluster API specific `CustomResou
 
 Each infrastructure specific installation has an own KSM instance which bundles Cluster API and the infrastructure specific `CustomResourceStateMetrics` configuration.
 
+> NOTE: this example scenario does not exist in a running cluster. It's drawn to visualize e.g. possible existing repositories
+
+![](crd_monitoring_via_logical_scoped_ksm_instances.svg)
+
 ##### Pros
 
 - As the App is only used by one specific infrastructure implementation, the `CustomResourceStateMetrics` configuration doesn't have to support different Cluster API versions at one time.
@@ -312,6 +320,10 @@ Each infrastructure specific installation has an own KSM instance which bundles 
 #### Variant 2.3: two dedicated `kube-state-metrics` instances on management cluster per CAPI providers
 
 As the `CustomResourceStateMetrics` configurations mostly correlate with the used Cluster API version and the used infrastructure provider specific version it might make sense to have one KSM for Cluster API and one KSM for the infrastructure provider specific implementation.
+
+> NOTE: this example scenario does not exist but this could be also seen as a potential solution for monitoring any `CustomResourceDefinition`, where the aggregation goes via `GroupVersion` <--> `kube-state-metrics`.
+
+![](crd_monitoring_via_crd_groupversion.svg)
 
 #### Pros
 
