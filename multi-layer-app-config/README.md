@@ -148,7 +148,7 @@ scenario would solve the problem.
 
 #### Cons
 
-- this might mean phasing out app platform operators or leaving in two worlds (with and without app platform)
+- this might mean phasing out app platform operators or living in two worlds (with and without app platform)
 - App CRs and app-platform are deeply integrated into our product, we can't get rid of it easily
 
 ### Dropping the 'values' key in AppCR's CMs/Secrets and moving them to top level
