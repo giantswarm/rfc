@@ -46,20 +46,20 @@ All these mentioned processes are error prone, we are frequently hitting differe
 ### Goals
 
 - Provide higher level API for deploying CRDs and related objects. This higher level API is a set of new CRDs (and an operator reconciling them).
-- New higher level CRDs are used instead of directly using `CustomResourceDefinition`.
-- New higher level CRDs are used instead of directly using `ValidatingWebhookConfiguration`.
-- New higher level CRDs are used instead of directly using `MutatingWebhookConfiguration`.
-- New higher level CRDs are used instead of directly using webhook `Service`.
-- New higher level CRDs are used instead of directly using webhook `Certificate`.
-- Controllers that reconcile new CRs modify webhook Deployment if necessary, in order to set correct Volume with Certificate Secret mounted.
+- New API is used instead of directly using `CustomResourceDefinition`.
+- New API is used instead of directly using `ValidatingWebhookConfiguration`.
+- New API is used instead of directly using `MutatingWebhookConfiguration`.
+- New API is used instead of directly using webhook `Service`.
+- New API is used instead of directly using webhook `Certificate`.
+- New API can specify which webhook `Deployment` has to be updated with correct webhook-related fields, e.g. set correct Volume with Certificate Secret mounted.
 - New higher level CRDs have minimal API with defaults that follow best practices.
-- New higher level CRDs are gitops friendly.
-- A tool is provided to automatically generate new CRs from existing `CustomResourceDefinition` and other related CRs.
-- `CustomResourceDefinition` themselves can be stored anywhere, e.g. in a git repo or in a GitHub release asset.
+- New API is gitops friendly, e.g. it does not use `Spec` for fields that should be in `Status` (e.g. fields that are automatically updated by the operator).
+- A tool is provided to automatically generate new API CRs from existing `CustomResourceDefinition` and other related CRs.
+- New API has support for installing CRDs from any web location with a URL (e.g. GitHub release asset), or from a git repo (plain CRDs or Helm/kustomize files that produce CRDs).
 
 ### Non goals / Future work
 
-- Fully manage the Deployment for the webhook. Currently many upstream projects (e.g. Cluster API) have webhook servers deployed in the same binary with controllers that reconcile the CRs, so there would be a non-trivial amount of work to decouple webhooks from controllers, if we wanted to do that.
+- Define where `CustomResourceDefinition` resources themselves can be stored.
 
 ## Proposal
 
@@ -80,26 +80,73 @@ This RFC introduces new higher level API for managing CRDs and other related obj
 
 The following sections define the API of these CRDs. The CRDs are ordered in kind of bottom-up fashion, starting from templates and finishing with all-encompassing `CustomResourceDefinitionGroupDeployment`.
 
-#### ServiceCertificateTemplate
+#### *`ServiceCertificateTemplate`*
+
+`ServiceCertificateTemplate` is a template for a `Certificate` that is used by a `Service`.
+
+The `ServiceCertificateTemplate` resource is referenced from a `CustomResourceDefinitionDeployment` or from a `CustomResourceDefinitionGroupDeployment`. The resource that references a `ServiceCertificateTemplate` must know the name of the `Service` for which the `Certificate` will be used, so that reconciler can set required DNS names when creating the `Certificate`.
+
+Example:
+
+```
+apiVersion: core.giantswarm.io/v1alpha1
+kind: ServiceCertificateTemplate
+metadata:
+  name: capi
+spec:
+  secretName: capi-webhook-service-cert
+  issuerRef:
+    apiGroup: cert-manager.io/v1
+    kind: ClusterIssuer
+    name: selfsigned-giantswarm
+
+```
+
+#### *`ConversionWebhookTemplate`*
+
+Example 1:
+
+```
+apiVersion: core.giantswarm.io/v1alpha1
+kind: ConversionWebhookTemplate
+metadata:
+  name: cluster-api-core-cluster
+spec:
+  handler:
+    service:
+      namespace: giantswarm
+      name: capi-webhook-service
+      pathStyle: KubebuilderWebhookPathStyle
+```
+
+Example 2:
+
+```
+apiVersion: core.giantswarm.io/v1alpha1
+kind: ConversionWebhookTemplate
+metadata:
+  name: abc-mutate-create
+spec:
+  handler:
+    service:
+      namespace: giantswarm
+      name: abc-webhook-service
+      path: "/mutate/abc/create"
+      port: 6443
+```
+
+#### *`ValidatingWebhookTemplate`*
 
 TBA
 
-#### ConversionWebhookTemplate
+#### *`MutatingWebhookTemplate`*
 
 TBA
 
-#### ValidatingWebhookTemplate
+#### *`CustomResourceDefinitionDeployment`*
 
 TBA
 
-#### MutatingWebhookTemplate
-
-TBA
-
-#### CustomResourceDefinitionDeployment
-
-TBA
-
-#### CustomResourceDefinitionGroupDeployment
+#### *`CustomResourceDefinitionGroupDeployment`*
 
 TBA
