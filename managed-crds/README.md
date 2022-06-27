@@ -84,7 +84,7 @@ The following sections define the API of these CRDs. The CRDs are ordered in kin
 
 `ServiceCertificateTemplate` is a template for a `Certificate` that is used by a `Service`.
 
-The `ServiceCertificateTemplate` resource is referenced from a `CustomResourceDefinitionDeployment` or from a `CustomResourceDefinitionGroupDeployment`. The resource that references a `ServiceCertificateTemplate` must know the name of the `Service` for which the `Certificate` will be used, so that reconciler can set required DNS names when creating the `Certificate`.
+The `ServiceCertificateTemplate` resource is referenced in a `CustomResourceDefinitionDeployment` or in a `CustomResourceDefinitionGroupDeployment`. The resource that references a `ServiceCertificateTemplate` must specify the name of the `Service` for which the `Certificate` will be used, so that reconciler can set required DNS names when creating the `Certificate`.
 
 Example:
 
@@ -104,6 +104,10 @@ spec:
 
 #### *`ConversionWebhookTemplate`*
 
+`ConversionWebhookTemplate` is a template for setting `CustomResourceDefinition`'s `Spec.Conversion` field.
+
+The `ConversionWebhookTemplate` resource is referenced in a `CustomResourceDefinitionDeployment` or in a `CustomResourceDefinitionGroupDeployment`. The resource that references a `ConversionWebhookTemplate` must specify for which `CustomResourceDefinition` this `ConversionWebhookTemplate` is used.
+
 Example 1:
 
 ```
@@ -116,7 +120,6 @@ spec:
     service:
       namespace: giantswarm
       name: capi-webhook-service
-      pathStyle: KubebuilderWebhookPathStyle
 ```
 
 Example 2:
@@ -125,23 +128,107 @@ Example 2:
 apiVersion: core.giantswarm.io/v1alpha1
 kind: ConversionWebhookTemplate
 metadata:
-  name: abc-mutate-create
+  name: some-resource-conversion
 spec:
   handler:
     service:
       namespace: giantswarm
-      name: abc-webhook-service
-      path: "/mutate/abc/create"
+      name: some-webhook-service
+      path: "/convert"
       port: 6443
 ```
 
 #### *`ValidatingWebhookTemplate`*
 
-TBA
+`ValidatingWebhookTemplate` is a template for creating a webhook that is added to a `ValidatingWebhookConfiguration`.
+
+The `ValidatingWebhookTemplate` resource is referenced in a `ValidatingWebhookTemplate` or in a `CustomResourceDefinitionGroupDeployment`. The resource that references a `ValidatingWebhookTemplate` must specify for which `CustomResourceDefinition` this `ValidatingWebhookTemplate` is used.
+
+The `ValidatingWebhookTemplate` resource can optionally specify the webhook `Service`, otherwise the resource that references a `ValidatingWebhookTemplate` must specify it.
+
+Example 1:
+
+```
+apiVersion: core.giantswarm.io/v1alpha1
+kind: ValidatingWebhookTemplate
+metadata:
+  name: cluster-api-core-cluster
+spec:
+  handler:
+    service:
+      namespace: giantswarm
+      name: capi-webhook-service
+      pathStyle: KubebuilderWebhookPathStyle
+  objectSelector:
+    matchLabels:
+      cluster.x-k8s.io/watch-filter: capi
+```
+
+Example 2:
+
+```
+apiVersion: core.giantswarm.io/v1alpha1
+kind: ValidatingWebhookTemplate
+metadata:
+  name: cluster-api-core-machine
+spec:
+  handler:
+    service:
+      namespace: giantswarm
+      name: capi-webhook-service
+      pathStyle: KubebuilderWebhookPathStyle
+  objectSelector:
+    matchLabels:
+      cluster.x-k8s.io/watch-filter: capi
+  ignoreErrors: true
+```
 
 #### *`MutatingWebhookTemplate`*
 
-TBA
+`MutatingWebhookTemplate` is a template for creating a webhook that is added to a `MutatingWebhookConfiguration`.
+
+The `MutatingWebhookTemplate` resource is referenced in a `MutatingWebhookTemplate` or in a `CustomResourceDefinitionGroupDeployment`. The resource that references a `MutatingWebhookTemplate` must specify for which `CustomResourceDefinition` this `MutatingWebhookTemplate` is used.
+
+The `MutatingWebhookTemplate` resource can optionally specify the webhook `Service`, otherwise the resource that references a `MutatingWebhookTemplate` must specify it.
+
+Example 1:
+
+```
+apiVersion: core.giantswarm.io/v1alpha1
+kind: MutatingWebhookTemplate
+metadata:
+  name: cluster-api-core-cluster
+spec:
+  handler:
+    service:
+      namespace: giantswarm
+      name: capi-webhook-service
+      pathStyle: KubebuilderWebhookPathStyle
+  objectSelector:
+    matchLabels:
+      cluster.x-k8s.io/watch-filter: capi
+  reinvocationPolicy: IfNeeded
+```
+
+Example 2:
+
+```
+apiVersion: core.giantswarm.io/v1alpha1
+kind: MutatingWebhookTemplate
+metadata:
+  name: cluster-api-core-machine
+spec:
+  handler:
+    service:
+      namespace: giantswarm
+      name: capi-webhook-service
+      pathStyle: KubebuilderWebhookPathStyle
+  objectSelector:
+    matchLabels:
+      cluster.x-k8s.io/watch-filter: capi
+  ignoreErrors: true
+
+```
 
 #### *`CustomResourceDefinitionDeployment`*
 
