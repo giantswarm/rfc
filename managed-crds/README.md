@@ -2,19 +2,22 @@
 
 ## Table of Contents
 
-- [Summary](#summary)
-- [Motivation](#motivation)
-  - [Goals](#goals)
-  - [Non goals / Future work](#non-goals--future-work)
-- [Proposal](#proposal)
-  - [User stories](#user-stories)
-  - [Implementation Details/Notes/Constraints](#implementation-detailsnotes-constraints)
-    - [ServiceCertificateTemplate](#servicecertificatetemplate)
-    - [ConversionWebhookTemplate](#conversionwebhooktemplate)
-    - [ValidatingWebhookTemplate](#validatingwebhooktemplate)
-    - [MutatingWebhookTemplate](#mutatingwebhooktemplate)
-    - [CustomResourceDefinitionDeployment](#customresourcedefinitiondeployment)
-    - [CustomResourceDefinitionGroupDeployment](#customresourcedefinitiongroupdeployment)
+- [Managed CRDs](#managed-crds)
+  - [Table of Contents](#table-of-contents)
+  - [Summary](#summary)
+  - [Motivation](#motivation)
+    - [Goals](#goals)
+    - [Non goals / Future work](#non-goals--future-work)
+  - [Proposal](#proposal)
+    - [User stories](#user-stories)
+    - [Implementation Details/Notes/Constraints](#implementation-detailsnotesconstraints)
+      - [*`ServiceCertificateTemplate`*](#servicecertificatetemplate)
+      - [*`ConversionWebhookTemplate`*](#conversionwebhooktemplate)
+      - [*`ValidatingWebhookTemplate`*](#validatingwebhooktemplate)
+      - [*`MutatingWebhookTemplate`*](#mutatingwebhooktemplate)
+      - [*`CustomResourceDefinitionDeployment`*](#customresourcedefinitiondeployment)
+      - [*`CustomResourceDefinitionGroupDeployment`*](#customresourcedefinitiongroupdeployment)
+      - [Common structures](#common-structures)
 
 ## Summary
 
@@ -76,7 +79,7 @@ This RFC introduces new higher level API for managing CRDs and other related obj
 - `MutatingWebhookTemplate` for defining a mutating webhook configuration for a single CRD, or for a set of CRDs that share the same mutating webhook configuration.
 - `ValidatingWebhookTemplate` for defining a validating webhook configuration for a single CRD, or for a set of CRDs that share the same validating webhook configuration.
 - `ConversionWebhookTemplate` for defining a conversion webhook for a single CRD, or for a set of CRDs that have the same conversion webhook configuration.
-- `ServiceCertificateTemplate` for defining a `Certificate` template for a single CRD, or for a set of CRDs.
+- `ServiceCertificateTemplate` for defining a template for the `Certificate` that is used for the webhook `Service` for a single CRD, or for a set of CRDs.
 
 The following sections define the API of these CRDs. The CRDs are ordered in kind of bottom-up fashion, starting from templates and finishing with all-encompassing `CustomResourceDefinitionGroupDeployment`.
 
@@ -85,6 +88,17 @@ The following sections define the API of these CRDs. The CRDs are ordered in kin
 `ServiceCertificateTemplate` is a template for a `Certificate` that is used by a `Service`.
 
 The `ServiceCertificateTemplate` resource is referenced in a `CustomResourceDefinitionDeployment` or in a `CustomResourceDefinitionGroupDeployment`. The resource that references a `ServiceCertificateTemplate` must specify the name of the `Service` for which the `Certificate` will be used, so that reconciler can set required DNS names when creating the `Certificate`.
+
+```
+type ServiceCertificateTemplateSpec struct
+```
+
+- `secretName` [required]
+  - Type: `string`
+  - Description: Name of the secret where the certificate is stored.
+- `IssuerRef`
+  - Type: [`TypedLocalObjectReference`](https://pkg.go.dev/k8s.io/api/core/v1@v0.24.1#TypedLocalObjectReference)
+  - Description: Reference to `Issuer` or `ClusterIssuer` resource.
 
 Example:
 
@@ -107,6 +121,14 @@ spec:
 `ConversionWebhookTemplate` is a template for setting `CustomResourceDefinition`'s `Spec.Conversion` field.
 
 The `ConversionWebhookTemplate` resource is referenced in a `CustomResourceDefinitionDeployment` or in a `CustomResourceDefinitionGroupDeployment`. The resource that references a `ConversionWebhookTemplate` must specify for which `CustomResourceDefinition` this `ConversionWebhookTemplate` is used.
+
+```
+type ConversionWebhookTemplate struct
+```
+
+- `Handler` (required)
+  - Type: [`WebhookHandlerConfig`](#webhookhandlerconfig)
+  - Description: Handler specifies what handles conversion requests.
 
 Example 1:
 
@@ -237,3 +259,26 @@ TBA
 #### *`CustomResourceDefinitionGroupDeployment`*
 
 TBA
+
+#### Common structures
+
+<span id="webhookhandlerconfig">`WebhookHandlerConfig`</span>
+
+```
+type WebhookHandlerConfig struct
+```
+
+- `URL` (optional)
+  - Type: `*string`
+  - Description: URL gives the location of the webhook, in standard URL form (`scheme://host:port/path`). Exactly one of URL or Service must be specified.
+- `Service` (optional)
+  - Type: [`*ServiceReference`](#servicereference)
+  - Description: Service is a reference to the service for this webhook. Either Service or URL must be specified.
+
+<span id="servicereference">`ServiceReference`</span>
+
+```
+type ServiceReference struct
+```
+
+spec TBA
