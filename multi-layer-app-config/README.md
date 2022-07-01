@@ -52,7 +52,7 @@ Assuming the following priorities for the platform layers:
 
 - Catalog: A (e.g.: 0)
 - Cluster (`config`): B (e.g.: 50)
-- User (`userConfig`): (e.g.: 100)
+- User (`userConfig`): C (e.g.: 100)
 
 The distance (d) between each priority level should be the same.
 The `priority` field is validated on the CRD schema definition that it must be within range of: `[A, C + d]` and have
