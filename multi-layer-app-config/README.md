@@ -46,6 +46,13 @@ On top of that `config` and `userConfig` gets a priority level - documented in A
 possible to apply some of the `extraConfigs` between the `config` and `userConfig` entries or even after `userConfig`.
 The bedrock is still considered to be what is in the catalog. It is not possible to apply `extraConfigs` before that.
 
+The `config` and `userConfig` fields will be kept. The motivation for keeping them and the priority field is that
+we have some components in App Platform that does late-binding of config maps and secrets when they are created
+after the Application is already deployed. With getting rid of the original fields, having only a list we can not
+programmatically tell where to insert the new item in the list. On the other hand if we want to add some overrides
+later on without adding it directly to the user overrides we need to have the priorities we can use to set
+a high enough number so that the new layer will be applied on top of everything.
+
 #### Merging algorithm
 
 Assuming the following priorities for the platform layers:
