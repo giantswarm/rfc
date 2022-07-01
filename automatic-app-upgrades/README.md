@@ -2,7 +2,18 @@
 
 ## Solution proposal
 
-We propose to use OCI registries, Flux controllers, and GitHub repositories to fully automate App upgrades.
+We propose to use OCI registries, Flux controllers, and GitHub repositories to fully automate App upgrades. This also
+includes anything delivered as Apps, including app bundles and CAPI clusters delivered as apps.
+
+## Relevant resources
+
+- RFC [automatic cluster upgrades](../automatic-cluster-upgrades/README.md)
+- the whole [gitops-template](https://github.com/giantswarm/gitops-template/) repo
+  - in particular the [auto upgrades page](https://github.com/giantswarm/gitops-template/blob/main/docs/apps/automatic_updates_appcr.md)
+- ticket: [automated cluster upgrades](https://github.com/giantswarm/giantswarm/issues/21419)
+- ticket: overarching issue for [automatic app updates](https://github.com/giantswarm/giantswarm/issues/20641)
+- ticket: issue for [upgrade testing](https://github.com/giantswarm/giantswarm/issues/20640)
+- ticket for [customer vs GS responsibility during upgrades](https://github.com/giantswarm/giantswarm/issues/21419)
 
 ## Motivation
 
@@ -24,7 +35,8 @@ We could set up rules for Flux controllers to update App CRs in a repository whe
 
 We acknowledge some of the Apps could have specific requirements regarding versioning, be it freezing the version, following just one major release's minors and patches, etc. It is solvable by having a custom automation setting, as permitted by [ImagePolicy's Policy section](https://fluxcd.io/docs/components/image/imagepolicies/#policy). For example:
 
-**A policy following latest stable version**
+### A policy following latest stable version
+
 ```yaml
 kind: ImagePolicy
 spec:
@@ -33,7 +45,8 @@ spec:
       range: '>=1.0.0'
 ```
 
-**A policy following minors and patches of v1.x.x**
+### A policy following minors and patches of v1.x.x
+
 ```yaml
 kind: ImagePolicy
 spec:
@@ -42,7 +55,8 @@ spec:
       range: '>=1.0.0 <2.0.0'
 ```
 
-**A policy following patches of v3.7.x**
+### A policy following patches of v3.7.x
+
 ```yaml
 kind: ImagePolicy
 spec:
@@ -55,12 +69,26 @@ More examples are presented in [the documentation](https://fluxcd.io/docs/compon
 
 ![Graph showcasing the described solution](https://user-images.githubusercontent.com/4587658/163184967-d8fa5e6b-18ac-42e5-bf6c-7fd8e7df3ab6.png)
 
+## Automated upgrades release process summary
+
+The release process with upgrades as described above looks like this:
+
+1. App part
+   1. A team responsible for the app prepares a new app branch for the release
+   1. The new App Chart CR is tested for successful [upgrade using `ats`](https://github.com/giantswarm/app-test-suite#quick-start)
+   1. The App is released, the chart has to be put into OCI repository (already supported by `architect-orb`)
+1. GitOps configuration part
+   1. Customer has prepared GitOps repository, including bases (they don't have to be bases, they can be individual clusters/apps, but we're encouraging bases for better (re)usability) that make sense for grouping their infrastructure (Honeybadger is working on specific layout recommendations)
+   1. Each base has defined upgrade strategy - a range of versions that can be automatically set for this part of repo. Check [gitops-template](https://github.com/giantswarm/gitops-template/blob/main/docs/apps/automatic_updates_appcr.md#app-cr-version-field-mark)
+   1. When a new App Chart is detected in the OCI registry, every cluster that uses the base (or just has a proper version range defined) is upgraded to a newer version. The upgrade might mean that Flux will just push the detected change to a separate upgrade branch in the repo and from there a human operator will be required to create a PR (can be easily automated) and approve it.
+
 ## Future work
 
 As mentioned previously, `app-operator` and `chart-operator` are ready to interact with OCI registries. Various registry providers have been tested as part of [OCI registry support for App Platform](https://github.com/giantswarm/roadmap/issues/391) issue. The viability of the proposed solution has been tested and confirmed as [a part of the same issue](https://github.com/giantswarm/roadmap/issues/391#issuecomment-1096522248).
 
 The remaining bits:
+
 - Setting up a repository holding App CRs
 - Setting up automation and rules in a repository
-- Configuring Flux to reconcile both of the abovementioned repositories
+- Configuring Flux to reconcile both of the above mentioned repositories
 - Updating CI to push Helm charts to the AzureCR as well
