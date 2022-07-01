@@ -179,7 +179,7 @@ The merge order for config maps will be:
 1. ConfigMap: nginx-ingress-controller-high-priority (P = 10)
 1. ConfigMap: nginx-ingress-controller-pre-cluster (P = 25)
 1. ConfigMap: ingress-controller-values (P = 50)
-1. ConfigMap: nginx-ingress-controller-pre-user  (P = 75)
+1. ConfigMap: nginx-ingress-controller-pre-user (P = 75)
 1. ConfigMap: nginx-ingress-controller-app-user-values (P = 100)
 1. ConfigMap: nginx-ingress-controller-post-user (P = 125, position in the list: 1)
 1. ConfigMap: nginx-ingress-controller-final (P = 125, position in the list: 4)
