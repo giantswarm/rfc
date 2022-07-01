@@ -40,6 +40,36 @@ We can extend App CR with on optional list of `ConfigMap`/`Secret` objects. Conf
 `userConfig:` properties (if given) is applied at the end of this list (to maintain backward compatibility).
 `app-operator` does merging of all layers on the list, from top to bottom, instead of just merging the two properties.
 
+This new list is called `extraConfigs`. Each entry in it has a field called the `priority`.
+It has a default value assumed that  makes them to be applied before `config` to keep the backward compatibility.
+On top of that `config` and `userConfig` gets a priority level - documented in App Platform - as well it becomes
+possible to apply some of the `extraConfigs` between the `config` and `userConfig` entries or even after `userConfig`.
+The bedrock is still considered to be what is in the catalog. It is not possible to apply `extraConfigs` before that.
+
+#### Merging algorithm
+
+Assuming the following priorities for the platform layers:
+
+- Catalog: A (e.g.: 0)
+- Cluster (`config`): B (e.g.: 50)
+- User (`userConfig`): (e.g.: 100)
+
+The distance (d) between each priority level should be the same.
+The `priority` field is validated on the CRD schema definition that it must be within range of: `[A, C + d]` and have
+the default value of: `A + d / 2` rounded up if necessary.
+
+The merging algorithm is as follows:
+
+1. Configuration from the catalog (A)
+2. All entries from `extraConfigs` with priority of P: A <= P <= B
+3. Configuration from `config` entry (B)
+4. All entries from `extraConfigs` with priority of P: B < P <= C
+5. Configuration from `userConfig` entry (C)
+6. All entries from `extraConfigs` with priority of P: C < P
+
+In case of multiple items in `extraConfigs` appear with the same priority then the item that appears first
+in the list will take the priority.
+
 The idea is modeled after Flux's [HelmRelease configuration](https://fluxcd.io/docs/components/helm/api/#helm.toolkit.fluxcd.io/v2beta1.ValuesReference).
 
 #### Example
@@ -65,49 +95,95 @@ spec:
   version: 2.7.0
 ```
 
-Using the new list instead of `config` and `userConfig`, works exactly the same as the one above:
+Using some `extraConfigs` with no priority set:
 
 ```yaml
 apiVersion: application.giantswarm.io/v1alpha1
 kind: App
 spec:
-  catalog: giantswarm
-  configs:  # <-- new
-    - kind: configMap
-      name: ingress-controller-values
-      namespace: m2m01
-    - kind: configMap
-      name: nginx-ingress-controller-app-user-values
-      namespace: m2m01
-  name: nginx-ingress-controller-app
-  namespace: kube-system
-  version: 2.7.0
+   catalog: giantswarm
+   config:
+      configMap:
+         name: ingress-controller-values
+         namespace: m2m01
+   configs:
+      - kind: secret
+        name: nginx-ingress-controller-admin-login
+        namespace: m2m01
+      - kind: configMap
+        name: nginx-ingress-controller-admin-account
+        namespace: m2m01
+   name: nginx-ingress-controller-app
+   namespace: kube-system
+   userConfig:
+      configMap:
+         name: nginx-ingress-controller-app-user-values
+         namespace: m2m01
+   version: 2.7.0
 ```
 
-Using the new list only and referencing more than 2 objects:
+In the above example the order for config maps will be:
+
+1. Catalog (P = 0)
+1. ConfigMap: nginx-ingress-controller-admin-account (P = 25)
+1. ConfigMap: ingress-controller-values (P = 50)
+1. ConfigMap: nginx-ingress-controller-app-user-values (P = 100)
+
+And for secrets it is simply (because not cluster or user layer is defined):
+
+1. Catalog
+1. Secret: nginx-ingress-controller-admin-login
+
+And an example with some `priority` fields set on `extraConfigs` entries:
 
 ```yaml
 apiVersion: application.giantswarm.io/v1alpha1
 kind: App
 spec:
-  catalog: giantswarm
-  configs:  # <-- new
-    - kind: configMap
-      name: ingress-controller-values
-      namespace: m2m01
-    - kind: configMap
-      name: nginx-ingress-controller-app-user-values
-      namespace: m2m01
-    - kind: secret
-      name: nginx-ingress-controller-admin-login
-      namespace: m2m01
-    - kind: configMap
-      name: nginx-ingress-controller-admin-account
-      namespace: m2m01
-  name: nginx-ingress-controller-app
-  namespace: kube-system
-  version: 2.7.0
+   catalog: giantswarm
+   config:
+      configMap:
+         name: ingress-controller-values
+         namespace: m2m01
+   configs:
+      - kind: configMap
+        name: nginx-ingress-controller-post-user
+        namespace: m2m01
+        priority: 125
+      - kind: configMap
+        name: nginx-ingress-controller-pre-user
+        namespace: m2m01
+        priority: 75
+      - kind: configMap
+        name: nginx-ingress-controller-pre-cluster
+        namespace: m2m01
+      - kind: configMap
+        name: nginx-ingress-controller-final
+        namespace: m2m01
+        priority: 125
+      - kind: configMap
+        name: nginx-ingress-controller-high-priority
+        namespace: m2m01
+        priority: 10
+   name: nginx-ingress-controller-app
+   namespace: kube-system
+   userConfig:
+      configMap:
+         name: nginx-ingress-controller-app-user-values
+         namespace: m2m01
+   version: 2.7.0
 ```
+
+The merge order for config maps will be:
+
+1. Catalog (P = 0)
+1. ConfigMap: nginx-ingress-controller-high-priority (P = 10)
+1. ConfigMap: nginx-ingress-controller-pre-cluster (P = 25)
+1. ConfigMap: ingress-controller-values (P = 50)
+1. ConfigMap: nginx-ingress-controller-pre-user  (P = 75)
+1. ConfigMap: nginx-ingress-controller-app-user-values (P = 100)
+1. ConfigMap: nginx-ingress-controller-post-user (P = 125, position in the list: 1)
+1. ConfigMap: nginx-ingress-controller-final (P = 125, position in the list: 4)
 
 #### Pros
 
