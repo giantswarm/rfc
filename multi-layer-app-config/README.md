@@ -67,8 +67,7 @@ The merging algorithm is as follows:
 5. Configuration from `userConfig` entry (C)
 6. All entries from `extraConfigs` with priority of P: C < P
 
-In case of multiple items in `extraConfigs` having the same priority, the order on the list is binding, with the item lower on the list being merged later (overriding those higher on the list)
-in the list will take the priority.
+In case of multiple items in `extraConfigs` having the same priority, the order on the list is binding, with the item lower on the list being merged later (overriding those higher on the list).
 
 The idea is modeled after Flux's [HelmRelease configuration](https://fluxcd.io/docs/components/helm/api/#helm.toolkit.fluxcd.io/v2beta1.ValuesReference).
 
