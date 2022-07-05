@@ -62,17 +62,17 @@ Assuming the following priorities for the platform layers:
 - User (`userConfig`): C (e.g.: 100)
 
 The distance (d) between each priority level should be the same.
-The `priority` field is validated on the CRD schema definition that it must be within range of: `[A, C + d]` and have
+The `priority` field is validated on the CRD schema definition that it must be within range of: `]A, C + d]` and have
 the default value of: `A + d / 2` rounded up if necessary.
 
 The merging algorithm is as follows:
 
 1. Configuration from the catalog (A)
-2. All entries from `extraConfigs` with priority of P: A <= P <= B
+2. All entries from `extraConfigs` with priority of P: A < P <= B
 3. Configuration from `config` entry (B)
 4. All entries from `extraConfigs` with priority of P: B < P <= C
 5. Configuration from `userConfig` entry (C)
-6. All entries from `extraConfigs` with priority of P: C < P
+6. All entries from `extraConfigs` with priority of P: C < P <= C + d
 
 In case of multiple items in `extraConfigs` having the same priority, the order on the list is binding, with the item lower on the list being merged later (overriding those higher on the list).
 
