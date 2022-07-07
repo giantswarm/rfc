@@ -46,6 +46,13 @@ On top of that `config` and `userConfig` gets a priority level - documented in A
 possible to apply some of the `extraConfigs` between the `config` and `userConfig` entries or even after `userConfig`.
 The bedrock is still considered to be what is in the catalog. It is not possible to apply `extraConfigs` before that.
 
+The `config` and `userConfig` fields will be kept. The motivation for keeping them and the priority field is that
+we have some components in App Platform that does late-binding of config maps and secrets when they are created
+after the Application is already deployed. With getting rid of the original fields, having only a list we can not
+programmatically tell where to insert the new item in the list. On the other hand if we want to add some overrides
+later on without adding it directly to the user overrides we need to have the priorities we can use to set
+a high enough number so that the new layer will be applied on top of everything.
+
 #### Merging algorithm
 
 Assuming the following priorities for the platform layers:
@@ -55,17 +62,17 @@ Assuming the following priorities for the platform layers:
 - User (`userConfig`): C (e.g.: 100)
 
 The distance (d) between each priority level should be the same.
-The `priority` field is validated on the CRD schema definition that it must be within range of: `[A, C + d]` and have
+The `priority` field is validated on the CRD schema definition that it must be within range of: `]A, C + d]` and have
 the default value of: `A + d / 2` rounded up if necessary.
 
 The merging algorithm is as follows:
 
 1. Configuration from the catalog (A)
-2. All entries from `extraConfigs` with priority of P: A <= P <= B
+2. All entries from `extraConfigs` with priority of P: A < P <= B
 3. Configuration from `config` entry (B)
 4. All entries from `extraConfigs` with priority of P: B < P <= C
 5. Configuration from `userConfig` entry (C)
-6. All entries from `extraConfigs` with priority of P: C < P
+6. All entries from `extraConfigs` with priority of P: C < P <= C + d
 
 In case of multiple items in `extraConfigs` having the same priority, the order on the list is binding, with the item lower on the list being merged later (overriding those higher on the list).
 
