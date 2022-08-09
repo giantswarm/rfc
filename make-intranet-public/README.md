@@ -35,6 +35,16 @@ The complete setup would then look as follows:
 - `intranet` only contains truly private information but imports all content from `handbook` into a unified search.
 - `docs` contains product documentation which is directly linked on our website as before.
 
+### Transitioning content into the public handbook
+
+Content will be transitioned into the public handbook on a "if-needed" basis for now.
+We have some usecases which require our internal docs to be public (e.g. relevant docs to external collaborators, people related docs which help with hiring, ... ).
+
+Once the new concept is proven with the currently needed docs being public, then a `public by default` policy should be put in place.
+This should then by followed by all non-critical docs being moved to the public repo in quick succession.
+
+Docs should always be made public by the owners of the docs.
+
 ## Technical implementation
 
 There are some open technical questions with this proposal.
