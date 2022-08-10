@@ -12,6 +12,9 @@ The non-security relevant parts of the intranet should be public.
 Making them public enables us to collaborate with other companies more easily.
 It additionally allows us to enable outside contributors to work on projects more independently.
 
+A very direct (and most urgent) goal is to enable outside collaborators quickly who need to work on docs for us.
+This is mainly related to companies who will help us implement features in our managed apps but will not get full access to our private docs.
+
 ## Considerations
 
 Content in the `intranet` is not fit for our general customer base.
