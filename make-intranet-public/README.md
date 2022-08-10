@@ -4,7 +4,7 @@
 
 We currently have an internal `hugo` page which we use for internal documentation.
 This page is called `intranet` and contains all kinds of documentation around our operational work as well as security and development.
-The sourcecode for our `intranet` is in a private github repository which contains other security and business relevant data.
+The source code for our `intranet` is in a private GitHub repository which contains other security and business relevant data.
 
 ## Goal
 
