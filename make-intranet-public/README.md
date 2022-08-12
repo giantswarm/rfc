@@ -27,9 +27,10 @@ that is a decision which can be made independently of this proposal.
 We create a new public repository called `handbook`.
 This repository uses the same general structure and hugo setup as our intranet.
 
-We then import the content from the `handbook` repository into the `intranet` source - this should be easily possible as described [here](https://discourse.gohugo.io/t/building-content-from-multiple-repositories/34636).
-Importing the `handbook` repository will mean that the search functionality in the `intranet` will automatically scrape both private and public docs.
+A similar search setup to our docs should be setup which covers the `handbook` as well as the `intranet`.
+That search will then be accessible through the `intranet`, linking to both sources of truth.
 Therefore the `intranet` can remain as the single source of truth for Giant Swarm employees to aggregate information.
+Most importantly, it becomes trivial to link URLs from either source as search results will forward you to the specific article.
 
 The `handbook` repository itself should also be setup with `hugo` to host its content under `handbook.giantswarm.io` making it easily accessible for outside collaborators.
 
