@@ -54,16 +54,12 @@ All these mentioned processes are error prone, we are frequently hitting differe
 ### Goals
 
 - Provide higher level API for deploying CRDs and related objects. This higher level API is a set of new CRDs (and an operator reconciling them).
-- New API is used instead of directly using `CustomResourceDefinition`.
-- New API is used instead of directly using `ValidatingWebhookConfiguration`.
-- New API is used instead of directly using `MutatingWebhookConfiguration`.
-- New API is used instead of directly using webhook `Service`.
-- New API is used instead of directly using webhook `Certificate`.
-- New API can specify which webhook `Deployment` has to be updated with correct webhook-related fields, e.g. set correct Volume with Certificate Secret mounted.
-- New higher level CRDs have minimal API with defaults that follow best practices.
-- New API is gitops friendly, e.g. it does not use `Spec` for fields that should be in `Status` (e.g. fields that are automatically updated by the operator).
-- A tool is provided to automatically generate new API CRs from existing `CustomResourceDefinition` and other related CRs.
-- New API has support for installing CRDs from any web location with a URL (e.g. GitHub release asset), or from a git repo (plain CRDs or Helm/kustomize files that produce CRDs).
+- New higher level CRs are used instead of directly using `CustomResourceDefinition`, `ValidatingWebhookConfiguration`, `MutatingWebhookConfiguration`, `Service`, `Certificate` and optionally webhook `Deployment`.
+- New higher level CR can specify which webhook `Deployment` has to be updated with correct webhook-related fields, e.g. set correct Volume with Certificate Secret mounted.
+- New higher level CRs have minimal API with defaults that follow best practices.
+- New higher level CRs are gitops friendly, e.g. they don't use `Spec` for fields that should be in `Status` (e.g. fields that are automatically updated by the operator).
+- A tool is provided to automatically generate new CRs from existing `CustomResourceDefinition` and other related CRs.
+- New higher level CRs have support for installing CRDs from any web location with a URL (e.g. GitHub release asset), or from a git repo (plain CRDs or Helm/kustomize files that produce CRDs).
 
 ### Non goals / Future work
 
