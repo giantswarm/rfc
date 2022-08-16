@@ -10,14 +10,19 @@
     - [Non goals / Future work](#non-goals--future-work)
   - [Proposal](#proposal)
     - [User stories](#user-stories)
-    - [Implementation Details/Notes/Constraints](#implementation-detailsnotesconstraints)
-      - [*`ServiceCertificateTemplate`*](#servicecertificatetemplate)
-      - [*`ConversionWebhookTemplate`*](#conversionwebhooktemplate)
-      - [*`ValidatingWebhookTemplate`*](#validatingwebhooktemplate)
-      - [*`MutatingWebhookTemplate`*](#mutatingwebhooktemplate)
-      - [*`CustomResourceDefinitionDeployment`*](#customresourcedefinitiondeployment)
+    - [API Implementation Details/Notes/Constraints](#api-implementation-detailsnotesconstraints)
       - [*`CustomResourceDefinitionGroupDeployment`*](#customresourcedefinitiongroupdeployment)
+      - [*`CustomResourceDefinitionDeployment`*](#customresourcedefinitiondeployment)
+      - [*`ConversionWebhookTemplate`*](#conversionwebhooktemplate)
+      - [*`MutatingWebhookTemplate`*](#mutatingwebhooktemplate)
+      - [*`ValidatingWebhookTemplate`*](#validatingwebhooktemplate)
+      - [*`ServiceCertificateTemplate`*](#servicecertificatetemplate)
       - [Common structures](#common-structures)
+    - [Installing CRDs](#installing-crds)
+    - [Upgrading CRDs](#upgrading-crds)
+      - [Adding API version to CustomResourceDefinition](#adding-api-version-to-customresourcedefinition)
+      - [Removing API version from CustomResourceDefinition](#removing-api-version-from-customresourcedefinition)
+    - [Deleting CRDs](#deleting-crds)
 
 ## Summary
 
@@ -70,50 +75,135 @@ All these mentioned processes are error prone, we are frequently hitting differe
 
 TBA
 
-### Implementation Details/Notes/Constraints
+### API Implementation Details/Notes/Constraints
 
 This RFC introduces new higher level API for managing CRDs and other related objects. The new API includes the following CRDs:
 
 - `CustomResourceDefinitionGroupDeployment` for managing a set of CRDs from the same API group, with same set of API versions, and with common webhook configurations (including webhook Service and Certificate, as well managing all required fields in the webhook's Deployment).
 - `CustomResourceDefinitionDeployment` for managing a single CRD and its webhook configuration (including webhook Service and Certificate, as well managing all required fields in the webhook's Deployment).
+- `ConversionWebhookTemplate` for defining a conversion webhook for a single CRD, or for a set of CRDs that have the same conversion webhook configuration.
 - `MutatingWebhookTemplate` for defining a mutating webhook configuration for a single CRD, or for a set of CRDs that share the same mutating webhook configuration.
 - `ValidatingWebhookTemplate` for defining a validating webhook configuration for a single CRD, or for a set of CRDs that share the same validating webhook configuration.
-- `ConversionWebhookTemplate` for defining a conversion webhook for a single CRD, or for a set of CRDs that have the same conversion webhook configuration.
 - `ServiceCertificateTemplate` for defining a template for the `Certificate` that is used for the webhook `Service` for a single CRD, or for a set of CRDs.
 
-The following sections define the API of these CRDs. The CRDs are ordered in kind of bottom-up fashion, starting from templates and finishing with all-encompassing `CustomResourceDefinitionGroupDeployment`.
+The following sections define the API of these CRDs. The CRDs are ordered in kind of top-down fashion, starting from the highest level all-encompassing CRD group deployment and finishing with templates for other CRD-related resources.
 
-#### *`ServiceCertificateTemplate`*
+#### *`CustomResourceDefinitionGroupDeployment`*
 
-`ServiceCertificateTemplate` is a template for a `Certificate` that is used by a `Service`.
-
-The `ServiceCertificateTemplate` resource is referenced in a `CustomResourceDefinitionDeployment` or in a `CustomResourceDefinitionGroupDeployment`. The resource that references a `ServiceCertificateTemplate` must specify the name of the `Service` for which the `Certificate` will be used, so that reconciler can set required DNS names when creating the `Certificate`.
-
-```
-type ServiceCertificateTemplateSpec struct
-```
-
-- `secretName` [required]
-  - Type: `string`
-  - Description: Name of the secret where the certificate is stored.
-- `IssuerRef`
-  - Type: [`TypedLocalObjectReference`](https://pkg.go.dev/k8s.io/api/core/v1@v0.24.1#TypedLocalObjectReference)
-  - Description: Reference to `Issuer` or `ClusterIssuer` resource.
+TBA
 
 Example:
 
 ```
 apiVersion: core.giantswarm.io/v1alpha1
-kind: ServiceCertificateTemplate
+kind: CustomResourceDefinitionGroupDeployment
 metadata:
-  name: capi
+  name: cluster-api-core
 spec:
-  secretName: capi-webhook-service-cert
-  issuerRef:
-    apiGroup: cert-manager.io/v1
-    kind: ClusterIssuer
-    name: selfsigned-giantswarm
+  group: cluster.x-k8s.io
+  versions:
+    storage: v1beta1
+    served:
+      - name: v1alpha4
+      - name: v1alpha3
+        deprecated: true
+  kinds:
+  - Cluster
+  - Machine
+  - MachineSet
+  - MachineDeployment
+  source:
+    type: File
+    url: https://github.com/kubernetes-sigs/cluster-api/releases/download/v1.1.4/core-components.yaml
+  webhooksConfig:
+    mutatingWebhook:
+      enabled: true
+      templateRef:
+        apiGroup: core.giantswarm.io/v1alpha1
+        kind: MutatingWebhookTemplate
+        name: cluster-api-core
+    validatingWebhook:
+      enabled: true
+      templateRef:
+        apiGroup: core.giantswarm.io/v1alpha1
+        kind: ValidatingWebhookTemplate
+        name: cluster-api-core
+    conversionWebhook:
+      enabled: true
+      templateRef:
+        apiGroup: core.giantswarm.io/v1alpha1
+        kind: ConversionWebhookTemplate
+        name: cluster-api-core
+    handler:
+      service:
+        namespace: giantswarm
+        name: capi-webhook-service
+    certificate:
+      enabled: true
+      templateRef:
+        apiGroup: core.giantswarm.io/v1alpha1
+        kind: ServiceCertificateTemplate
+        name: capi
+    deployment:
+      name: capi-controller-manager
+      mode: Update
+```
 
+#### *`CustomResourceDefinitionDeployment`*
+
+TBA
+
+Example:
+
+```
+apiVersion: core.giantswarm.io/v1alpha1
+kind: CustomResourceDefinitionDeployment
+metadata:
+  name: cluster-api-core-cluster
+spec:
+  group: cluster.x-k8s.io
+  versions:
+    storage: v1beta1
+    served:
+      - name: v1alpha4
+      - name: v1alpha3
+        deprecated: true
+  kind: Cluster
+  source:
+    type: File
+    url: https://github.com/kubernetes-sigs/cluster-api/releases/download/v1.1.4/core-components.yaml
+  webhooksConfig:
+    mutatingWebhook:
+      enabled: true
+      templateRef:
+        apiGroup: core.giantswarm.io/v1alpha1
+        kind: MutatingWebhookTemplate
+        name: cluster-api-core-cluster
+    validatingWebhook:
+      enabled: true
+      templateRef:
+        apiGroup: core.giantswarm.io/v1alpha1
+        kind: ValidatingWebhookTemplate
+        name: cluster-api-core-cluster
+    conversionWebhook:
+      enabled: true
+      templateRef:
+        apiGroup: core.giantswarm.io/v1alpha1
+        kind: ConversionWebhookTemplate
+        name: cluster-api-core-cluster
+    handler:
+      service:
+        namespace: giantswarm
+        name: capi-webhook-service
+    certificate:
+      enabled: true
+      templateRef:
+        apiGroup: core.giantswarm.io/v1alpha1
+        kind: ServiceCertificateTemplate
+        name: capi
+    deployment:
+      name: capi-controller-manager
+      mode: Update
 ```
 
 #### *`ConversionWebhookTemplate`*
@@ -158,51 +248,6 @@ spec:
       name: some-webhook-service
       path: "/convert"
       port: 6443
-```
-
-#### *`ValidatingWebhookTemplate`*
-
-`ValidatingWebhookTemplate` is a template for creating a webhook that is added to a `ValidatingWebhookConfiguration`.
-
-The `ValidatingWebhookTemplate` resource is referenced in a `ValidatingWebhookTemplate` or in a `CustomResourceDefinitionGroupDeployment`. The resource that references a `ValidatingWebhookTemplate` must specify for which `CustomResourceDefinition` this `ValidatingWebhookTemplate` is used.
-
-The `ValidatingWebhookTemplate` resource can optionally specify the webhook `Service`, otherwise the resource that references a `ValidatingWebhookTemplate` must specify it.
-
-Example 1:
-
-```
-apiVersion: core.giantswarm.io/v1alpha1
-kind: ValidatingWebhookTemplate
-metadata:
-  name: cluster-api-core-cluster
-spec:
-  handler:
-    service:
-      namespace: giantswarm
-      name: capi-webhook-service
-      pathStyle: KubebuilderWebhookPathStyle
-  objectSelector:
-    matchLabels:
-      cluster.x-k8s.io/watch-filter: capi
-```
-
-Example 2:
-
-```
-apiVersion: core.giantswarm.io/v1alpha1
-kind: ValidatingWebhookTemplate
-metadata:
-  name: cluster-api-core-machine
-spec:
-  handler:
-    service:
-      namespace: giantswarm
-      name: capi-webhook-service
-      pathStyle: KubebuilderWebhookPathStyle
-  objectSelector:
-    matchLabels:
-      cluster.x-k8s.io/watch-filter: capi
-  ignoreErrors: true
 ```
 
 #### *`MutatingWebhookTemplate`*
@@ -252,13 +297,83 @@ spec:
 
 ```
 
-#### *`CustomResourceDefinitionDeployment`*
+#### *`ValidatingWebhookTemplate`*
 
-TBA
+`ValidatingWebhookTemplate` is a template for creating a webhook that is added to a `ValidatingWebhookConfiguration`.
 
-#### *`CustomResourceDefinitionGroupDeployment`*
+The `ValidatingWebhookTemplate` resource is referenced in a `ValidatingWebhookTemplate` or in a `CustomResourceDefinitionGroupDeployment`. The resource that references a `ValidatingWebhookTemplate` must specify for which `CustomResourceDefinition` this `ValidatingWebhookTemplate` is used.
 
-TBA
+The `ValidatingWebhookTemplate` resource can optionally specify the webhook `Service`, otherwise the resource that references a `ValidatingWebhookTemplate` must specify it.
+
+Example 1:
+
+```
+apiVersion: core.giantswarm.io/v1alpha1
+kind: ValidatingWebhookTemplate
+metadata:
+  name: cluster-api-core-cluster
+spec:
+  handler:
+    service:
+      namespace: giantswarm
+      name: capi-webhook-service
+      pathStyle: KubebuilderWebhookPathStyle
+  objectSelector:
+    matchLabels:
+      cluster.x-k8s.io/watch-filter: capi
+```
+
+Example 2:
+
+```
+apiVersion: core.giantswarm.io/v1alpha1
+kind: ValidatingWebhookTemplate
+metadata:
+  name: cluster-api-core-machine
+spec:
+  handler:
+    service:
+      namespace: giantswarm
+      name: capi-webhook-service
+      pathStyle: KubebuilderWebhookPathStyle
+  objectSelector:
+    matchLabels:
+      cluster.x-k8s.io/watch-filter: capi
+  ignoreErrors: true
+```
+
+#### *`ServiceCertificateTemplate`*
+
+`ServiceCertificateTemplate` is a template for a `Certificate` that is used by a `Service`.
+
+The `ServiceCertificateTemplate` resource is referenced in a `CustomResourceDefinitionDeployment` or in a `CustomResourceDefinitionGroupDeployment`. The resource that references a `ServiceCertificateTemplate` must specify the name of the `Service` for which the `Certificate` will be used, so that reconciler can set required DNS names when creating the `Certificate`.
+
+```
+type ServiceCertificateTemplateSpec struct
+```
+
+- `secretName` [required]
+  - Type: `string`
+  - Description: Name of the secret where the certificate is stored.
+- `IssuerRef`
+  - Type: [`TypedLocalObjectReference`](https://pkg.go.dev/k8s.io/api/core/v1@v0.24.1#TypedLocalObjectReference)
+  - Description: Reference to `Issuer` or `ClusterIssuer` resource.
+
+Example:
+
+```
+apiVersion: core.giantswarm.io/v1alpha1
+kind: ServiceCertificateTemplate
+metadata:
+  name: capi
+spec:
+  secretName: capi-webhook-service-cert
+  issuerRef:
+    apiGroup: cert-manager.io/v1
+    kind: ClusterIssuer
+    name: selfsigned-giantswarm
+
+```
 
 #### Common structures
 
@@ -282,3 +397,29 @@ type ServiceReference struct
 ```
 
 spec TBA
+
+### Installing CRDs
+
+This section explains the steps that crd-operator goes through in order to install a CustomResourceDefinition.
+
+TBA
+
+### Upgrading CRDs
+
+This section explains the steps that crd-operator goes through in order to upgrade a CustomResourceDefinition.
+
+TBA
+
+#### Adding API version to CustomResourceDefinition
+
+TBA
+
+#### Removing API version from CustomResourceDefinition
+
+TBA
+
+### Deleting CRDs
+
+This section explains the steps that crd-operator goes through in order to delete a CustomResourceDefinition.
+
+TBA
