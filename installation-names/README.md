@@ -20,7 +20,7 @@ When providing name candidates, we apply the following criteria:
 
 ## Claiming a name
 
-Customers should claim any name they like from our [repository](https://github.com/giantswarm/installation-names). The goal here is to foster adption of the name.
+Customers should claim any name they like from our [repository](https://github.com/giantswarm/installation-names). The goal here is to foster adoption of the name.
 
 We encourage customers to select a name that is not easily associated with the customer name. For example, a company named Jaguar should not pick the installation name `jaguar`.
 
