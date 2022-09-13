@@ -8,7 +8,7 @@ For Giant Swarm staff this is done via `dex` using github as the _only_ identity
 Our vintage product also offers the possibility to create a client certificate to access the management cluster.
 This means that in the event of github or `dex` being unavailable, we do not get locked out of the management cluster.
 
-For pure CAPI installations on the other hand, no other authentication method is available at this point.
+For pure CAPI installations on the other hand, the only fallback authentication method is a single static kubeconfig that is stored in lastpass for emergency access.
 This poses a real risk to get locked out of the management cluster in case of problems with OIDC.
 We also rely on the github api being available as an external dependency we can not control.
 
@@ -41,6 +41,7 @@ At the moment this is not the case for the CAPI product.
 - A long living client-certificate granting admin access is a security risk since permissions can not be revoked.
 - We do not want this to be the primary authentication method for human users. (That should remain SSO)
 - If we want to support this, we need to decide whether we want to use vault or something else.
+- Whichever method we choose, we need to ensure that TTL duration is limited to minimize the security risk. 
 
 ### Storing kubeconfig in lastpass
 
@@ -48,8 +49,11 @@ In the CAPI product, a valid kubeconfig is stored in lastpass as emergency fallb
 
 - This method of authentication is completely separate from SSO and does not have shared dependencies.
 - It is not integrated in our tooling and we need to pull the kubeconfig using lastpass cli.
-- We should revisit how this works. What type of authorization is used here? Is access revokable? Is this rotated?
+- As it is right now, access is neither easily revokable nor is there a rotation. 
+- In case of a security threat this implies rotating the api server CA and all certificates.
 - Since it is already integrated, it makes sense to keep it for emergencies while there is no alternative.
+- If we want to support this for a longer time we need to improve security.
+- We could support this as fallback method in `opsctl login` by managing access to `lastpass` or calling the `lastpass` cli to ease operations.
 
 ### Introduce a second identity provider for SSO
 
