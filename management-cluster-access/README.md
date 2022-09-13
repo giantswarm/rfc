@@ -24,8 +24,8 @@ Let's ensure that management cluster access is highly available for operations t
 
 - [PKI epic](https://github.com/giantswarm/giantswarm/issues/15981)
 - [Issue regarding client cert creation for CAPO ](https://github.com/giantswarm/giantswarm/issues/21740)
-- [story for backup idp in dex](https://github.com/giantswarm/roadmap/issues/603)
-- [proposal to use azure AD for GS staff](https://github.com/giantswarm/giantswarm/issues/21627)
+- [Story for backup IDP in dex](https://github.com/giantswarm/roadmap/issues/603)
+- [Proposal to use Azure AD for GS staff](https://github.com/giantswarm/giantswarm/issues/21627)
 - 
 
 ## Possible solutions
