@@ -67,7 +67,7 @@ However, we could add more providers.
 
 ### Service account tokens
 
-Other than client certficiates, we could also look at service accounts as a means of managing access.
+Other than client certificates, we could also look at service accounts as a means of managing access.
 
 - Service accounts can be rotated so they carry less risk in that regard than client certificates.
 - This should not be a standard access method for human engineers.
