@@ -94,6 +94,26 @@ Related problems include:
 - Access to workload clusters by gs staff
 - Access to workload clusters by customers
 
-### Next steps
+## Next steps
 
-- to be discussed
+### Adding azure AD as a second identity provider for SSO
+
+As a first step to mitigate the problem of a single point of failure, we want to introduce azure active directory as a second SSO identity provider.
+This can be done in rainbow independently of new developments in terms of pki for capi.
+
+- Proposed connector name: `giantswarm-ad`. We want to use the same pattern for other connectors. Adding or removing another connector should be repeatable and fairly simple
+- Configuration on the azure side (application, groups, users)
+- Automation to add new callback URLs for new installations/clusters.
+- Creation of the admin group and rbac automation (admin groups needs to be a list)
+- Adding the connector to our MC configurations.
+- Adapting the dex helm chart.
+- Later: Evaluate if this setup can be automated enough to make OIDC a default in workload clusters
+- Later: Add another connector and deprecating github
+
+
+### Revisiting lastpass as a fallback
+
+We already use lastpass as a fallback and we should keep it if possible. However, we should integrate it better.
+
+- Think about how to limit duration and renew it more often.
+- Include this fallback option in `opsctl login`
