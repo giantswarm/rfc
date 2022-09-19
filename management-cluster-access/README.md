@@ -9,7 +9,7 @@ Our vintage product also offers the possibility to create a client certificate t
 This means that in the event of GitHub or Dex being unavailable, we do not get locked out of the management cluster.
 
 For pure CAPI installations on the other hand, the only fallback authentication method is a single static kubeconfig that is stored in LastPass for emergency access.
-This poses a real risk to get locked out of the management cluster in case of problems with OIDC.
+Since this method is not integrated into our tooling, accessing the management cluster using `opsctl` may not be possible when there are problems with OIDC.
 We also rely on the GitHub API being available as an external dependency we can not control.
 
 Furthermore, loss of access to the management clusters implies loss of access to all workload clusters that do not have OIDC access for Giant Swarm staff set up.
