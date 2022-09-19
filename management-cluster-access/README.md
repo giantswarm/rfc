@@ -2,21 +2,21 @@
 
 ## Access to MCs for giant swarm staff in vintage vs the CAPI product
 
-Our default access method to management clusters is now single-sign-on.
-For Giant Swarm staff this is done via `dex` using github as the _only_ identity provider. 
+Our default access method to management clusters is now single-sign-on (SSO).
+For Giant Swarm staff this is currently done via Dex using GitHub as the _only_ identity provider. 
 
 Our vintage product also offers the possibility to create a client certificate to access the management cluster.
-This means that in the event of github or `dex` being unavailable, we do not get locked out of the management cluster.
+This means that in the event of GitHub or Dex being unavailable, we do not get locked out of the management cluster.
 
-For pure CAPI installations on the other hand, the only fallback authentication method is a single static kubeconfig that is stored in lastpass for emergency access.
+For pure CAPI installations on the other hand, the only fallback authentication method is a single static kubeconfig that is stored in LastPass for emergency access.
 This poses a real risk to get locked out of the management cluster in case of problems with OIDC.
-We also rely on the github api being available as an external dependency we can not control.
+We also rely on the GitHub API being available as an external dependency we can not control.
 
-Furthermore, loss of access to the management clusters implies loss of access to all workload clusters that do not have OIDC access for giant swarm staff set up.
+Furthermore, loss of access to the management clusters implies loss of access to all workload clusters that do not have OIDC access for Giant Swarm staff set up.
 This is due to the fact that in order to create a client certificate for these workload clusters, we need to access the management cluster first.
 At this moment this likely applies to all workload clusters on pure CAPI installations.
 
-However, even if OIDC access was set up, it would still leave github as a single point of failure.
+However, even if OIDC access was set up, it would still leave GitHub as a single point of failure.
 
 Let's ensure that management cluster access is highly available for operations through GS staff in the future.
 
@@ -43,9 +43,9 @@ At the moment this is not the case for the CAPI product.
 - If we want to support this, we need to decide whether we want to use vault or something else.
 - Whichever method we choose, we need to ensure that TTL duration is limited to minimize the security risk. 
 
-### Storing kubeconfig in lastpass
+### Storing kubeconfig in LastPass
 
-In the CAPI product, a valid kubeconfig is stored in lastpass as emergency fallback. This is part of the bootstrap process.
+In the CAPI product, a kubeconfig is stored in LastPass as an emergency fallback, during the bootstrap process.
 
 - This method of authentication is completely separate from SSO and does not have shared dependencies.
 - It is not integrated in our tooling and we need to pull the kubeconfig using lastpass cli.
@@ -53,7 +53,7 @@ In the CAPI product, a valid kubeconfig is stored in lastpass as emergency fallb
 - In case of a security threat this implies rotating the api server CA and all certificates.
 - Since it is already integrated, it makes sense to keep it for emergencies while there is no alternative.
 - If we want to support this for a longer time we need to improve security.
-- We could support this as fallback method in `opsctl login` by managing access to `lastpass` or calling the `lastpass` cli to ease operations.
+- We could support this as fallback method in `opsctl login` by managing access to lastpass.com or calling the `lastpass` CLI to ease operations.
 
 ### Introduce a second identity provider for SSO
 
