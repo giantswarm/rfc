@@ -1,34 +1,45 @@
 # Ensure no single point of failure in management cluster access
 
-## Access to MCs for giant swarm staff in vintage vs the CAPI product
+## Access to management clusters for Giant Swarm staff
 
-Our default access method to management clusters is now single-sign-on (SSO).
-For Giant Swarm staff this is currently done via Dex using GitHub as the _only_ identity provider. 
+Our default access method to management clusters is now single sign-on (SSO).
+For Giant Swarm staff this is currently done via Dex using GitHub as the _only_ identity provider (IdP).
 
 Our vintage product also offers the possibility to create a client certificate to access the management cluster.
-This means that in the event of GitHub or Dex being unavailable, we do not get locked out of the management cluster.
+This means that in the event of GitHub or Dex being unavailable, we have a fall-back method for management cluster access.
 
-For pure CAPI installations on the other hand, the only fallback authentication method is a single static kubeconfig that is stored in LastPass for emergency access.
-Since this method is not integrated into our tooling, accessing the management cluster using `opsctl` may not be possible when there are problems with OIDC.
-We also rely on the GitHub API being available as an external dependency we can not control.
+For pure CAPI installations on the other hand, the only fallback authentication method is a single static kubeconfig that is stored in LastPass.
+Since this method is currently not integrated with our tooling, accessing the management cluster using `opsctl` is not possible when there are problems with OIDC or GitHub.
 
 Furthermore, loss of access to the management clusters implies loss of access to all workload clusters that do not have OIDC access for Giant Swarm staff set up.
 This is due to the fact that in order to create a client certificate for these workload clusters, we need to access the management cluster first.
 At this moment this likely applies to all workload clusters on pure CAPI installations.
 
-However, even if OIDC access was set up, it would still leave GitHub as a single point of failure.
+However, even if OIDC access to workload clusters was set up, with GitHub as the identity provider, we would still have the IdP as the single point of failure.
 
-Let's ensure that management cluster access is highly available for operations through GS staff in the future.
+Hence the goal of this RFC is to ensure that management cluster access is highly available for operations through Giant Swarm staff in the future.
 
 ## References
 
 - [PKI epic](https://github.com/giantswarm/giantswarm/issues/15981)
-- [Issue regarding client cert creation for CAPO ](https://github.com/giantswarm/giantswarm/issues/21740)
+- [Issue regarding client certificate creation for CAPO ](https://github.com/giantswarm/giantswarm/issues/21740)
 - [Story for backup IDP in dex](https://github.com/giantswarm/roadmap/issues/603)
 - [Proposal to use Azure AD for GS staff](https://github.com/giantswarm/giantswarm/issues/21627)
-- 
 
-## Possible solutions
+## Proposed solution
+
+### Redundant identity providers
+
+- Azure AD as the primary identity provider
+- Secondary identity provider
+
+### Enable opsctl to retrieve kubeconfig from LastPass
+
+## Future outlook
+
+- Potentially have a PKI for client certificate creation
+
+## TODO: Clean up remainders
 
 ### Client certificates
 
@@ -41,7 +52,7 @@ At the moment this is not the case for the CAPI product.
 - A long living client-certificate granting admin access is a security risk since permissions can not be revoked.
 - We do not want this to be the primary authentication method for human users. (That should remain SSO)
 - If we want to support this, we need to decide whether we want to use vault or something else.
-- Whichever method we choose, we need to ensure that TTL duration is limited to minimize the security risk. 
+- Whichever method we choose, we need to ensure that TTL duration is limited to minimize the security risk.
 
 ### Storing kubeconfig in LastPass
 
@@ -109,7 +120,6 @@ This can be done in rainbow independently of new developments in terms of pki fo
 - Adapting the dex helm chart.
 - Later: Evaluate if this setup can be automated enough to make OIDC a default in workload clusters
 - Later: Add another connector and deprecating github
-
 
 ### Revisiting lastpass as a fallback
 
