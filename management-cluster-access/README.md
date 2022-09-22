@@ -25,6 +25,7 @@ Hence the goal of this RFC is to ensure that management cluster access is highly
 - [Issue regarding client certificate creation for CAPO ](https://github.com/giantswarm/giantswarm/issues/21740)
 - [Story for backup IDP in dex](https://github.com/giantswarm/roadmap/issues/603)
 - [Proposal to use Azure AD for GS staff](https://github.com/giantswarm/giantswarm/issues/21627)
+- [Story for IDP and dex connector automation](https://github.com/giantswarm/roadmap/issues/1432)
 
 ## Proposed solution
 
@@ -54,6 +55,11 @@ At the moment this is not the case for the CAPI product.
 - If we want to support this, we need to decide whether we want to use vault or something else.
 - Whichever method we choose, we need to ensure that TTL duration is limited to minimize the security risk.
 
+Possible story for workload cluster access here:
+- If we run `vault` or an alternative outside the MC, we could create workload cluster CA here before cluster creation, generate all required client-certificates from that CA.
+- This would make MC and WC more independent
+- Requirement to have clean separation of customer accounts
+
 ### Storing kubeconfig in LastPass
 
 In the CAPI product, a kubeconfig is stored in LastPass as an emergency fallback, during the bootstrap process.
@@ -65,6 +71,12 @@ In the CAPI product, a kubeconfig is stored in LastPass as an emergency fallback
 - Since it is already integrated, it makes sense to keep it for emergencies while there is no alternative.
 - If we want to support this for a longer time we need to improve security.
 - We could support this as fallback method in `opsctl login` by managing access to lastpass.com or calling the `lastpass` CLI to ease operations.
+
+Possible story for workload cluster access here:
+- Use a controller on the MC to push WC client certificiates to lastpass
+- This would make MC and WC more independent
+- Would enable rotation of short lived certificates
+- Alternatively we could write the secret to a gitrepo via `sops` instead of using `lastpass`
 
 ### Introduce a second identity provider for SSO
 
