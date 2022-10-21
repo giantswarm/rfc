@@ -2,11 +2,11 @@
 
 Managed Crossplane offering is under development as per customers' requests.
 This document discusses all the required elements of Crossplane's deployment
-and design decisions we make along the way.
+and the design decisions we make along the way.
 
 ## Crossplane building blocks
 
-For the ease of describing each proposal, we will divide a fully functional
+For ease of describing each proposal, we will divide a fully functional
 Crossplane deployment into three stages.
 
 ### Stage 1 - Crossplane
@@ -32,7 +32,7 @@ infrastructure yet.
 ### Stage 2 - Crossplane Providers
 
 Infrastructure is managed by Providers. Creating a
-`providers.pkg.crossplane.io` resource will cause Crossplane operator's to
+`providers.pkg.crossplane.io` resource will cause Crossplane operators to
 deploy provider operators and all necessary resources.
 
 - Provider-specific Operator
@@ -43,13 +43,13 @@ deploy provider operators and all necessary resources.
 ### Stage 3 - Provider Configuration
 
 Just deploying Providers is not enough for them to be functional. They still
-need to be configured with passwords, secrets, access keys, API keys and the
-like. Each Provider comes with their own configuration CRD, usually
+need to be configured with passwords, secrets, access keys, API keys, and the
+like. Each Provider comes with its configuration CRD, usually
 `providerconfigs.<provider-name>.crossplane.io`.
 
-For example, AWS provider will require a `ProviderConfig` similar to the one
-below to be able to perform reconciliation. `crossplane-system/aws-creds`
-Secret should contain AWS Access Key.
+For example, the AWS provider will require a `ProviderConfig` similar to the
+one below to be able to perform reconciliation. `crossplane-system/aws-creds`
+The Secret should contain AWS Access Key.
 
 ```yaml
 apiVersion: aws.crossplane.io/v1beta1
@@ -69,11 +69,11 @@ spec:
 
 ### 1. Installation
 
-#### Install Crossplane as part of App collection
+#### Install Crossplane as part of the App collection
 
 This is useful if we want to install Crossplane App on every Management Cluster
-by default. Configuration will live in `giantswarm/config`. This still allows
-us to change available settings and Providers per Cloud Provider and per
+by default. The configuration will live in `giantswarm/config`. This still
+allows us to change available settings and Providers per Cloud Provider and per
 Management Cluster.
 
 #### Install Crossplane as HelmRelease in management-clusters-fleet
@@ -92,12 +92,12 @@ including Provider Configuration. This means we need to store sensitive data
 support their encryption and decryption, and deliver them to Management
 Clusters.
 
-#### Giant Swarm manages Crossplane, customer provides the keys
+#### Giant Swarm manages Crossplane, the customer provides the keys
 
 In this case, Giant Swarm is responsible for stages one and two. Our goal is to
 deliver Crossplane and a set of Providers. It is up to the customer to create a
 `Secret` and `ProviderConfig`. The structure of both resources is simple and
-well documented. It also makes sense given how `ProviderConfig` definition
+well-documented. It also makes sense given how the `ProviderConfig` definition
 varies, depending on the Provider.
 
 ### 3. Providers
@@ -109,22 +109,22 @@ We deploy a provider that best matches the Cloud Provider's infrastructure:
 - Azure <https://github.com/crossplane-contrib/provider-azure>
 - CAPA <https://github.com/crossplane-contrib/provider-aws>?
 - GCP <https://github.com/crossplane/provider-gc>
-- KVM not supported; obviously it's customers' own infrastructure
+- KVM is not supported; obviously, it's the customers' infrastructure
 - OpenStack TBD (<https://github.com/crossplane-contrib/provider-terraform>???)
 
 No other providers are available, even upon request. The offering is "managed".
 
-#### Customers can pick and choose from a well defined list of vetted Providers
+#### Customers can pick and choose from a well-defined list of vetted Providers
 
 We offer a curated selection of [all Crossplane
 providers](https://github.com/orgs/crossplane-contrib/repositories). Clients
-are free pick the ones they like for us to install. The offering is "managed".
+are free to pick the ones they like for us to install. The offering is "managed".
 
 #### Customers can request any Provider they like
 
-Customers can select any of Provider they like to be installed. This means
+Customers can select any of the Providers they like to have. It means
 Giant Swarm tests and vets the Provider to be able to support the customer and
-truly "manage" the deployment.
+"manage" the deployment.
 
 #### Customers can install any Provider they like
 
