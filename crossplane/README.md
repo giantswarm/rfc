@@ -104,12 +104,43 @@ varies, depending on the Provider.
 
 #### The list of Providers is pre-defined and immutable
 
+We deploy a provider that best matches the Cloud Provider's infrastructure:
+- AWS <https://github.com/crossplane-contrib/provider-aws>
+- Azure <https://github.com/crossplane-contrib/provider-azure>
+- CAPA <https://github.com/crossplane-contrib/provider-aws>?
+- GCP <https://github.com/crossplane/provider-gc>
+- KVM not supported; obviously it's customers' own infrastructure
+- OpenStack TBD (<https://github.com/crossplane-contrib/provider-terraform>???)
+
+No other providers are available, even upon request. The offering is "managed".
+
 #### Customers can pick and choose from a well defined list of vetted Providers
+
+We offer a curated selection of [all Crossplane
+providers](https://github.com/orgs/crossplane-contrib/repositories). Clients
+are free pick the ones they like for us to install. The offering is "managed".
 
 #### Customers can request any Provider they like
 
+Customers can select any of Provider they like to be installed. This means
+Giant Swarm tests and vets the Provider to be able to support the customer and
+truly "manage" the deployment.
+
 #### Customers can install any Provider they like
+
+Customers are free to create and configure `Provider` resources however and
+whenever they like. Only stage 1 is managed. Customers are responsible for
+running Providers much like with ArgoCD and custom operators on Management
+Clusters.
+
+#### 4. OpenStack provider
+
+To our best knowledge, there are no dedicated OpenStack Crossplane providers.
 
 ## Decision
 
+TBD
+
 ### Next steps
+
+TBD
