@@ -40,8 +40,6 @@ Hence the goal of this RFC is to ensure that management cluster access is highly
 
 - Potentially have a PKI for client certificate creation
 
-## TODO: Clean up remainders
-
 ### Client certificates
 
 In the vintage product, client certificates can be created from outside the cluster using `vault` for signing.
@@ -92,17 +90,10 @@ However, we could add more providers.
 - While dex allows an array of connectors, we currently use a fixed naming for our single `giantswarm` connector. We need to revisit what relies on this convention to ensure the second connector is equal.
 - Regardless of other means auf authentication being implemented, adding another dex idp would be beneficial.
 
-### Service account tokens
+### Other methods
 
-Other than client certificates, we could also look at service accounts as a means of managing access.
-
-- Service accounts can be rotated so they carry less risk in that regard than client certificates.
-- This should not be a standard access method for human engineers.
-- We would need to discover how to implement this. A dedicated controller for managing service account access is thinkable.
-
-### Other access methods
-
-- To be discussed
+For the time being we focus on above mentioned means of authentication.
+Service account tokens are another one which we could revisit in the future. However, to authenticate human users, SSO is preferred.
 
 ### Related stories
 
@@ -119,6 +110,19 @@ Related problems include:
 
 ## Next steps
 
+### Automation for SSO setup towards MC and WC
+
+The goal is to have SSO access by default on all our clusters (MC and WC) and ease introduction of new identity providers.
+
+- Automation to register callback URLs in identity providers for new installations/clusters.
+- Automation for identity provider side settings.
+- Creation of the admin group and rbac automation (admin groups needs to be a list)
+- Adapting dex to combine default (automatic) configuration as well as user side configuration.
+- Adapting kubectl gs to work with more dex connectors.
+- Deprecate k8s authenticator
+- Make OIDC a default in all clusters
+- This would need athena, nginx ingress controller, cert manager and dex to be default apps.
+
 ### Adding azure AD as a second identity provider for SSO
 
 As a first step to mitigate the problem of a single point of failure, we want to introduce azure active directory as a second SSO identity provider.
@@ -126,11 +130,7 @@ This can be done in rainbow independently of new developments in terms of pki fo
 
 - Proposed connector name: `giantswarm-ad`. We want to use the same pattern for other connectors. Adding or removing another connector should be repeatable and fairly simple
 - Configuration on the azure side (application, groups, users)
-- Automation to add new callback URLs for new installations/clusters.
-- Creation of the admin group and rbac automation (admin groups needs to be a list)
-- Adding the connector to our MC configurations.
-- Adapting the dex helm chart.
-- Later: Evaluate if this setup can be automated enough to make OIDC a default in workload clusters
+- This provider will be the first one supported by above automation.
 - Later: Add another connector and deprecating github
 
 ### Revisiting lastpass as a fallback
@@ -139,3 +139,14 @@ We already use lastpass as a fallback and we should keep it if possible. However
 
 - Think about how to limit duration and renew it more often.
 - Include this fallback option in `opsctl login`
+
+### Deprecate Auth0
+
+We want to unify the way we authenticate to services. This also means deprecating auth0.
+- Identify which services still use auth0.
+- Migrate from auth0 to other identity providers. (Likely azure AD)
+  
+### PKI story and future of client certificates
+
+This is largely reliant on the development of the CAPI product. Therefore we want to focus on SSO first and revisit client certificates at a later point in time.
+Since we still have vault in the vintage product and use other fallback methods (lastpass) in CAPI, we can afford to wait.
