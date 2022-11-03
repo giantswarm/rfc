@@ -36,6 +36,8 @@ Hence the goal of this RFC is to ensure that management cluster access is highly
 
 ### Enable opsctl to retrieve kubeconfig from LastPass
 
+For Giant Swarm staff, the `opsctl login` command is the preferred way to access the management cluster. In the future we aim to improve the command by letting it read the kubeconfig stored in a LastPass secret.
+
 ## Future outlook
 
 - Potentially have a PKI for client certificate creation
