@@ -86,6 +86,10 @@ This is useful if we want to limit Crossplane to be deployed on select
 Management Clusters. Creating a single `HelmRelease` resource allows us to
 easily set chart values.
 
+#### Decision
+
+(b) Crossplane MVP will be installed as part of `management-clusters-fleet`.
+
 ### 2. Handling configuration and secrets
 
 #### Giant Swarm stores customer secrets
@@ -103,6 +107,10 @@ deliver Crossplane and a set of Providers. It is up to the customer to create a
 `Secret` and `ProviderConfig`. The structure of both resources is simple and
 well-documented. It also makes sense given how the `ProviderConfig` definition
 varies, depending on the Provider.
+
+#### Decision
+
+(b) Customers will be required to provide the keys.
 
 ### 3. Providers
 
@@ -136,6 +144,10 @@ Customers are free to create and configure `Provider` resources however and
 whenever they like. Only stage 1 is managed. Customers are responsible for
 running Providers much like with ArgoCD and custom operators on Management
 Clusters.
+
+#### Decision
+
+(a) We will start with a pre-defined and immutable list of Providers.
 
 #### 4. OpenStack provider
 
