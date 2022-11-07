@@ -73,14 +73,14 @@ spec:
 
 ### 1. Installation
 
-#### Install Crossplane as part of the App collection
+#### 1.a Install Crossplane as part of the App collection
 
 This is useful if we want to install Crossplane App on every Management Cluster
 by default. The configuration will live in `giantswarm/config`. This still
 allows us to change available settings and Providers per Cloud Provider and per
 Management Cluster.
 
-#### Install Crossplane as HelmRelease in management-clusters-fleet
+#### 1.b Install Crossplane as HelmRelease in management-clusters-fleet
 
 This is useful if we want to limit Crossplane to be deployed on select
 Management Clusters. Creating a single `HelmRelease` resource allows us to
@@ -88,11 +88,11 @@ easily set chart values.
 
 #### Decision
 
-(b) Crossplane MVP will be installed as part of `management-clusters-fleet`.
+(1.b) Crossplane MVP will be installed as part of `management-clusters-fleet`.
 
 ### 2. Handling configuration and secrets
 
-#### Giant Swarm stores customer secrets
+#### 2.a Giant Swarm stores customer secrets
 
 In this case, Giant Swarm is responsible for all three stages of deployment,
 including Provider Configuration. This means we need to store sensitive data
@@ -100,7 +100,7 @@ including Provider Configuration. This means we need to store sensitive data
 support their encryption and decryption, and deliver them to Management
 Clusters.
 
-#### Giant Swarm manages Crossplane, the customer provides the keys
+#### 2.b Giant Swarm manages Crossplane, the customer provides the keys
 
 In this case, Giant Swarm is responsible for stages one and two. Our goal is to
 deliver Crossplane and a set of Providers. It is up to the customer to create a
@@ -110,11 +110,11 @@ varies, depending on the Provider.
 
 #### Decision
 
-(b) Customers will be required to provide the keys.
+(2.b) Customers will be required to provide the keys.
 
 ### 3. Providers
 
-#### The list of Providers is pre-defined and immutable
+#### 3.a The list of Providers is pre-defined and immutable
 
 We deploy a provider that best matches the Cloud Provider's infrastructure:
 - AWS <https://github.com/crossplane-contrib/provider-aws>
@@ -126,19 +126,19 @@ We deploy a provider that best matches the Cloud Provider's infrastructure:
 
 No other providers are available, even upon request. The offering is "managed".
 
-#### Customers can pick and choose from a well-defined list of vetted Providers
+#### 3.b Customers can pick and choose from a well-defined list of vetted Providers
 
 We offer a curated selection of [all Crossplane
 providers](https://github.com/orgs/crossplane-contrib/repositories). Clients
 are free to pick the ones they like for us to install. The offering is "managed".
 
-#### Customers can request any Provider they like
+#### 3.c Customers can request any Provider they like
 
 Customers can select any of the Providers they like to have. It means
 Giant Swarm tests and vets the Provider to be able to support the customer and
 "manage" the deployment.
 
-#### Customers can install any Provider they like
+#### 3.d Customers can install any Provider they like
 
 Customers are free to create and configure `Provider` resources however and
 whenever they like. Only stage 1 is managed. Customers are responsible for
@@ -147,7 +147,7 @@ Clusters.
 
 #### Decision
 
-(a) We will start with a pre-defined and immutable list of Providers.
+(3.a) We will start with a pre-defined and immutable list of Providers.
 
 #### 4. OpenStack provider
 
