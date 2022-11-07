@@ -1,8 +1,12 @@
-# Crossplane on Management Clusters
+# Crossplane MVP on Management Clusters
 
 Managed Crossplane offering is under development as per customers' requests.
 This document discusses all the required elements of Crossplane's deployment
 and the design decisions we make along the way.
+
+> 💡Please note: This document defines decisions made towards delivering
+  Crossplane MVP to select customers on a deadline. It is not indicative of
+  final plans for Crossplane on Giant Swarm Management Clusters.
 
 ## Crossplane building blocks
 
