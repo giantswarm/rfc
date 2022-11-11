@@ -25,7 +25,7 @@ The following lists some ideas towards RFC that are explicitly not presented:
 
 This is both to allow a more natural process to evolve over time, as well as to not prescribe a badly-fitting process too early. The above points could be the subject of future RFCs.
 
-## Visiblity
+## Visibility
 
 The RFC repository (`giantswarm/rfc`) is public. This is a continuation of Giant Swarm's default position of radical transparency, with the aim to allow all ideas to be shared and discussed openly. Some reasonable efforts may need to be made to ensure sensitive information remains private.
 
