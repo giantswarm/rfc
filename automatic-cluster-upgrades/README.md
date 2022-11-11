@@ -8,7 +8,7 @@
 
 - As a Giant Swarm customer, and also as a Giant Swarm maintainer, we would like to have workload clusters running in the latest version automatically, and not worry about patching security vulnerabilities or cluster components running out of updates (e. g. Kubernetes release end of life).
 
-- As a customer admin, I would like to define upgrade windows, to ensure that upgrades happen when disruption is most permittable and impact on production traffic is minimal.
+- As a customer admin, I would like to define upgrade windows, to ensure that upgrades happen when disruption is most suitable and impact on production traffic is minimal.
 
 - As a customer admin, I would like to mark a workload cluster as "frozen" in order to block upgrades for a certain time period.
 
@@ -18,6 +18,8 @@
 
 - As a customer, and also as Giant Swarm, we want to capture the result of an upgrade. Based on the result we can alert on a certain condition, track the history for certain cluster(s) or automate response based on the end state.
 
+- As a customer, and also as Giant Swarm, we want to make the automatic upgrades compatible to GitOps, so the state of the infrastructure changes are tracked in Git.
+
 ## Reasoning
 
 Our customers need to plan every upgrade on their side and manage the upgrades for every workload cluster release. Each customer has their own requirements regarding when they need to schedule upgrades (freeze periods, maintenance windows, etc.). At the same time, cloud native projects and Giant Swarm are continuously providing new releases. The preparation and execution of upgrades is time and labor intensive, while the fact that they are executed manually does not add much value to stakeholders.
@@ -26,9 +28,9 @@ Giant Swarm designed a versioning scheme (based on Semver), which includes all c
 
 ## Current state
 
-Right now the automatic upgrades are carried by Solution Engineers agreeing with the customer on upgrade windows and environments selected. The idea is to automate all this behaviour and information under a Kubernetes operator(s) and Custom Resource(s).
+Right now the automatic upgrades are carried by Solution Engineers (AEs and SAs) agreeing with the customer on upgrade windows and environments selected. The idea is to automate all this behaviour and information under a Kubernetes operator(s) and Custom Resource(s).
 
-The Solution Engineer plans cluster upgrades based on cluster type (environment, team,...) and maintenance windows offered by the customers. The upgrade is just a change on the cluster version field on the cluster Custom Resource (CR).
+The Solution Engineer plans cluster upgrades based on cluster type (environment, team,...) and maintenance windows offered by the customers. The upgrade is just a change on cluster-<provider> App manifest of the cluster.
 
 Based on the fact Giant Swarm is moving to Cluster API this is story let us define a new greenfield scenario where we can design a model that can be more generic and not focus only in Giant Swarm platform. The idea would be contribute as much as possible with upstream due the fact most of this functionality would be useful for everyone that manages clusters.
 
@@ -44,7 +46,7 @@ There are different reason why we are interested in having an object to define t
 
 - We can save cluster upgrade status displaying if something goes wrong or not.
 
-- In theory we can include apps upgrades together or separately.
+- In theory we can include apps upgrades together or separately. [UPDATE] Now [this is possible thanks to OCI registries and Flux](https://github.com/giantswarm/rfc/tree/main/automatic-app-upgrades).
 
 ### Maintenance schedule entity
 
@@ -72,25 +74,29 @@ Example resource:
 apiVersion: 
 kind: ClusterUpgrade
 metadata:
-  name: upgrade-to-release-v20
+  name: upgrade-to-cluster-openstack-v1.20
   namespace: default
 spec:
-  clusterRef:
-    apiVersion: cluster.x-k8s.io/v1alpha3
-    kind: Cluster
-    name: foo01
+  matchers:
+  - name: cluster_id
+    value: mgab6
+    isRegex: false
+  - name: dev_clusters
+    key: stage
+    value: dev
+    isRegex: true
   releaseRef:
-    apiVersion: release.giantswarm.io/v1alpha1
+    apiVersion: application.giantswarm.io/v1alpha1
     kind: Release
-    name: v13.0.1
+    name: v1.20.0
   startTime: 2021-03-10T07:00:00Z
 status:
   triggeredAt: 2021-03-10T10:00:00Z
   state: finished
   outcome: success
   finishedAt: 2021-03-10T10:31:10Z
-  fromRelease: v13.0.0
-  toRelease: v13.0.1
+  fromRelease: v1.16.0
+  toRelease: v1.20.0
 ```
 
 #### MaintenanceSchedule
@@ -122,21 +128,17 @@ This would allow upgrades to happen between 07:00 UTC and 17:00 UTC on Monday-Fr
 
 #### Cluster upgrade executor
 
-There will be an operator that based on the `Cluster Upgrade` CRs will initiate the upgrades changing the labels on the specific CR(s), it could include Apps at some point though ideally would detach apps totally from the cluster and apps metadata and App Platform enforce the requirements. 
+There will be an operator that based on the `Cluster Upgrade` CRs will trigger the upgrades changing the labels on the specific CR(s) when date matches or it will create the pull requests in Git repo to trigger the upgrade. 
 
 This operator can also check on the `maintenance schedule` to verify the upgrade fulfil or not the criteria, and in case it does not, alert or set an appropriate status on the object status.
-
-Also the operator will handle the mechanics of the upgrade like which `MachinePool` is upgraded first or wait till one `MachinePool` is done successfully to continue with next one. There is already an [RFC](https://github.com/giantswarm/rfc/pull/17/files) up for this specific controller.
 
 #### Cluster upgrade scheduler
 
 Ideally to automate the whole process there will be an operator that creates all the `Cluster Upgrade` CRs when a new release of Giant Swarm is created (and/or possibly other events).
 
-#### Existing CAPI controllers
-
-There was [a proposal in CAPI upstream](https://github.com/kubernetes-sigs/cluster-api/blob/master/docs/proposals/20191017-kubeadm-based-control-plane.md) for the KubeadmControlPlane (later included in CAPZ components) to add `upgradeAfter` parameter to influence the upgrades. Though this field only means a cluster upgrade will be triggered after that date, to force an upgrade, it is related to the goal of controlling upgrades. The idea would be to create a new proposal that allows pointing a new entity (`MaintenanceSchedule `/`UpgradePolicy`)  to extend the possibilities more than a single timestamp. Later controllers could leverage on that to allow changes or not to their reconciled resources.
-
 ## Open questions
+
+- How Cluster Upgrade Scheduler knows there is a new version? Should the controller listen to cluster-<provider> releases?
 
 - Do we schedule automatic upgrades by default? Or do we let customer schedule them (maybe suggesting in our UI a cluster upgrade need to be scheduled)?
 
