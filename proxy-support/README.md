@@ -45,10 +45,10 @@ superseded-by:
 
 ## Glossary
 
-- Management Cluster (`MC`): 
-- Workload Cluster (`WC`): 
+- Management Cluster (`MC`): A cluster which hosts all ClusterAPI controllers and extend this with Giant Swarm specific features like GitOps tooling and an observability stack.
+- Workload Cluster (`WC`): A cluster created by a ClusterAPI controller, which is meant to be used by end-users.
 - Installation: An installation defines the combination of a `MC` with all the provisioned `WCs` from there.
-- App Platform: 
+- App Platform: Refers to a set of features and concepts that allow to browse, install and manage the configurations of apps from the management cluster.
 - Proxy configuration: In most cases a combination of valid `http_proxy`,`https_proxy` and `no_proxy` environment variables.
 
 ## Summary
@@ -84,9 +84,9 @@ Every pod within a Kubernetes cluster needs a valid proxy configuration if the p
 
 On a `MC` there are a lot of components which needs access to external systems:
 
-- `flux` needs access to `github.com`
-- the entire monitoring and alerting stack needs access to `opsgenie`, `grafana`, ...
-- App platform components needs access to an OCI artifact system (e.g. `github.com`, `azure`)
+- `Flux` needs access to `github.com`
+- The entire monitoring and alerting stack needs access to `opsgenie`, `grafana`, ...
+- App platform components need access to an OCI artifact system (e.g. `github.com`, `azure`)
 
 As we already use `kyverno` in our `MC`, we can use the [`kyverno-policies-connectivity`] chart to inject the proxy configuration into all pods.
 
@@ -261,6 +261,7 @@ As `cluster-apps-operator` takes care of creating `deployment/chart-operator` in
 [`kyverno-policies-connectivity`]: (https://github.com/giantswarm/kyverno-policies-connectivity)
 [proxy variables]: https://about.gitlab.com/blog/2021/01/27/we-need-to-talk-no-proxy/
 [PR #290]: (https://github.com/giantswarm/cluster-apps-operator/pull/290)
+[ClusterAPI]: (https://cluster-api.sigs.k8s.io/#:~:text=Cluster%20API%20is%20a%20Kubernetes,and%20operating%20multiple%20Kubernetes%20clusters.)
 
 <!-- 
 toc got created by running 
