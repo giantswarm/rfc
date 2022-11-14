@@ -9,6 +9,7 @@ participant "App CR" as appCR #OrangeRed
 control "CAPI" as CAPI #blue
 control "cluster-apps-operator" as clusterAppsOperator
 participant "cluster values" as clusterValues
+participant "systemd proxy" as systemdProxy
 control "WC specific App operator" as appOperator
 /'control "Chart operator" as chartOperator #orange'/
 end box
@@ -19,15 +20,15 @@ control "Chart operator" as chartOperatorWC
 participant "cert-manager" as certManager
 end box
 
-
 User -> clusterCR: create
 
 == CAPI ==
 
 CAPI -> clusterCR: reconcile
 clusterAppsOperator -> clusterCR: reconcile
-clusterAppsOperator -> clusterValues: creates a cluster-specific secret and configmap
-CAPI -> clusterValues: fetches the cluster-specific secret
+clusterAppsOperator --[#green]> clusterValues: creates a cluster-specific secret
+clusterAppsOperator -[#green]> systemdProxy: creates a cluster-specific systemd proxy drop-in
+CAPI -[#green]> systemdProxy: fetches the cluster-specific secret
 CAPI -> CAPI: continue with machine bootstraping
 
 == app platform ==

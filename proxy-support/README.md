@@ -130,6 +130,11 @@ For that, the values of `no_proxy` are separated into two logical parts:
 
 During the initial bootstrap phase of the `MC`, there isn't the entire App Platform running. For that reason it's required to define the proxy configuration multiple times.
 
+Following components are applied as helm-charts with a proxy configuration:
+
+- `cert-manager` in `namespace/kube-system`
+- `kyverno-policies-connectivity` (this `clusterPolicy` mutate each `pod` and inject the cluster-specific proxy configuration)
+
 #### after all controllers/operators are in place
 
 After the initial bootstrap is done and all GiantSwarm specific controllers and operators are in place to treat the `MC` as a `WC`, [`cluster-apps-operator`] will take over the handling of the installation specific proxy configuration.
@@ -138,13 +143,15 @@ After the initial bootstrap is done and all GiantSwarm specific controllers and 
 
 The current implemented workflow can be visualized like this:
 
+> The green lines represent the new changes to make the current proxy configuration on a cluster base work.
+
 ![](data/workload_cluster_creation.svg)
 
 #### [`cluster-apps-operator`]
 
 As the proxy configuration is something which exists (for now) on a installation base and must be injected on a WC base (to make cluster-lifecycle work), in [PR #290] [`cluster-apps-operator`] got extended to propagate global proxy configuration into workload cluster specific resources.
 
-[`cluster-apps-operator`] can then be configured to accept following configuration as additional input (added as `configmap-values.yaml.patch` and `secret-values.yaml.patch` in the [`config`]-repo):
+[`cluster-apps-operator`] can then be configured to accept following configuration as additional input (defined via `secret-values.yaml.patch` in the [`config`]-repo):
 
 ```yaml
 proxy:
@@ -153,32 +160,19 @@ proxy:
   https: "http://myProxyUser:mySuperSecretPassword@192.168.52.220:3128"
 ```
 
-As [`cluster-apps-operator`] already creates a `configmap` for each WC called `<clusterName>-cluster-values`, with the extended proxy implementation, the `cluster` section of the `configmap` now contains a `proxy` sub section:
-
-```yaml
-calico:
-  CIDR: 100.96.0.0/11
-kubernetes:
-  API:
-    clusterIPRange: 10.96.0.0/12
-  DNS:
-    IP: 10.96.0.10
-proxy:
-  noProxy: cluster.local,100.64.0.0/13,100.96.0.0/11,178.170.32.59,172.16.0.0/16,internal.corpdomain.net,example.com,svc,127.0.0.1,localhost
-```
-
-[`cluster-apps-operator`] also creates a `secret` which contains some infrastructure specific values ([for `openstack` and `vcd`](https://github.com/giantswarm/cluster-apps-operator/blob/master/service/controller/resource/clustersecret/desired.go#L42-L65)).
+[`cluster-apps-operator`] already creates a `secret` which contains some infrastructure specific values ([for `openstack` and `vcd`](https://github.com/giantswarm/cluster-apps-operator/blob/master/service/controller/resource/clustersecret/desired.go#L42-L65)).
 The `secret` for each WC is called `<clusterName>-cluster-values`.
 With the extended proxy implementation, the secret now contains a new `cluster` section with a `proxy` sub section:
 
 ```yaml
 cluster:
   proxy:
-    httpProxy: http://myProxyUser:mySuperSecretPassword@192.168.52.220:3128
-    httpsProxy: http://myProxyUser:mySuperSecretPassword@192.168.52.220:3128
+    http: http://myProxyUser:mySuperSecretPassword@192.168.52.220:3128
+    https: http://myProxyUser:mySuperSecretPassword@192.168.52.220:3128
+    noProxy: cluster.local,100.64.0.0/13,100.96.0.0/11,178.170.32.59,172.16.0.0/16,internal.corpdomain.net,example.com,svc,127.0.0.1,localhost
 ```
 
-This `secret` and `configmap` can now be used to pass these information into `Apps` which get applied into a WC.
+This `secret` can now be used to pass these information into `Apps` which get applied into a WC.
 As `cert-manager` needs this data, the manifest should now look like:
 
 ```yaml
