@@ -27,14 +27,15 @@ explicit k8s.gcr.io 12
 
 - In vintage, we configure [containerd for docker registry mirrors](https://github.com/giantswarm/giantnetes-terraform/blob/13700c6d1b1adf8d65fba8b1b37eccf31e1ce4f3/templates/files/conf/containerd-config.toml#L37). 
   
-## Possible solutions
+## Design proposals
 
+### 1. How to solve ImagePullErrors
 
-### ImagePullSecret
+#### 1.a ImagePullSecret
 
 We can set `imagePullSecrets` for all pods with an admission hook for authentication but Kubernetes doesn't have any mechanism like registry mirrors. That is why it is not a viable option.
 
-### FairwindsOps/saffire
+#### 1.b FairwindsOps/saffire
 
 There is an open-source project to patch pods in `imagePullErrors` error state: https://github.com/FairwindsOps/saffire
 
@@ -56,7 +57,7 @@ spec:
 This mechanism doesn't work for static pods and it doesn't prevent the issue in advance. Also, it has no built-in mechanism for authentication. We can extend it or combine with the image pull secret solution but it sounds too complicated and dirty.
 
 
-### Containerd Configuration
+#### 1.c Containerd Configuration
 
 As we do in vintage clusters, we can configure containerd configuration as below. This seems the best approach.
 
@@ -73,25 +74,102 @@ username = "giantswarm-user-account"
 password = "my_token_from_docker_hub"
 ```
 
-## Registry usage
+#### Decision
 
-### Which registry should we use? 
+`1.c` is selected.
+We will use containerd configuration. 
+
+### 2. Authentication
+
+#### 2.a Using unauthenticated accounts
+
+Using only public images without authentication is an option to avoid complexity of securing credentials. However, registry providers have pull/rate limits per account. We will be limited by total of [free account limit](https://docs.docker.com/docker-hub/download-rate-limit/) of Docker Hub (100 pulls per 6 hours per IP address) and [tier limit](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-skus) of Azure Container Registry (3000 ReadOps per minute for standard). Anyone can pull images from our registry and spend our limits, which makes us vulnerable. 
+
+#### 2.b Using authenticated accounts
+
+We can pass credentials to `containerd` configuration to be not limited by registry provider limits.
+
+#### Decision
+
+`2.b` is selected.
+We will use authenticated accounts.
+
+
+### 3. Registries
 
 The infranet page (See `Registry Mirrors`) states this as a desired configuration:
   - `docker.io` as primary public registry since it has a privilege in docker daemon.
   - Our own Azure Container Registry as secondary registry because of the security concerns
 
-Using only public images without authentication is also on the table. In that case, we will be limited by total of [free account limit](https://docs.docker.com/docker-hub/download-rate-limit/) of Docker Hub (100 pulls per 6 hours per IP address) and [tier limit](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-skus) of Azure Container Registry (3000 ReadOps per minute for standard). However, anyone can pull images from our registry and spend our limits, which makes us vulnerable. That is why we must use authenticated users.  
+Since we use `containerd`, docker has not a privelege anymore but there is no need to change this order at the moment. We will follow this configuration for CAPI clusters too.
 
-### Open Points
+### 4. Accounts
 
-## How are we going to configure containerd in cluster app?
+- 4.a Giantswarm Account + Single account
+- 4.b Giantswarm Account + Per MC including its WCs
+- 4.c Giantswarm Account + Per WC
+- 4.b Customer Accounts
 
-We need to provide a configation interface in our `cluster-$provider` apps for the users so that they can provide their credentials. Note that we are the users of our management clusters.
+#### Decision
 
-Options:
-1. We can ask users to create whole containerd configuration as a secret.
-2. We can ask users to provide list of registries and credentials as a secret and render containerd configuration with them.
+`4.b` is selected.
+
+Since it is a part of the platform itself, we are going to use GiantSwarm accounts in containerd configuration.
+As we do for other operators, we will follow "per MC" approach here to.
+
+### 5. How to provide credentials to WCs
+
+#### 5.a cluster-apps-operator
+
+We can propogate credentials from MC to WC by using `cluster-apps-operator`. It can create a secret per WC with the credentials.
+
+#### 5.b Optional interface + Gitops
+
+We can delegate the responsibility of creating credentials secret to the creator of `cluster-$provider` apps. GitOps can be useful to template the secrets per WC.
+
+#### Decision
+
+`5.b` is selected.
+
+We don't want to add another responsility to `cluster-apps-operator`. 
+
+
+### 6. Default configuration for WCs
+
+- 6.a: Configuring WCs by default
+- 6.b: Not configuring WCs by default
+
+#### Decision
+
+**NOT DECIDED YET**
+
+
+### 7. Where to put the credentials
+
+#### 7.a Customer's Git Repository
+
+We can put the secret into customers' git repositories. Customers will access to our credentials.
+
+#### 7.b Management Cluster Fleet
+
+We can put the secret into our `management-clusters-fleet` repo. We will need to give reference to that secret in customers' git repository. Management of these secrets can be so costly when we need to create the secret in each organization namespace.
+
+#### Decision
+
+**NOT DECIDED YET**
+
+
+### 8. Configuration interface
+
+How will be the configuration interface in `cluster-$provider` apps?
+
+#### 8.a Full containerd configuration
+
+We can implement a full transitive configuration interface so that users can provide a full containerd configuration, including registy credentials.
+
+#### 8.b Only registry credentials in a structred way
+
+We can define a configuration interface like below and render containerd configuration in `cluster-$provider` app chart.
 
 ```
 registries:
@@ -104,20 +182,8 @@ registries:
   ...
 ```
 
-> Note that there can be more than one feature we will support that affects containerd configuration like proxy settings. In this case, we should ensure that the option 1 will not lead conflicts.
+#### Decision
 
-### Workload Clusters
+`8.b` is selected.
 
-- Will we configure workload clusters by default?
-- Will we use our credentials for workload clusters by default?
-
-According to the discussion in Kaas Sync, we will configure management clusters and all workload clusters in the management cluster will inherit the configuration from their MCs.
-
-### Configuration Details
-
-- Where will be the source of truth for the container registry configuration? `config` repo or `management-cluster-fleet`?
-- How will WCs consume the credentials in their charts? 
-
-### How are going to manage credentials per cluster?
-
-Will we create a user per management cluster?
+8.a seems risky. Also, there can be other configurations (e.g. proxy) that touch containerd configuration too. 8.a can be error prone.
