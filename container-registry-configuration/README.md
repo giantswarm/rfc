@@ -18,7 +18,7 @@ explicit k8s.gcr.io 12
 
 - We don't configure our Kubernetes clusters for container registries via a central configuration. We mostly rely on public registries and anonymous users. Some applications consume `.dockerConfigJson` from config repo but it is for only `quay.io`.
 
-- We have an infranet page (See `Registry Mirrors`) that states some decisions about which registries we must use. Shortly,
+- We have an intranet page (See `Registry Mirrors`) that states some decisions about which registries we must use. Shortly,
   - We need registry mirrors for high availability.
   - We will not run our own registy.
   - We will use `docker.io` as primary public registry since it has a privilege in docker daemon.
@@ -97,11 +97,11 @@ We will use authenticated accounts.
 
 ### 3. Registries
 
-The infranet page (See `Registry Mirrors`) states this as a desired configuration:
+The intranet page (See `Registry Mirrors`) states this as a desired configuration:
   - `docker.io` as primary public registry since it has a privilege in docker daemon.
   - Our own Azure Container Registry as secondary registry because of the security concerns
 
-Since we use `containerd`, docker has not a privelege anymore but there is no need to change this order at the moment. We will follow this configuration for CAPI clusters too.
+Since we use `containerd`, docker has not a privilege anymore but there is no need to change this order at the moment. We will follow this configuration for CAPI clusters too.
 
 ### 4. Accounts
 
@@ -114,7 +114,7 @@ Since we use `containerd`, docker has not a privelege anymore but there is no ne
 
 `4.b` is selected.
 
-Since it is a part of the platform itself, we are going to use GiantSwarm accounts in containerd configuration.
+Since it is a part of the platform itself, we are going to use Giant Swarm accounts in containerd configuration.
 As we do for other operators, we will follow "per MC" approach here to.
 
 ### 5. How to provide credentials to WCs
