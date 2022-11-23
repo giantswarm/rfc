@@ -5,11 +5,11 @@ The purpose of this RFC is to propose a labelling scheme to safely identify a wo
 This is required for:
 
 - deleting a workload cluster on CAPI;
-- displaying a workload cluster's defining apps in Happa.
+- displaying a workload cluster's defining apps in a client like the web UI (happa).
 
 ## Deleting a workload cluster on CAPI
 
-To delete a workload cluster on CAPI we need to identify corresponding cluster app.
+To delete a workload cluster on CAPI, we need to identify the corresponding cluster app.
 
 ### Current state
 
@@ -17,15 +17,15 @@ On CAPI we are relying on the resource names (in the org namespace) for cluster 
 
 ### Proposal
 
-Require `giantswarm.io/cluster` to be present in all app resources related to a workload cluster, including cluster app.
+Require the `giantswarm.io/cluster` label to be present in all App resources related to a workload cluster, including the cluster app.
 
-Introduce a new `giantswarm.io/cluster-app` label to safly mark cluster app CRs.
+Introduce a new `giantswarm.io/cluster-app` label to safely mark cluster app resources (the App CR).
 
 Refactor places where it's assumed that cluster app doesn't have `giantswarm.io/cluster` label to rely on a new `giantswarm.io/cluster-app` label instead.
 
 ## Displaying a workload cluster's defining apps in Happa
 
-In Happa, we display workload cluster's apps in two separate lists - apps installed by a user and default (preinstalled) apps. To achieve that, we need:
+In Happa, we intend to display a workload cluster's apps in two separate lists - apps installed by a user and default (preinstalled) apps. To achieve that, we need:
 
 - fetch all App CRs related to a workload cluster. On CAPI this list should not contain cluster app App CR.
 - split the App CRs into default apps and user installed apps.
@@ -49,6 +49,6 @@ On CAPI, proposal from the "Deleting a workload cluster on CAPI" will also suit 
 
 #### For splitting cluster's apps into two lists:
 
-We could eather introduce a new label to mark default apps bundle e.g. `giantswarm.io/installed-by-default`, or we can set `giantswarm.io/managed-by` label of a default apps bundle to something specific (right now it's not set).
+We could either introduce a new label to mark default apps bundle, e.g. `giantswarm.io/installed-by-default`, or we can set the `giantswarm.io/managed-by` label of a default apps bundle to something specific (right now it's not set).
 
-Require that `giantswarm.io/managed-by` label is correctly set for app bundle's child apps. It should point to a parent app.
+Require that `giantswarm.io/managed-by` label is correctly set for app bundle's child apps. It should point to the parent app.
