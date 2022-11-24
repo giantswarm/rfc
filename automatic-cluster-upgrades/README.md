@@ -28,7 +28,7 @@ Giant Swarm designed a versioning scheme (based on Semver), which includes all c
 
 ## Current state
 
-Right now the automatic upgrades are carried by Solution Engineers (AEs and SAs) agreeing with the customer on upgrade windows and environments selected. The idea is to automate all this behaviour and information under a Kubernetes operator(s) and Custom Resource(s).
+Right now the automatic upgrades are carried by Solution Engineers (AEs and SAs) agreeing with the customer on upgrade windows and environments selected. The idea is to automate all this behavior and information under a Kubernetes operator(s) and Custom Resource(s).
 
 The Solution Engineer plans cluster upgrades based on cluster type (environment, team,...) and maintenance windows offered by the customers. The upgrade is just a change on cluster-<provider> App manifest of the cluster.
 
@@ -52,7 +52,7 @@ There are different reason why we are interested in having an object to define t
 
 Our customer can have a different set of constraints when it comes to allow changes in their clusters. The maintenance schedule would define those and then the clusters can rely on a policy to enforce the desired behavior.
 
-The maintenance schedule would be possible to be referenced from different cluster resources (Cluster,Machine Pool, KubeadmControlPlane, Apps,...) letting controllers to decide if the resource would be or not reconciled.
+The maintenance schedule would be reconciled by the cluster upgrade scheduler and it will program the upgrades based on that restrictions. 
 
 The maintenance schedule would contain
 
@@ -128,7 +128,7 @@ This would allow upgrades to happen between 07:00 UTC and 17:00 UTC on Monday-Fr
 
 #### Cluster upgrade executor
 
-There will be an operator that based on the `Cluster Upgrade` CRs will trigger the upgrades changing the labels on the specific CR(s) when date matches or it will create the pull requests in Git repo to trigger the upgrade. 
+There will be an operator that based on the `Cluster Upgrade` CRs will trigger the upgrades changing the labels on the specific CR(s) when date matches or it will create the pull requests in Git repo to trigger the upgrade (Flux controllers could be used here for that). 
 
 This operator can also check on the `maintenance schedule` to verify the upgrade fulfil or not the criteria, and in case it does not, alert or set an appropriate status on the object status.
 
@@ -136,9 +136,11 @@ This operator can also check on the `maintenance schedule` to verify the upgrade
 
 Ideally to automate the whole process there will be an operator that creates all the `Cluster Upgrade` CRs when a new release of Giant Swarm is created (and/or possibly other events).
 
+__Note__: Currently team Phoenix has developed a cluster upgrade operator that works with annotations for vintage product. So having their feedback here will be helpful.
+
 ## Open questions
 
-- How Cluster Upgrade Scheduler knows there is a new version? Should the controller listen to cluster-<provider> releases?
+- How Cluster Upgrade Scheduler knows there is a new version? Should the controller listen to cluster-<provider> releases? Can we use/extend Flux image reflector for that?
 
 - Do we schedule automatic upgrades by default? Or do we let customer schedule them (maybe suggesting in our UI a cluster upgrade need to be scheduled)?
 
