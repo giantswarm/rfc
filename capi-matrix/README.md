@@ -1,16 +1,16 @@
-# RFC 0015 - CAPI matrix per provider
+# CAPI matrix per provider
 
 ## Introduction
 
-We have a cluster-<provider> chart for every provider that we support (it is our UI to the customer). It has a set of templates that allow our customers to create a cluster app with all necessary resources required by a Cluster API implementation. 
+We have a cluster-PROVIDER chart for every provider that we support (it is our UI to the customer). It has a set of templates that allow our customers to create a cluster app with all necessary resources required by a Cluster API implementation. 
 
 In the values of these charts, among all possible parameters we define the Kubernetes version of the cluster and the image that machines will use to run. These images contain the Kubernetes components with a specific version. 
 
-This RFC born out of necessity to automate the cluster upgrades. For that reason team rocket has discussed and found a solution adding a Kubernetes and OS version in each chart release. Today AWS, GCP anf Open Stack providers pinned the Kubernetes/OS version in the chart. Here we propose an extension to give more flexibility and control to Giant Swarm and the customers.
+This RFC born out of necessity to automate the cluster upgrades. For that reason, team Rocket has discussed and found a solution adding a Kubernetes and OS version in each chart release. Today AWS, GCP anf Open Stack providers pinned the Kubernetes/OS version in the chart. Here we propose an extension to give more flexibility and control to Giant Swarm and the customers.
 
 ## User stories
 
-- As a customer, I don`t want to worry about the kubernetes version or OS version used by my cluster machines. Just rely on the Giant Swarm default and tested version.
+- As a customer, I don't want to worry about the kubernetes version or OS version used by my cluster machines. Just rely on the Giant Swarm default and tested version.
 
 - As a customer, I would like to choose the kubernetes version of my cluster without think which OS AMI correspond to that version.
 
@@ -22,7 +22,7 @@ This RFC born out of necessity to automate the cluster upgrades. For that reason
 
 ## Solution
 
-The solution proposed is to create a cluster-<provider> chart release for every Kubernetes/OS version is released. That way will help our automation to roll upgrades automatically when new version is published.
+The solution proposed is to create a cluster-PROVIDER chart release for every Kubernetes/OS version is released. That way will help our automation to roll upgrades automatically when new version is published.
 
 But we would like to have a list of images attached to every Kubernetes version like:
 
@@ -43,10 +43,10 @@ kubernetesVersionImages:
   ...
 ```
 
-Every time there is a new Kubernetes version or OS version we will (automatically) create a PR to cluster-<provider> charts including the version and potentially changing the default version (if our tests run successfully).
+Every time there is a new Kubernetes version or OS version we will (automatically) create a PR to cluster-PROVIDER charts including the version and potentially changing the default version (if our tests run successfully).
 
 At the same time if we found a Kubernetes/OS version with a security issue, we can remove the Kubernetes/OS version and enforce customers to upgrade clusters.
 
 We have start with [Cluster API OpenStack](https://github.com/giantswarm/cluster-openstack/pull/125).
 
-__Bonus__: If cluster-<provider> chart is used for companies out of Giant Swarm they can use their own matrix.
+__Bonus__: If cluster-PROVIDER chart is used for companies out of Giant Swarm they can use their own matrix.
