@@ -1,10 +1,10 @@
-# CAPI matrix per provider
+# Cluster API Kubernetes/OS version management
 
 ## Introduction
 
-We have a cluster-PROVIDER chart for every provider that we support (it is our UI to the customer). It has a set of templates that allow our customers to create a cluster app with all necessary resources required by a Cluster API implementation. 
+We have a cluster-PROVIDER app for every provider that we support (it is our interface to define the cluster structure and configuration). It has a set of templates that allow our customers to create a cluster app with all necessary resources required by a Cluster API implementation. 
 
-In the values of these charts, among all possible parameters we define the Kubernetes version of the cluster and the image that machines will use to run. These images contain the Kubernetes components with a specific version. 
+In the values of these charts, among all possible parameters we define the Kubernetes version of the cluster and the machine image (AMI) that will be used to run the VMs. These images contain the Kubernetes components with a specific version. There are usually three AMIs defined in every provider: bastion, control-plane and node pools.
 
 This RFC born out of necessity to automate the cluster upgrades. For that reason, team Rocket has discussed and found a solution adding a Kubernetes and OS version in each chart release. Today AWS, GCP anf Open Stack providers pinned the Kubernetes/OS version in the chart. Here we propose an extension to give more flexibility and control to Giant Swarm and the customers.
 
@@ -49,4 +49,14 @@ At the same time if we found a Kubernetes/OS version with a security issue, we c
 
 We have start with [Cluster API OpenStack](https://github.com/giantswarm/cluster-openstack/pull/125).
 
-__Bonus__: If cluster-PROVIDER chart is used for companies out of Giant Swarm they can use their own matrix.
+__Bonus__: In favour of making the providers apps not tied to Giant Swarm, adding the conversion image table helps enabling other vendors to adopt it and customize it.
+
+## Open questions
+
+- Every time we release a new provider app with a newer Kubernetes version we can make it default, but at the same time we might want to wait and run not edge version but a previous one. So we will need a bit of process deciding when we change the default version.
+
+## Out of scope
+
+- How containerd version is managed.
+
+- How default apps version is managed.
