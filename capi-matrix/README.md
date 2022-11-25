@@ -51,6 +51,22 @@ We have start with [Cluster API OpenStack](https://github.com/giantswarm/cluster
 
 __Bonus__: In favour of making the providers apps not tied to Giant Swarm, adding the conversion image table helps enabling other vendors to adopt it and customize it.
 
+## How the conversion image table is updated?
+
+- We have not defined this process. But one possible scenario would be:
+
+1) Kubernetes/Kinvolk release a new OS/k8s version
+
+2) Our image builder job is triggered and creates the AMIs for the different providers. 
+
+3) Other job can be triggered after and create pull requests to the cluster-PROVIDER repos adding the new k8s/OS version.
+
+4) Our future CI pipeline can test this new version for each provider and check it runs correctly (conformance tests or even custom tests). 
+
+5) In case CI succeed the default version and conversion image table is changed to the new one with the approval of the owning team.
+
+From this moment Cluster Upgrade automation can start scheduling the workload cluster upgrades based on customer constraints. More info about this process discussed [here](https://github.com/giantswarm/rfc/pull/52).
+
 ## Open questions
 
 - Every time we release a new provider app with a newer Kubernetes version we can make it default, but at the same time we might want to wait and run not edge version but a previous one. So we will need a bit of process deciding when we change the default version.
