@@ -10,9 +10,7 @@ This RFC born out of necessity to automate the cluster upgrades. For that reason
 
 ## User stories
 
-- As a customer, I don't want to worry about the kubernetes version or OS version used by my cluster machines. Just rely on the Giant Swarm default and tested version.
-
-- As a customer, I would like to choose the kubernetes version of my cluster without think which OS AMI correspond to that version.
+- As a customer, I would like to choose between the two supported minor Kubernetes versions without having to think about choosing an OS or machine image.
 
 - As Giant Swarm staff, I want to have the capacity to push new Kubernetes/OS versions and trigger the upgrade automation.
 
