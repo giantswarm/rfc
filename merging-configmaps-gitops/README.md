@@ -72,7 +72,7 @@ spec:
 
 **The `.spec.config` should be used with caution. It should either be set explicitly to the `<CLUSTER_NAME>-cluster-values`,
 or should be left empty to be later populated by either `app-admission-controller`, upon submission, or `app-operator`, upon
-reconciliation. Using this field to provide other values may result in underconfiguring certain apps.**
+reconciliation. Using this field to provide other values may result in the mis-configuration of certain apps.**
 
 The values coming from these fields are merged based on the priority, see the [App Platform configuration](https://docs.giantswarm.io/developer-platform/app-platform/app-configuration/). Both, the `.spec.config` and `.spec.userConfig`,
 fields get the fixed priorities, making their place in the hierarchy fixed as well, while the `.spec.extraConfigs` memebers
