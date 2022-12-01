@@ -4,6 +4,17 @@ Cluster apps are apps which are used to configure and provision clusters based o
 
 This RFC defines basic requirements for all cluster apps provided by Giant Swarm.
 
+## Overview
+
+- [R1: JSON Schema dialect must be specified](#r1)
+- [R2: Schema must explicitly cover all allowed properties](#r2)
+- [R3: Array item schema must be defined](#r3)
+- [R4: Properties must have a title](#r4)
+- [R5: Properties should have descriptions](#r5)
+- [R6: Properties should provide examples](#r6)
+- [R7: Constrain values as much as possible](#r7)
+- [R8: Required properties must be marked as such](#r8)
+
 ## Background
 
 TODO: Some more info regarding the rationale.
