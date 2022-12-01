@@ -45,7 +45,9 @@ Full context of the PR can be found here: https://github.com/giantswarm/workload
 
 Our app platform offers a layered configuration approach already which we can utilize to enable us here.
 
-An app CR has two fields where configuration can be supplied:
+An app CR has three fields where configuration can be supplied, out of which two can be used for providing user
+configuration:
+
 ```yaml
 apiVersion: application.giantswarm.io/v1alpha1
 kind: App
@@ -53,29 +55,40 @@ metadata:
   name: something
   namespace: org-some
 spec:
-  config:
-    configMap:
-      name: flux01-default-apps-config
+  # config:
+  #   configMap:
+  #     name: mycluster-cluster-values
+  #     namespace: org-some
+  extraConfigs:
+    - kind: configMap
+      name: flux01-extra-config
       namespace: org-some
+      # priority: 25 by default
   userConfig:
     configMap:
       name: flux01-userconfig
       namespace: org-some
 ```
-This functionality means that values in `config` will be overlaid by values from `userConfig`.
-So far we have only been using this functionality to supply Giant Swarm offered configuration through `config` and encouraged end users to only use the `userConfig` field.
 
-The proposal is to use `config` for cases in gitops where we can not merge configmaps through `kustomize`.
+**The `.spec.config` should be used with caution. It should either be set explicitly to the `<CLUSTER_NAME>-cluster-values`,
+or should be left empty to be later populated by either `app-admission-controller`, upon submission, or `app-operator`, upon
+reconciliation. Using this field to provide other values may result in the mis-configuration of certain apps.**
+
+The values coming from these fields are merged based on their priority, see the [App Platform configuration](https://docs.giantswarm.io/developer-platform/app-platform/app-configuration/). Both, the `.spec.config` and `.spec.userConfig`,
+fields get the fixed priorities, making their place in the hierarchy fixed as well, while the `.spec.extraConfigs` memebers
+priorities are configurable.
+
+The proposal is to use `.spec.extraConfig` for cases in GitOps where we can not merge configmaps through `kustomize`.
 From preliminary testing this works without any issues **but** is a change to how we treated this feature so far in the app platform.
 
 ### Pros
 - Easy to just use
 - Easy to explain to customers
+- Leave the `.spec.config` empty for controllers to populate
+- Multiple layers of overlays possible
 
 ### Cons
-- Change in the intended design in app platform
-- Only sidestepping the issue, not really resolving it
-- Only one layer of overlays possible
+- Only sidestepping the issue, not really resolving it in terms of GitOps.
 
 ## Future work
 
