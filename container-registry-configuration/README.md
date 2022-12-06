@@ -108,7 +108,7 @@ Since we use `containerd`, docker has not a privilege anymore but there is no ne
 - 4.a Giantswarm Account + Single account
 - 4.b Giantswarm Account + Per MC including its WCs
 - 4.c Giantswarm Account + Per WC
-- 4.b Customer Accounts
+- 4.d Customer Accounts
 
 #### Decision
 
