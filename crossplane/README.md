@@ -157,6 +157,8 @@ To our best knowledge, there are no dedicated OpenStack Crossplane providers.
 
 TBD
 
+2022-12-06 update: As per [Oli's announcement](https://gigantic.slack.com/archives/CNHMVT6LW/p1670335252163369), OpenStack/CAPO development is suspended.
+
 ### Next steps
 
 TBD
