@@ -176,11 +176,15 @@ Example:
 }
 ```
 
-### R8: Required properties must be marked as such {#r8}
+### R8: Required properties {#r8}
 
-If a property is required to be set, it MUST be included in the `required` keyword.
+If a property is required to be set by the creator of a cluster, it MUST be included in the `required` keyword.
 
-In terms of a lifecycle, this means that the property must be defined when submitting the values for validation or for cluster creation.
+Properties that have default values defined in the app's `values.yaml` file MUST NOT be set as required, as here the default values are applied in case no user value is given.
+
+Properties that get default values assigned via some external mechanism (e.g. an admission controller) also MUST NOT be set as required. An example here would be the name of a cluster or node pool, where a unique name would be generated in case none is given.
+
+Note: If property of type object named `a` has required properties, this does not indicate that `a` itself must be defined in the payload. However it indicates that if `a` is defined, the required properties must be defined, too.
 
 ## TODO
 
