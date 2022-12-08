@@ -48,7 +48,7 @@ Example:
 }
 ```
 
-The example below shows an excerpt of a JSON Schema which uses draft 2020-12.
+The example above shows an excerpt of a JSON Schema which uses draft 2020-12.
 
 ### R2: Schema must explicitly cover all allowed properties {#r2}
 
