@@ -60,7 +60,7 @@ The `patternProperties` keyword MUST NOT be used.
 
 ### R3: Array item schema must be defined {#r3}
 
-The items schema for all array properties must be defined using the `items` keyword.
+The items schema for all array properties MUST be defined using the `items` keyword.
 
 ### R4: Properties must have a title {#r4}
 
@@ -162,7 +162,7 @@ Properties of type `string`:
 Numeric properties (type `number`, `integer`):
 
 - Restrict the values range using `minimum` or `exclusiveMaximum` and `maximum` or `exclusiveMaximum`.
-- Use `multipleOf` if the value must be a multiple of a certain number.
+- Use `multipleOf` if the value has to be a multiple of a certain number.
 
 Example:
 
@@ -180,7 +180,6 @@ Example:
 If a property is required to be set, it MUST be included in the `required` keyword.
 
 In terms of a lifecycle, this means that the property must be defined when submitting the values for validation or for cluster creation.
-
 
 ## TODO
 
