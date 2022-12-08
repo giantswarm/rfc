@@ -141,7 +141,7 @@ We don't want to add another responsility to `cluster-apps-operator`.
 
 #### Decision
 
-**NOT DECIDED YET**
+`6.a` is selected.
 
 
 ### 7. Where to put the credentials
@@ -153,6 +153,10 @@ We can put the secret into customers' git repositories. Customers will access to
 #### 7.b Management Cluster Fleet
 
 We can put the secret into our `management-clusters-fleet` repo. We will need to give reference to that secret in customers' git repository. Management of these secrets can be so costly when we need to create the secret in each organization namespace.
+
+#### 7.c Catalog configuration
+
+We can use catalog configurations (See <mc-name>/appcatalog folder in `installations` repo) to provide a MC specific configuration to all charts in the cluster.
 
 #### Decision
 
