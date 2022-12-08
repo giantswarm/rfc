@@ -115,7 +115,7 @@ Best practices:
 - Write descriptions between 50 and 200 characters long.
 - Use simple language.
 - Use no formatting syntax, nor hyperlinks.
-- Use no line brakes.
+- Use no line breaks.
 - Use sentence case and punctuation.
 
 ### R6: Properties should provide examples {#r6}
