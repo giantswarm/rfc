@@ -190,13 +190,15 @@ Note: If property of type object named `a` has required properties, this does no
 
 I haven't gotten to these yet, or I'm not sure about them.
 
-- Each property must declare the `type`. Not sure this is required by JSON schema.
+- Each property must declare the `type`. Pretty sure that this is required by JSON schema.
+
+- Should schemas have the `$id` property defined? And if yes, to what?
 
 - Use of the `default` keyword. As per JSON Schema documentation, it is for annotation only. It is not meant to automatically fill in missing values for validation.
 
 - How to specify whether a property can be modified or not. `"readOnly": true` mit be the right one for that.
 
-- Use of the `deprecated` keyword to phase out properties. Documentation says: "The deprecated keyword is a boolean that indicates that the instance value the keyword applies to should not be used and may be removed in the future."
+- Use of the `deprecated` keyword to phase out properties. Documentation says: "The deprecated keyword is a boolean that indicates that the instance value the keyword applies to should not be used and may be removed in the future.". Additional information could be given via a `$comment` in the right place.
 
 ## Resources
 
