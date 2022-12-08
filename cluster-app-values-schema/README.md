@@ -158,6 +158,7 @@ Properties of type `string`:
 - Use of the keywords `minLength` and `maxLength` to specify the valid length.
 - If applicable, use the `pattern` keyword to specify a regular expression for validation. This is useful for example to restrict the value to ASCII characters, or to lowercase etc.
 - Use the `format` keyword to restrict the property to a common string format, like a URL or an email address. Watch out to use only formats which are available in the JSON schema dialect used (see also R1).
+- Use `enum` if only certain known values can be valid.
 
 Numeric properties (type `number`, `integer`):
 
