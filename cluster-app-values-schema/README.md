@@ -184,7 +184,7 @@ Properties that have default values defined in the app's `values.yaml` file MUST
 
 Properties that get default values assigned via some external mechanism (e.g. an admission controller) also MUST NOT be set as required. An example here would be the name of a cluster or node pool, where a unique name would be generated in case none is given.
 
-Note: If property of type object named `a` has required properties, this does not indicate that `a` itself must be defined in the payload. However it indicates that if `a` is defined, the required properties must be defined, too.
+Note: If property of type object named `a` has required properties, this does not indicate that `a` itself must be defined in the instance. However it indicates that if `a` is defined, the required properties must be defined, too.
 
 ## TODO
 
