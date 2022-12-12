@@ -186,6 +186,38 @@ Properties that get default values assigned via some external mechanism (e.g. an
 
 Note: If property of type object named `a` has required properties, this does not indicate that `a` itself must be defined in the instance. However it indicates that if `a` is defined, the required properties must be defined, too.
 
+### R9: Avoid `anyOf` and `oneOf` {#r9}
+
+A cluster app schema SHALL NOT make use of the `anyOf` or `oneOf` keyword.
+
+If using `anyOf` or `oneOf` cannot be avoided, the desired subschema SHOULD be the first in the sequence.
+
+In JSON Schema, the `anyOf` and `oneOf` keyword defines an array of possible subschemas for a property. For a user interface which is generated based on the schema, this creates a high degree of complexity.
+
+At Giant Swarm, our user interface for cluster creation will not support `anyOf` nor `oneOf` to full extent. Instead, we are going to select only one of the defined schemas for data input, using simply the first schema that is not deprecated.
+
+Let's consider this example schema:
+
+```json
+"replicas": {
+  "anyOf": [
+    {
+      "type": "string",
+      "deprecated": true,
+      "$comment": "Supported until v1.23.4"
+    },
+    {
+      "type": "integer",
+      "maximum": 100,
+      "title": "Size"
+    },
+    {...}
+  ]
+}
+```
+
+Here, the user interface would use the second subschema (type: integer) and ignore all others.
+
 ## TODO
 
 I haven't gotten to these yet, or I'm not sure about them.
