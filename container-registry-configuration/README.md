@@ -143,7 +143,6 @@ We don't want to add another responsility to `cluster-apps-operator`.
 
 `6.a` is selected.
 
-
 ### 7. Where to put the credentials
 
 #### 7.a Customer's Git Repository
@@ -160,8 +159,7 @@ We can use catalog configurations (See <mc-name>/appcatalog folder in `installat
 
 #### Decision
 
-**NOT DECIDED YET**
-
+7.c is selected.
 
 ### 8. Configuration interface
 
