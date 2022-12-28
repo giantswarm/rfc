@@ -12,8 +12,7 @@ There were some recent discussions where we learned about other requirements lea
 
 ### Distributed setup
 
-* 1 Loki instance for each installation
-* Loki is hosted at the installation level
+1 Loki instance for each installation, each instance is hosted at the installation level
 
 #### Pros
 
@@ -27,8 +26,7 @@ There were some recent discussions where we learned about other requirements lea
 
 ### Centralized setup
 
-* Single central Loki instance
-* Loki is hosted by GiantSwarm
+Single central Loki instance, which is hosted by GiantSwarm
 
 #### Pros
 
