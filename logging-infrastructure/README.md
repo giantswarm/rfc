@@ -4,21 +4,21 @@ As a Giant Swarm engineer, I want to be able to access a history of logs for com
 
 ## Context
 
-High level architecture proposal to implement a logging solution.
-
 Atlas started working on a logging infrastructure implementation using [Loki](https://grafana.com/docs/loki/latest/).
-So far we worked on a POC towards having a centralized setup.
-There were some recent discussions where we learned about other requirements leaning towards a distributed setup, here are the pro and cons details of those setups.
+So far we worked on a POC towards having a centralized setup, where a central Loki instance hosted by GiantSwarm ingests logs from our installations.
+There were some recent discussions where we learned about other requirements leaning towards a distributed setup, here are the pro and cons details of those discussions.
 
 ### Distributed setup
 
-1 Loki instance for each installation, each instance is hosted at the installation level
+What we call distributed setup, is when there is 1 Loki instance hosted on each installation.
+So logs are stored and accessible on a per installation basis.
 
 #### Pros
 
 - Satisfy customer requirement towards data isolation (i.e. legal, or data privacy requirements)
-- Keep our Platform as a Product model (self-sufficient installation can keep running alone)
 - More resilient setup towards failure
+- Keep our Platform as a Product model (self-sufficient installation can keep running alone)
+
 
 #### Cons
 
@@ -26,7 +26,8 @@ There were some recent discussions where we learned about other requirements lea
 
 ### Centralized setup
 
-Single central Loki instance, which is hosted by GiantSwarm
+What we call centralized setup, is when there is a single central Loki instance hosted by GiantSwarm.
+So logs are stored and accessible in a single and central place.
 
 #### Pros
 
@@ -40,15 +41,15 @@ Single central Loki instance, which is hosted by GiantSwarm
 
 ## Conclusion
 
-There is a hard requirement from some customer where no data should leave their installation (due to legal concerns). In order to comply with this we need to adopt a distributed setup.
+There is a hard requirement from some customer where no data should leave their installation (due to legal concerns).
+In order to comply with this requirement we need to adopt a distributed setup.
 We currently have some concerns towards the feasibility of implementing Loki on all the different providers we support, due to storage requirements.
 
 ## Next steps
 
 - Build a POC with a Loki running inside an installation starting with 1 provider.
-  - crossplane and work done on harbour might help us for storage
 - Re-evaluate and see how we proceed with other providers and other customer requirements.
 
 ## Open questions
 
-- Can we provide a global view on a distributed setup ? (maybe on a data subset)
+- Can we provide a global view on a distributed setup ?
