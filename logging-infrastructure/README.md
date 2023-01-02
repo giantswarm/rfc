@@ -49,8 +49,8 @@ In order to comply with this requirement we need to adopt a distributed setup.
 
 ### Requirements
 
-- object storage: in order for data to be stored at the installation level, Loki requires access to an object storage solution
-                  this is currently unknown and needs to be evaluated on a per-provider basis
+- object storage: in order for data to be stored at the installation level, Loki requires access to an object storage solution.
+                  This is currently unknown and needs to be evaluated on a per-provider basis
 
 ### Steps
 
