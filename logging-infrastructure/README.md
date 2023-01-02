@@ -19,7 +19,6 @@ So logs are stored and accessible on a per installation basis.
 - More resilient setup towards failure
 - Keep our Platform as a Product model (self-sufficient installation can keep running alone)
 
-
 #### Cons
 
 - Heterogeneous Object storage (different provider, different requirements, different limitations)
@@ -38,6 +37,8 @@ So logs are stored and accessible in a single and central place.
 #### Cons
 
 - Cost needs a new billing system and business model
+- Customer does not own their data (i.e. lose logs access when leaving GiantSwarm)
+- Requires good connectivty from installations to Loki (i.e. edge cluster might be a problem)
 
 ## Conclusion
 
