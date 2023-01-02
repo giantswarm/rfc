@@ -44,11 +44,17 @@ So logs are stored and accessible in a single and central place.
 
 There is a hard requirement from some customer where no data should leave their installation (due to legal concerns).
 In order to comply with this requirement we need to adopt a distributed setup.
-We currently have some concerns towards the feasibility of implementing Loki on all the different providers we support, due to storage requirements.
 
 ## Next steps
 
-- Build a POC with a Loki running inside an installation starting with 1 provider.
+### Requirements
+
+- object storage: in order for data to be stored at the installation level, Loki requires access to an object storage solution
+                  this is currently unknown and needs to be evaluated on a per-provider basis
+
+### Steps
+
+- Build a POC following the distributed setup with 1 provider.
 - Re-evaluate and see how we proceed with other providers and other customer requirements.
 
 ## Open questions
