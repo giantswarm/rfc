@@ -16,7 +16,7 @@ So logs are stored and accessible on a per installation basis.
 #### Pros
 
 - Satisfy customer requirement towards network traffic isolation (i.e. no data leaving their machines or cloud account)
-- More resilient setup towards failure
+- Smaller impact case of failure
 - Keep our Platform as a Product model (self-sufficient installation can keep running alone)
 
 #### Cons
