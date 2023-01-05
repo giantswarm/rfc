@@ -22,6 +22,7 @@ So logs are stored and accessible on a per installation basis.
 #### Cons
 
 - Heterogeneous Object storage (different provider, different requirements, different limitations)
+- Operational cost (handling many Loki instance)
 
 ### Centralized setup
 
@@ -31,7 +32,6 @@ So logs are stored and accessible in a single and central place.
 #### Pros
 
 - Global view (aka single pane of glass, cross-installation queries)
-- Operational cost (1 Loki instance to handle)
 - Anomalies detections (multi installation correlated data)
 
 #### Cons
