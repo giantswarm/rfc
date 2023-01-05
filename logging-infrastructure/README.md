@@ -32,7 +32,7 @@ So logs are stored and accessible in a single and central place.
 #### Pros
 
 - Global view (aka single pane of glass, cross-installation queries)
-- Anomalies detections (multi installation correlated data)
+- Anomalies detections (i.e. detect issues earlier via error/trends measures accross installations/regions/providers)
 
 #### Cons
 
