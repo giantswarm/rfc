@@ -15,6 +15,7 @@ This RFC defines basic requirements for all cluster apps provided by Giant Swarm
 - [R7: Constrain values as much as possible](#r7)
 - [R8: Required properties must be marked as such](#r8)
 - [R9: Avoid `anyOf` and `oneOf`](#r9)
+- [R10: Use `deprecated` to phase out properties](#r10)
 
 ## Background
 
@@ -205,7 +206,7 @@ Let's consider this example schema:
     {
       "type": "string",
       "deprecated": true,
-      "$comment": "Supported until v1.23.4"
+      "$comment": "to be removed in the next major version, please use the integer type instead"
     },
     {
       "type": "integer",
@@ -219,6 +220,19 @@ Let's consider this example schema:
 
 Here, the user interface would use the second subschema (type: integer) and ignore all others.
 
+## R10: Use `deprecated` to phase out properties {#r10}
+
+To indicate that a property is supposed to be removed in a future version, the property SHOULD carry the `deprecated` key with the value `true`.
+
+As a consequence, user interfaces for cluster creation SHALL NOT display the according form field for data entry. However, providing the property within values YAML will not cause any failure.
+
+In addition, it is RECOMMENDED to add a `$comment` key to the property, with information regarding
+
+- which property will replace the deprecated one (if any)
+- when the property will be removed
+
+Note that `$comment` content is not intended for display in any UI nor processing in any tool. It is mainly targeting schema developers and anyone using the schema itself as a source of information.
+
 ## TODO
 
 I haven't gotten to these yet, or I'm not sure about them.
@@ -230,8 +244,6 @@ I haven't gotten to these yet, or I'm not sure about them.
 - Use of the `default` keyword. As per JSON Schema documentation, it is for annotation only. It is not meant to automatically fill in missing values for validation.
 
 - How to specify whether a property can be modified or not. `"readOnly": true` mit be the right one for that.
-
-- Use of the `deprecated` keyword to phase out properties. Documentation says: "The deprecated keyword is a boolean that indicates that the instance value the keyword applies to should not be used and may be removed in the future.". Additional information could be given via a `$comment` in the right place.
 
 ## Resources
 
