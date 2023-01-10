@@ -6,7 +6,7 @@ This RFC defines basic requirements for all cluster apps provided by Giant Swarm
 
 ## Overview
 
-- [R1: JSON Schema dialect must be specified](#r1)
+- [R1: JSON Schema dialect (draft 2020-12) must be specified](#r1)
 - [R2: Schema must explicitly cover all allowed properties](#r2)
 - [R3: Array item schema must be defined](#r3)
 - [R4: Properties must have a title](#r4)
@@ -37,9 +37,11 @@ TODO: Some more info regarding the rationale.
 
 Requirements carry identifiers with prefix `R` and a unique number, for easy referencing.
 
-### R1: JSON Schema dialect must be specified {#r1}
+### R1: JSON Schema dialect (draft 2020-12) must be specified {#r1}
 
 Each cluster app's values schema file MUST specify the schema dialect (also called draft) used via the `$schema` keyword on the top level, with the draft URI as a value.
+
+The draft URI MUST BE `https://json-schema.org/draft/2020-12/schema`.
 
 Example:
 
@@ -49,8 +51,6 @@ Example:
   ...
 }
 ```
-
-The example above shows an excerpt of a JSON Schema which uses draft 2020-12.
 
 ### R2: Schema must explicitly cover all allowed properties {#r2}
 
