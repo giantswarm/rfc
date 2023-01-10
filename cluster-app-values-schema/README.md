@@ -58,8 +58,6 @@ All properties that can be used in values MUST be covered in the schema explicit
 
 To enforce this and to disable the use of any undefined properties, the keyword `additionalProperties` SHOULD be set to `false` on all object schemas.
 
-The `patternProperties` keyword MUST NOT be used.
-
 ### R3: Array item schema must be defined {#r3}
 
 The items schema for all array properties MUST be defined using the `items` keyword.
