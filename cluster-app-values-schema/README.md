@@ -14,6 +14,7 @@ This RFC defines basic requirements for all cluster apps provided by Giant Swarm
 - [R6: Properties should provide examples](#r6)
 - [R7: Constrain values as much as possible](#r7)
 - [R8: Required properties must be marked as such](#r8)
+- [R9: Avoid `anyOf` and `oneOf`](#r9)
 
 ## Background
 
