@@ -96,6 +96,8 @@ Best practices:
 
 Each property SHOULD be annotated and via the `description` keyword.
 
+Description content MUST NOT include any line breaks. Also it MUST NOT contain formatting code like e.g. Markdown or HTML.
+
 Example:
 
 ```json
@@ -116,8 +118,6 @@ Best practices:
 - Do not repeat the property name or title in the description.
 - Write descriptions between 50 and 200 characters long.
 - Use simple language.
-- Use no formatting syntax, nor hyperlinks.
-- Use no line breaks.
 - Use sentence case and punctuation.
 
 ### R6: Properties should provide examples {#r6}
