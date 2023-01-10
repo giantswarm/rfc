@@ -162,7 +162,7 @@ Properties of type `string`:
 
 Numeric properties (type `number`, `integer`):
 
-- Restrict the values range using `minimum` or `exclusiveMaximum` and `maximum` or `exclusiveMaximum`.
+- Restrict the values range using `minimum` or `exclusiveMinimum` and `maximum` or `exclusiveMaximum`.
 - Use `multipleOf` if the value has to be a multiple of a certain number.
 
 Example:
