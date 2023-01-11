@@ -237,6 +237,8 @@ I haven't gotten to these yet, or I'm not sure about them.
 
 - Each property must declare the `type`. Pretty sure that this is required by JSON schema.
 
+- How to label values, e. g. in the case of the service priority label. See https://github.com/giantswarm/roadmap/issues/1181#issuecomment-1359344451
+
 - Should schemas have the `$id` property defined? And if yes, to what?
 
 - Use of the `default` keyword. As per JSON Schema documentation, it is for annotation only. It is not meant to automatically fill in missing values for validation.
