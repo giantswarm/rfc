@@ -85,7 +85,7 @@ Example:
 
 Additional requirements apply to the title value:
 
-- The title MUST be written using sentence case capitalization. Right: "Cluster name", Wrong: "Cluster Name".
+- The title MUST be written using sentence case capitalization. Correct: "Cluster name", incorrect: "Cluster Name".
 - The title MUST NOT contain punctuation marks.
 - If the title annotates a property that is part of another object, the title SHOULD NOT include the parent property name, to avoid repetition.
   - Example: with an object `/controlPlane` that is titled `Control plane`, the property  `/controlPlane/availabilityZones` should be titled `Availability zones`, not `Control plane availability zones`.
@@ -94,7 +94,7 @@ Additional requirements apply to the title value:
 
 Each property SHOULD be annotated and via the `description` keyword.
 
-Description content MUST NOT include any line breaks. Also it MUST NOT contain formatting code like e.g. Markdown or HTML.
+
 
 Example:
 
@@ -111,12 +111,14 @@ Example:
 }
 ```
 
-Best practices:
+If a description is given, additional requirements apply to the value:
 
-- Do not repeat the property name or title in the description.
-- Write descriptions between 50 and 200 characters long.
-- Use simple language.
-- Use sentence case and punctuation.
+- Description content MUST NOT include any line breaks.
+- Descriptions MUST NOT contain formatting code like e.g. Markdown or HTML.
+- Descriptions MUST use sentence case capitalization and punctuation.
+- The description SHOULD NOT repeat the property name or title. Correct: "Identifies this cluster uniquely within the installation.", incorrect: "Cluster name identifies this cluster uniquely within the installation.".
+- Descriptions SHOULD be between 50 and 200 characters long.
+- Descriptions SHOULD be written in simple language.
 
 ### R6: Properties should provide examples {#r6}
 
