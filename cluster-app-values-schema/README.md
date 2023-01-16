@@ -122,7 +122,7 @@ If a description is given, additional requirements apply to the value:
 
 ### R6: Properties should provide examples {#r6}
 
-Each property SHOULD provide one or more examples using the `example` keyword.
+Each property SHOULD provide one or more examples using the `examples` keyword.
 
 Example:
 
