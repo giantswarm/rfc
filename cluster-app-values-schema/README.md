@@ -66,6 +66,8 @@ The items schema for all array properties MUST be defined using the `items` keyw
 
 Each property MUST be annotated via the `title` keyword.
 
+The `title` keyword provides a user friendly label for the property, to be displayed in a user interface instead of the technical property name. The title should be chosen to match the wording used in documentation, especially in prosa text (as opposed to configuration examples).
+
 Example:
 
 ```json
@@ -81,14 +83,12 @@ Example:
 }
 ```
 
-Rationale: These annotations (just like description and examples, see R5 and R6) are mainly useful for users during data entry, but also when reasoning about an cluster configuration.
+Additional requirements apply to the title value:
 
-Best practices:
-
-- Ue sentence case.
-- Do not use punctuation.
-- Do not repeat the parent title.
-  - Example: if `.controlPlane` is titled `Control plane`, then `.controlPlane.availabilityZones` should be titled `Availability zones`, not `Control plane availability zones`.
+- The title MUST be written using sentence case capitalization. Right: "Cluster name", Wrong: "Cluster Name".
+- The title MUST NOT contain punctuation marks.
+- If the title annotates a property that is part of another object, the title SHOULD NOT include the parent property name, to avoid repetition.
+  - Example: with an object `/controlPlane` that is titled `Control plane`, the property  `/controlPlane/availabilityZones` should be titled `Availability zones`, not `Control plane availability zones`.
 
 ### R5: Properties should have descriptions {#r5}
 
