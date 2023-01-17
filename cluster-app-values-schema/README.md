@@ -16,6 +16,7 @@ This RFC defines basic requirements for all cluster apps provided by Giant Swarm
 - [R8: Required properties must be marked as such](#r8)
 - [R9: Avoid `anyOf` and `oneOf`](#r9)
 - [R10: Use `deprecated` to phase out properties](#r10)
+- [R11: Provide valid string values where possible](#r11)
 
 ## Background
 
@@ -232,6 +233,38 @@ In addition, it is RECOMMENDED to add a `$comment` key to the property, with inf
 - when the property will be removed
 
 Note that `$comment` content is not intended for display in any UI nor processing in any tool. It is mainly targeting schema developers and anyone using the schema itself as a source of information.
+
+## R11: Provide valid string values where possible {#r11}
+
+For string properties, in some cases only a few values are considered valid. In this case, the schema SHOULD specify these selectable values in one of the following forms:
+
+1. Using `enum` in case the selectable value does not require a more user-friendly label.
+2. Using `oneOf` with a combination of `title` and `const`, in case a user-friendly label is needed in addition to the value. See below for more details.
+
+As an example of the `enum` method, we use a string property with two possible values. The values `active` and `inactive` are considered to be speaking for themselves.
+
+```json
+"autoRefresh": {
+  "type": "string",
+  "title": "Auto refresh",
+  "enum": ["active", "inactive"]
+}
+```
+
+However, if the string values are not considered self-explanatory, the `oneOf` method can be used to provide user-friendly labels in addition to the axctual value. Here, `oneOf` is an array of tuples, in which `title` contains the user-friendly description and `const` provides the value.
+
+```json
+"imagePullPolicy": {
+  "type": "string",
+  "title": "Pull policy",
+  "description": "Whether the container image should be pulled from a registry",
+  "oneOf": [
+    {"const": "IfNotPresent", "title": "Pull image if not present in the node"},
+    {"const": "Always", "title": "Always pull up-to-date image"},
+    {"const": "Never", "title": "Never pull image, use image available locally"}
+  ]
+}
+```
 
 ## TODO
 
