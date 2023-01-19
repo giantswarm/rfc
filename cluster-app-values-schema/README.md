@@ -87,15 +87,13 @@ Example:
 Additional requirements apply to the title value:
 
 - The title MUST be written using sentence case capitalization. Correct: "Cluster name", incorrect: "Cluster Name".
-- The title MUST NOT contain punctuation marks.
+- The title MUST NOT contain punctuation marks, leading or trailing white space, control characters, tabs, nor multiple whitespaces in a row.
 - If the title annotates a property that is part of another object, the title SHOULD NOT include the parent property name, to avoid repetition.
   - Example: with an object `/controlPlane` that is titled `Control plane`, the property  `/controlPlane/availabilityZones` should be titled `Availability zones`, not `Control plane availability zones`.
 
 ### R5: Properties should have descriptions {#r5}
 
 Each property SHOULD be annotated and via the `description` keyword.
-
-
 
 Example:
 
