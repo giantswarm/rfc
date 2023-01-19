@@ -113,7 +113,7 @@ Example:
 If a description is given, additional requirements apply to the value:
 
 - Description content MUST NOT include any line breaks.
-- Descriptions MUST NOT contain formatting code like e.g. Markdown or HTML.
+- Descriptions MUST NOT contain formatting code like e.g. Markdown or HTML, leading or trailing white space, control characters, tabs, nor multiple whitespaces in a row.
 - Descriptions MUST use sentence case capitalization and punctuation.
 - The description SHOULD NOT repeat the property name or title. Correct: "Identifies this cluster uniquely within the installation.", incorrect: "Cluster name identifies this cluster uniquely within the installation.".
 - Descriptions SHOULD be between 50 and 200 characters long.
