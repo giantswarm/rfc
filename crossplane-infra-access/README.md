@@ -34,8 +34,7 @@ Specific questions in regard to infrastructure provider access tokens:
 
 ### 1. No default access token
 
-As it's hard to create a limited yet elastic set of access permissions to the infrastructure, we provide no default config. Every user that will need to do something will have to manage 
-access tokens on its own. Sample workflow: a user that needs access to S3, needs to create AWS Access Keys on each MC. Then, the user needs to encrypt them and add to the [management clusters fleet repo](https://github.com/giantswarm/management-clusters-fleet/) in `sops` encrypted form. As a result, access tokens are delivered to every MC and RBAC permissions to them can be handled easy as a common RBAC configuration delivered by Flux to every relevant MC.
+As it's hard to create a limited yet elastic set of access permissions to the infrastructure, we provide no default config. Every user that will need to do something will have to manage access tokens on its own. Sample workflow: a user that needs access to S3, needs to create AWS Access Keys on each MC. Then, the user needs to encrypt them and add to the [management clusters fleet repo](https://github.com/giantswarm/management-clusters-fleet/) in `sops` encrypted form. As a result, access tokens are delivered to every MC and RBAC permissions to them can be handled easily as a common RBAC configuration delivered by Flux to every relevant MC.
 
 Questions:
 - Is it possible/realistic to automate creation of these access keys (same set of permissions, but on different infra provider accounts)? What about different providers (AWS vs Azure vs ...)
