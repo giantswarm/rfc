@@ -169,19 +169,19 @@ How will be the configuration interface in `cluster-$provider` apps?
 
 We can implement a full transitive configuration interface so that users can provide a full containerd configuration, including registy credentials.
 
-#### 8.b Only registry credentials in a structred way
+#### 8.b Only registry configuration in a structred way
 
 We can define a configuration interface like below and render containerd configuration in `cluster-$provider` app chart.
 
 ```
-registries:
-- name: docker
-  endpoint: https://registry-1.docker.io
-  username:
-  password:
-- name: azurecr
-  endpoint: giantswarm.azurecr.io
-  ...
+connectivity:
+ containerRegistries:
+   docker.io: 
+    - endpoint: "registry-1.docker.io"
+       credentials:
+         username: "my_user_name"
+         password: "my_password"
+   - endpoint: "my-mirror-registry.mydomain.io"
 ```
 
 #### Decision
