@@ -103,6 +103,8 @@ The intranet page (See `Registry Mirrors`) states this as a desired configuratio
 
 Since we use `containerd`, docker has not a privilege anymore but there is no need to change this order at the moment. We will follow this configuration for CAPI clusters too.
 
+Also, users must be able to customize the configuration for their workload clusters. Additional registries and additional mirrors for existing registries must be supported.
+
 ### 4. Accounts
 
 - 4.a Giantswarm Account + Single account
@@ -117,59 +119,51 @@ Since we use `containerd`, docker has not a privilege anymore but there is no ne
 Since it is a part of the platform itself, we are going to use Giant Swarm accounts in containerd configuration.
 As we do for other operators, we will follow "per MC" approach here to.
 
-### 5. How to provide credentials to WCs
+### 5. Default configuration for WCs
 
-#### 5.a cluster-apps-operator
+- 5.a: Configuring WCs by default
+- 5.b: Not configuring WCs by default
+
+#### Decision
+
+`5.a` is selected.
+
+### 6. How to propogate credentials and where to put them
+
+#### 6.a cluster-apps-operator
 
 We can propogate credentials from MC to WC by using `cluster-apps-operator`. It can create a secret per WC with the credentials.
 
-#### 5.b Optional interface + Gitops
+#### 6.b Customer's Git Repository
 
-We can delegate the responsibility of creating credentials secret to the creator of `cluster-$provider` apps. GitOps can be useful to template the secrets per WC.
+We can put the secret into customers' git repositories and use GitOps templates to use the same credentials for all WCs. 
 
-#### Decision
+#### 6.c Management Cluster Fleet
 
-`5.b` is selected.
+We can put the secret into our `management-clusters-fleet` repo. We will need to give reference to that secret in customers' git repository.
 
-We don't want to add another responsility to `cluster-apps-operator`. 
-
-
-### 6. Default configuration for WCs
-
-- 6.a: Configuring WCs by default
-- 6.b: Not configuring WCs by default
-
-#### Decision
-
-`6.a` is selected.
-
-### 7. Where to put the credentials
-
-#### 7.a Customer's Git Repository
-
-We can put the secret into customers' git repositories. Customers will access to our credentials.
-
-#### 7.b Management Cluster Fleet
-
-We can put the secret into our `management-clusters-fleet` repo. We will need to give reference to that secret in customers' git repository. Management of these secrets can be so costly when we need to create the secret in each organization namespace.
-
-#### 7.c Catalog configuration
+#### 6.d Catalog configuration
 
 We can use catalog configurations (See <mc-name>/appcatalog folder in `installations` repo) to provide a MC specific configuration to all charts in the cluster.
 
 #### Decision
 
-7.c is selected.
+`6.d` is selected.
 
-### 8. Configuration interface
+- Regarding 6.a, we don't want to add another responsility to `cluster-apps-operator`. 
+- Regarding 6.b, we want to manage the credentials in our side and to have a full control over them.
+- Regarding 6.c, management of the secrets can be so costly when we need to create the secret in each organization namespace.
+- Regarding 6.d, it is not the ideal solution we want to have since catalog configurations are hard to track. Nevertheless, we decided to start with this. Since the configurations are passed by the app platform, we can change this in the future without changing anything in cluster-$provider apps and users' inputs.
+
+### 7. Configuration interface
 
 How will be the configuration interface in `cluster-$provider` apps?
 
-#### 8.a Full containerd configuration
+#### 7.a Full containerd configuration
 
 We can implement a full transitive configuration interface so that users can provide a full containerd configuration, including registy credentials.
 
-#### 8.b Only registry configuration in a structred way
+#### 7.b Only registry configuration in a structred way
 
 We can define a configuration interface like below and render containerd configuration in `cluster-$provider` app chart.
 
@@ -186,6 +180,6 @@ connectivity:
 
 #### Decision
 
-`8.b` is selected.
+`7.b` is selected.
 
-8.a seems risky. Also, there can be other configurations (e.g. proxy) that touch containerd configuration too. 8.a can be error prone.
+7.a seems risky. Also, there can be other configurations (e.g. proxy) that touch containerd configuration too. 7.a can be error prone.
