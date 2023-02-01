@@ -47,3 +47,12 @@ To limit the problematic side of creating access tokens with cloud provider's IA
 
 This is exactly like 2., but we start with a limited set of service allowed (right now we know that we need S3, so we include S3 only). When more services are required, we add more permissions to already existing token.
 
+### 4. IRSA + Role claims
+
+According to [docs](https://github.com/upbound/provider-aws/blob/main/AUTHENTICATION.md) we should be able to mix IRSA and assumed Web Identity providers. In this solution, `Crossplane` controllers run with a ServiceAccount that is authenticated by IRSA and authorized in IAM to claim other Roles in IAM. Then, we and customers can create multiple `ProviderConfig`s CRs that reference different IAM roles that `aws-provider` controller is able to claim using IRSA. This seems like a preferred solution, but has to be tested.
+
+Problems/questions:
+- This doesn't solve a use case, where clients (software) access to AWS infrastructure created by Crossplane needs to be based on access keys (we have this issue with Harbor). This can be worked-around by creating an IAM role, user and access keys from Crossplane, in the same go as the needed infrastructure, but this seems to be a complex and error prone solution.
+- `aws-provider` controller still runs with a single SA (obviously). This means, that the IAM Role it runs with has to have permissions to claim all other needed IAM roles, including these created by a customer. And we don't want to edit our Role every time a customeror we adds another to-be-claimed Role.
+
+
