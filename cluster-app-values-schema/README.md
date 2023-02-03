@@ -150,17 +150,9 @@ Property schema SHOULD explicitly restrict values as much as possible.
 
 There are several ways this requirement can/has to be fulfilled, depending on the property type and the use case.
 
-Properties of type `string`:
+String properties SHOULD be constrained by at least one of the keywords `const`, `enum`, `pattern`, `minLength`, or `maxLength`, or `format`.
 
-- Use of the keywords `minLength` and `maxLength` to specify the valid length.
-- If applicable, use the `pattern` keyword to specify a regular expression for validation. This is useful for example to restrict the value to ASCII characters, or to lowercase etc.
-- Use the `format` keyword to restrict the property to a common string format, like a URL or an email address. Watch out to use only formats which are available in the JSON schema dialect used (see also R1).
-- Use `enum` if only certain known values can be valid.
-
-Numeric properties (type `number`, `integer`):
-
-- Restrict the values range using `minimum` or `exclusiveMinimum` and `maximum` or `exclusiveMaximum`.
-- Use `multipleOf` if the value has to be a multiple of a certain number.
+Numeric properties (type `number`, `integer`) SHOULD be constrained by at least one of the keywords `minimum` or `exclusiveMinimum`, `maximum` or `exclusiveMaximum`.
 
 Example:
 
