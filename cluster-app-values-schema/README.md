@@ -138,15 +138,11 @@ Example:
 }
 ```
 
-Best practices:
+An example can give users easy-to-understand guideance on how to use a property. Ideally, examples SHOULD be valid cases, fulfilling the contstraints of the property.
 
-- Ideally, provide one example.
-- Provide more than one example if you want to highlight that very different values are accepted.
-- Provide no more than five examples
+Multiple examples can be provided. Per property, there SHOULD be at least one example. Additional examples should only be provided to indicate the range of different values possible. There SHOULD NOT be more than five examples per property.
 
-TODO
-
-- We could decide to use the examples for testing purposes, replacing ci-values.yaml and the likes. In that case, we should make it a MUST requirement.
+TODO: We could decide to use the examples for testing purposes, replacing ci-values.yaml and the likes. In that case, we should make it a MUST requirement.
 
 ### R7: Constrain values as much as possible {#r7}
 
