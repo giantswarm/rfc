@@ -278,6 +278,23 @@ I haven't gotten to these yet, or I'm not sure about them.
 
 - How to specify whether a property can be modified or not. `"readOnly": true` mit be the right one for that.
 
+- Avoid recursion. No use of dynamicRef, dynamicAnchor, RecursiveRef
+
+- Not, AllOf, AnyOf, OneOf must only be used for constraints. No use of `type`, `properties` etc. in the sub-schema.
+
+- If, Then, Else cannot be used
+
+- DependentRequired, DependentSchemas: to be evaluated.
+
+- UnevaluatedProperties, UnevaluatedItems cannot be used.
+
+- AdditionalItems, PrefixItems, for tuple validation cannot be used.
+
+- All array items must be of the same type. `contains` cannot be used.
+
+- contentEncoding in combination with contentSchema: to be defined.
+  - see "username:password" in base 64 example
+
 ## Resources
 
 - [Understanding JSON Schema](https://json-schema.org/understanding-json-schema/)
