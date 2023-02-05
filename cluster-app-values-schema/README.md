@@ -7,6 +7,7 @@ This RFC defines basic requirements for all cluster apps provided by Giant Swarm
 ## Overview
 
 - [R1: JSON Schema dialect (draft 2019-09) must be specified](#r1)
+- [R12: A single type must be declared](#r12)
 - [R2: Schema must explicitly cover all allowed properties](#r2)
 - [R3: Array item schema must be defined](#r3)
 - [R4: Properties must have a title](#r4)
@@ -50,6 +51,28 @@ Example:
 {
   "$schema": "https://json-schema.org/draft/2019-09/schema",
   ...
+}
+```
+
+### R12: A single type must be declared {#r12}
+
+For each property, including the root level schema, the `type` keyword MUST be present, and there MUST be a single value for the `type` keyword.
+
+While JSON Schema draft 2019-09 allows multiple values for the `type` keyword, for cluster-apps this would complicate the generation of user interfaces. Hence we require a single type to be specified.
+
+For validation, there is no difference between an array with a single member or a single string. The two following examples can be considered identical.
+
+```json
+{
+  "type": "string",
+  "title": "Name"
+}
+```
+
+```json
+{
+  "type": ["string"],
+  "title": "Name"
 }
 ```
 
@@ -255,10 +278,6 @@ However, if the string values are not considered self-explanatory, the `oneOf` m
 ## TODO
 
 I haven't gotten to these yet, or I'm not sure about them.
-
-- Each property must declare the `type`. Pretty sure that this is required by JSON schema.
-
-- `type` must have exactly one value.
 
 - Should schemas have the `$id` property defined? And if yes, to what?
 
