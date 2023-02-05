@@ -19,6 +19,7 @@ This RFC defines basic requirements for all cluster apps provided by Giant Swarm
 - [R10: Use `deprecated` to phase out properties](#r10)
 - [R11: Provide valid string values where possible](#r11)
 - [R13: Avoid recursion](#r13)
+- [R14: Avoid logical constructs using `if`, `then`, `else`](#r14)
 
 ## Background
 
@@ -280,6 +281,10 @@ However, if the string values are not considered self-explanatory, the `oneOf` m
 
 The JSON Schema keywords `dynamicRef`, `dynamicAnchor`, and `recursiveRef` MUST NOT be used.
 
+### R14: Avoid logical constructs using `if`, `then`, `else` {#r14}
+
+The JSON Schema keywords `if`, `then`, and `else` MUST NOT be used.
+
 ## TODO
 
 I haven't gotten to these yet, or I'm not sure about them.
@@ -291,8 +296,6 @@ I haven't gotten to these yet, or I'm not sure about them.
 - How to specify whether a property can be modified or not. `"readOnly": true` mit be the right one for that.
 
 - Not, AllOf, AnyOf, OneOf must only be used for constraints. No use of `type`, `properties` etc. in the sub-schema.
-
-- If, Then, Else cannot be used
 
 - DependentRequired, DependentSchemas: to be evaluated.
 
