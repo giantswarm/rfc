@@ -21,7 +21,7 @@ This RFC defines basic requirements for all cluster apps provided by Giant Swarm
 - [R13: Avoid recursion](#r13)
 - [R14: Avoid logical constructs using `if`, `then`, `else`](#r14)
 - [R15: Avoid `unevaluatedProperties`, `unevaluatedItems`](#r15)
-- [R16: Avoid tuple validation](#r16)
+- [R16: Array items and tuple validation](#r16)
 
 ## Background
 
@@ -291,9 +291,11 @@ The JSON Schema keywords `if`, `then`, and `else` MUST NOT be used.
 
 The JSON Schema keywords `unevaluatedProperties` , `unevaluatedItems` MUST NOT be used.
 
-### R16: Avoid tuple validation {#r16}
+### R16: Array items and tuple validation {#r16}
 
-The JSON Schema keywords `additionalItems` and `prefixItems` MUST NOT be used.
+All array items MUST be of the same type.
+
+The JSON Schema keywords `contains`, `additionalItems` and `prefixItems` MUST NOT be used.
 
 ## TODO
 
@@ -308,8 +310,6 @@ I haven't gotten to these yet, or I'm not sure about them.
 - Not, AllOf, AnyOf, OneOf must only be used for constraints. No use of `type`, `properties` etc. in the sub-schema.
 
 - DependentRequired, DependentSchemas: to be evaluated.
-
-- All array items must be of the same type. `contains` cannot be used.
 
 - contentEncoding in combination with contentSchema: to be defined.
   - see "username:password" in base 64 example
