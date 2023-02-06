@@ -309,7 +309,7 @@ I haven't gotten to these yet, or I'm not sure about them.
 
 - Not, AllOf, AnyOf, OneOf must only be used for constraints. No use of `type`, `properties` etc. in the sub-schema.
 
-- DependentRequired, DependentSchemas: to be evaluated.
+- dependentRequired, dependentSchemas: to be evaluated.
 
 - contentEncoding in combination with contentSchema: to be defined.
   - see "username:password" in base 64 example
