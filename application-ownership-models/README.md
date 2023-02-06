@@ -51,7 +51,7 @@ Partial application ownership of these components means that a Giant Swarm team 
 **Release engineering is owned fully** in case of forked projects, where Giant Swarm team builds the application from the forked repository, then tests, packages and finally delivers it.
 
 **Release engineering is owned partially** when Giant Swarm team does not build the app, but, for example, re-tagged container image is used. Here we have two cases:
-- Giant Swarm team is packaging app as a Helm chart in the app repository, by building required Helm templates for deploying re-tagged container image and optionally using existing upstream Kubernetes manifests instead of writing Helm templates from scratch.
+- Giant Swarm team is packaging the app as a Helm chart in the app repository, by building required Helm templates for deploying re-tagged container images and optionally using existing upstream Kubernetes manifests instead of writing Helm templates from scratch.
 - Giant Swarm is repackaging or importing existing upstream Helm charts into Giant Swarm application repositories.
 
 ## 2. Sole or shared application ownership
