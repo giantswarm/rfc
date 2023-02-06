@@ -70,7 +70,7 @@ And this is the tricky part, one of the main reasons for which this whole RFC is
 
 Shared application ownership applies in some cases of partial application lifecycle ownership, so in a nutshell, the question here is - which Giant Swarm team owns some upstream application? Can it even be one team, or multiple teams must share ownership? If multiple teams share ownership, how does that work in practice?
 
-There is no silver bullet for all upstream applications, so here we need clear and robust, but also flexible ownership model.
+There is no silver bullet for all upstream applications, so here we need a clear and robust, but also flexible ownership model.
 
 Before trying to come up with some definition, let's first check few examples.
 
