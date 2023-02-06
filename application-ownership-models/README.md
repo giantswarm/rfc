@@ -102,7 +102,7 @@ Teams own apps with sole application ownership model. And multiple teams take tu
 
 When a team is assigned to be sole app owner that means that the team takes care of app's release engineering and operations (on-call, postmortems, etc).
 
-How frequently the ownership is rotated depends on the app, and is decided on a case by case basis by the interested teams, but in most cases the app ownership should be passed to the next team every few months to half a year, depending on the release cadence of the app. Less then a month is probably too often, more than half a year could lead to folks falling out of practice (important for operations) or even mean that some team doesn't get to own the app as team structure changes.
+How frequently the ownership is rotated depends on the app, and is decided on a case by case basis by the interested teams, but in most cases the app ownership should be passed to the next team every few months to half a year, depending on the release cadence of the app. Less than a month is probably too often, more than half a year could lead to folks falling out of practice (important for operations) or even mean that some team doesn't get to own the app as team structure changes.
 
 This shared application ownership model could be applied to the above examples in the following way (made up examples, not suggestions in the RFC):
 - Cluster API ownership is rotated between KaaS teams every 2 months. Within this time frame the team will deal with multiple minor and patch releases for which the release engineering work is required. Also, the rotation is relatively frequent, so everybody will be up-to-date when it comes to operations.
