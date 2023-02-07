@@ -15,7 +15,7 @@ This RFC defines basic requirements for all cluster apps provided by Giant Swarm
 - [R6: Properties should provide examples](#r6)
 - [R7: Constrain values as much as possible](#r7)
 - [R8: Required properties must be marked as such](#r8)
-- [R9: Avoid `anyOf` and `oneOf`](#r9)
+- [R9: Use `anyOf` and `oneOf` only for specific purposes](#r9)
 - [R10: Use `deprecated` to phase out properties](#r10)
 - [R11: Provide valid string values where possible](#r11)
 - [R13: Avoid recursion](#r13)
@@ -202,17 +202,53 @@ Properties that get default values assigned via some external mechanism (e.g. an
 
 Note: If property of type object named `a` has required properties, this does not indicate that `a` itself must be defined in the instance. However it indicates that if `a` is defined, the required properties must be defined, too.
 
-### R9: Avoid `anyOf` and `oneOf` {#r9}
+### R9: Use `anyOf` and `oneOf` only for specific purposes {#r9}
 
-A cluster app schema SHALL NOT make use of the `anyOf` or `oneOf` keyword.
+The keywords `anyOf` and `oneOf` allow definition of multiple subschemas, where the payload must match the constraints of either one (`oneOf`) or any number of (`anyOf`) subschemas. For user interface generation, this creates great complications, hence we strongly restrict the use of these features.
 
-If using `anyOf` or `oneOf` cannot be avoided, the desired subschema SHOULD be the first in the sequence.
+A cluster app MAY only make use of the `anyOf` or `oneOf` keyword in the following ways:
 
-In JSON Schema, the `anyOf` and `oneOf` keyword defines an array of possible subschemas for a property. For a user interface which is generated based on the schema, this creates a high degree of complexity.
+1. to specify validation constraints via subschemas
+2. to declare one or more subschemas as deprecated
 
-At Giant Swarm, our user interface for cluster creation will not support `anyOf` nor `oneOf` to full extent. Instead, we are going to select only one of the defined schemas for data input, using simply the first schema that is not deprecated.
+#### (1) Specifying validation constraints via subschemas
 
-Let's consider this example schema:
+The idea here is that each subschema only defines constraints for the validation of the payload.
+
+In this case, the subschemas MUST NOT contain any of the following keywords:
+
+- `type` declaration
+- annotations (`title`, `description`, `examples`)
+- `properties`, `patternProperties`, `additionalProperties`
+- `items`, `additionalItems`
+
+The following examples shows a string property with two subschemas, where each one has a different validation pattern.
+
+```json
+"diskSize": {
+  "type": "string",
+  "title": "Volume size",
+  "examples": ["10 GB", "10000 MB"],
+  "oneOf": [
+    {
+      "pattern": "^[0-9]+ GB$"
+    },
+    {
+      "pattern": "^[0-9]+ MB$"
+    }
+  ]
+}
+```
+
+#### (2) Declaring a subschema as deprecated
+
+If the schema of a property changes over time, while keeping the name of the property, the use of subschemas in combination with the `deprecated` keyword can help phase out an old schema and introduce a new one.
+
+As an exception to the rules defined in (1) above, the subschemas MAY use the JSON Schema keywords forbidden under (1) if `"deprecated": true` is present in all except one of the subschemas.
+
+In the case of a generated user interface, only the non-deprecated subschema will be applied. All other subschemas will be ignored.
+
+Example:
 
 ```json
 "replicas": {
@@ -226,13 +262,10 @@ Let's consider this example schema:
       "type": "integer",
       "maximum": 100,
       "title": "Size"
-    },
-    {...}
+    }
   ]
 }
 ```
-
-Here, the user interface would use the second subschema (type: integer) and ignore all others.
 
 ## R10: Use `deprecated` to phase out properties {#r10}
 
@@ -307,7 +340,7 @@ I haven't gotten to these yet, or I'm not sure about them.
 
 - How to specify whether a property can be modified or not. `"readOnly": true` mit be the right one for that.
 
-- Not, AllOf, AnyOf, OneOf must only be used for constraints. No use of `type`, `properties` etc. in the sub-schema.
+- Clarify use of `Not`.
 
 - dependentRequired, dependentSchemas: to be evaluated.
 
