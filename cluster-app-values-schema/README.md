@@ -6,7 +6,7 @@ This RFC defines basic requirements for all cluster apps provided by Giant Swarm
 
 ## Overview
 
-- [R1: JSON Schema dialect (draft 2019-09) must be specified](#r1)
+- [R1: JSON Schema dialect (draft 2020-12) must be specified](#r1)
 - [R12: A single type must be declared](#r12)
 - [R2: Schema must explicitly cover all allowed properties](#r2)
 - [R3: Array item schema must be defined](#r3)
@@ -43,17 +43,17 @@ TODO: Some more info regarding the rationale.
 
 Requirements carry identifiers with prefix `R` and a unique number, for easy referencing.
 
-### R1: JSON Schema dialect (draft 2019-09) must be specified {#r1}
+### R1: JSON Schema dialect (draft 2020-12) must be specified {#r1}
 
 Each cluster app's values schema file MUST specify the schema dialect (also called draft) used via the `$schema` keyword on the top level, with the draft URI as a value.
 
-The draft URI MUST be `https://json-schema.org/draft/2019-09/schema`.
+The draft URI MUST be `https://json-schema.org/draft/2020-12/schema`.
 
 Example:
 
 ```json
 {
-  "$schema": "https://json-schema.org/draft/2019-09/schema",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
   ...
 }
 ```
@@ -62,7 +62,7 @@ Example:
 
 For each property, including the root level schema, the `type` keyword MUST be present, and there MUST be a single value for the `type` keyword.
 
-While JSON Schema draft 2019-09 allows multiple values for the `type` keyword, for cluster-apps this would complicate the generation of user interfaces. Hence we require a single type to be specified.
+While JSON Schema draft 2020-12 allows multiple values for the `type` keyword, for cluster-apps this would complicate the generation of user interfaces. Hence we require a single type to be specified.
 
 For validation, there is no difference between an array with a single member or a single string. The two following examples can be considered identical.
 
