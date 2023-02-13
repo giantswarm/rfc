@@ -7,17 +7,17 @@ This RFC defines basic requirements for all cluster apps provided by Giant Swarm
 ## Overview
 
 - [R1: JSON Schema dialect (draft 2020-12) must be specified](#r1)
-- [R12: A single type must be declared](#r12)
-- [R2: Schema must explicitly cover all allowed properties](#r2)
-- [R3: Array item schema must be defined](#r3)
-- [R4: Properties must have a title](#r4)
-- [R5: Properties should have descriptions](#r5)
-- [R6: Properties should provide examples](#r6)
-- [R7: Constrain values as much as possible](#r7)
-- [R8: Required properties must be marked as such](#r8)
-- [R9: Use `anyOf` and `oneOf` only for specific purposes](#r9)
-- [R10: Use `deprecated` to phase out properties](#r10)
-- [R11: Provide valid string values where possible](#r11)
+- [R2: A single type must be declared](#r2)
+- [R3: Schema must explicitly cover all allowed properties](#r3)
+- [R4: Array item schema must be defined](#r4)
+- [R5: Properties must have a title](#r5)
+- [R6: Properties should have descriptions](#r6)
+- [R7: Properties should provide examples](#r7)
+- [R8: Constrain values as much as possible](#r8)
+- [R9: Required properties must be marked as such](#r9)
+- [R10: Use `anyOf` and `oneOf` only for specific purposes](#r10)
+- [R11: Use `deprecated` to phase out properties](#r11)
+- [R12: Provide valid string values where possible](#r12)
 - [R13: Avoid recursion](#r13)
 - [R14: Avoid logical constructs using `if`, `then`, `else`](#r14)
 - [R15: Avoid `unevaluatedProperties`, `unevaluatedItems`](#r15)
@@ -58,7 +58,7 @@ Example:
 }
 ```
 
-### R12: A single type must be declared {#r12}
+### R2: A single type must be declared {#r2}
 
 For each property, including the root level schema, the `type` keyword MUST be present, and there MUST be a single value for the `type` keyword.
 
@@ -80,17 +80,17 @@ For validation, there is no difference between an array with a single member or 
 }
 ```
 
-### R2: Schema must explicitly cover all allowed properties {#r2}
+### R3: Schema must explicitly cover all allowed properties {#r3}
 
 All properties that can be used in values MUST be covered in the schema explicitly.
 
 To enforce this and to disable the use of any undefined properties, the keyword `additionalProperties` SHOULD be set to `false` on all object schemas.
 
-### R3: Array item schema must be defined {#r3}
+### R4: Array item schema must be defined {#r4}
 
 The items schema for all array properties MUST be defined using the `items` keyword.
 
-### R4: Properties must have a title {#r4}
+### R5: Properties must have a title {#r5}
 
 Each property MUST be annotated via the `title` keyword.
 
@@ -118,7 +118,7 @@ Additional requirements apply to the title value:
 - If the title annotates a property that is part of another object, the title SHOULD NOT include the parent property name, to avoid repetition.
   - Example: with an object `/controlPlane` that is titled `Control plane`, the property  `/controlPlane/availabilityZones` should be titled `Availability zones`, not `Control plane availability zones`.
 
-### R5: Properties should have descriptions {#r5}
+### R6: Properties should have descriptions {#r6}
 
 Each property SHOULD be annotated and via the `description` keyword.
 
@@ -146,7 +146,7 @@ If a description is given, additional requirements apply to the value:
 - Descriptions SHOULD be between 50 and 200 characters long.
 - Descriptions SHOULD be written in simple language.
 
-### R6: Properties should provide examples {#r6}
+### R7: Properties should provide examples {#r7}
 
 Each property (except for type `boolean`) SHOULD provide one or more examples using the `examples` keyword.
 
@@ -171,7 +171,7 @@ Multiple examples can be provided. Per property, there SHOULD be at least one ex
 
 TODO: We could decide to use the examples for testing purposes, replacing ci-values.yaml and the likes. In that case, we should make it a MUST requirement.
 
-### R7: Constrain values as much as possible {#r7}
+### R8: Constrain values as much as possible {#r8}
 
 Property schema SHOULD explicitly restrict values as much as possible.
 
@@ -192,7 +192,7 @@ Example:
 }
 ```
 
-### R8: Required properties {#r8}
+### R9: Required properties {#r9}
 
 If a property is required to be set by the creator of a cluster, it MUST be included in the `required` keyword.
 
@@ -202,7 +202,7 @@ Properties that get default values assigned via some external mechanism (e.g. an
 
 Note: If property of type object named `a` has required properties, this does not indicate that `a` itself must be defined in the instance. However it indicates that if `a` is defined, the required properties must be defined, too.
 
-### R9: Use `anyOf` and `oneOf` only for specific purposes {#r9}
+### R10: Use `anyOf` and `oneOf` only for specific purposes {#r10}
 
 The keywords `anyOf` and `oneOf` allow definition of multiple subschemas, where the payload must match the constraints of either one (`oneOf`) or any number of (`anyOf`) subschemas. For user interface generation, this creates great complications, hence we strongly restrict the use of these features.
 
@@ -267,7 +267,7 @@ Example:
 }
 ```
 
-## R10: Use `deprecated` to phase out properties {#r10}
+## R11: Use `deprecated` to phase out properties {#r11}
 
 To indicate that a property is supposed to be removed in a future version, the property SHOULD carry the `deprecated` key with the value `true`.
 
@@ -280,7 +280,7 @@ In addition, it is RECOMMENDED to add a `$comment` key to the property, with inf
 
 Note that `$comment` content is not intended for display in any UI nor processing in any tool. It is mainly targeting schema developers and anyone using the schema itself as a source of information.
 
-## R11: Provide valid string values where possible {#r11}
+## R12: Provide valid string values where possible {#r12}
 
 For string properties, in some cases only a few values are considered valid. In this case, the schema SHOULD specify these selectable values in one of the following forms:
 
