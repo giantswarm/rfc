@@ -22,6 +22,7 @@ This RFC defines basic requirements for all cluster apps provided by Giant Swarm
 - [R14: Avoid logical constructs using `if`, `then`, `else`](#r14)
 - [R15: Avoid `unevaluatedProperties`, `unevaluatedItems`](#r15)
 - [R16: Array items and tuple validation](#r16)
+- [R17: Common schema structure](#r17)
 
 ## Background
 
@@ -329,6 +330,26 @@ The JSON Schema keywords `unevaluatedProperties` , `unevaluatedItems` MUST NOT b
 All array items MUST be of the same type.
 
 The JSON Schema keywords `contains`, `additionalItems` and `prefixItems` MUST NOT be used.
+
+### R17: Common schema structure {#r17}
+
+For cluster apps, we aim to use a common schema structure among the providers we support. This structure accounts for the necessary differences that can occur between providers, as some concepts and implementations are provider-specific.
+
+Each cluster app values schema MUST offer the following root level properties:
+
+| Property name | Property type | Description |
+|-|-|-|
+| `metadata` | object | Descriptive settings like name, description, cluster labels (e. g. service priority), owner organization |
+| `connectivity` | object | Settings related to connectivity and networking, and defining how the cluster reaches the outside world and how it can be reached. |
+| `controlPlane` | object | Configuration of the cluster's control plane, Etcd, API server and more. |
+| `nodePools` | array | Configuration of node pools (groups of worker nodes), regardless of their implentation flavour. |
+
+In addition, the cluster app values schema SHOULD offer the following root level properties:
+
+| Property name | title | description |
+|-|-|-|
+| `internal` | object | Settings which are not supposed to be configured by end users, and which won't be exposed via user interfaces. Also experimental features that undergo schema changes. |
+| `providerSpecific` | object | Configuration specific to the infrastructure provider. |
 
 ## TODO
 
