@@ -1,0 +1,20 @@
+name: Close Stale Issues
+on:
+  schedule:
+    - cron: '21 * * * *'
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v5.0.0
+        with:
+          days-before-stale: 100
+          days-before-close: 7
+          ascending: true
+          operations-per-run: 100
+          stale-pr-message: 'This RFC has had no activity for 100 days. It will be closed in 1 week, unless activity occurs or the label `lifecycle/keep` is added.'
+          close-pr-message: 'This RFC was closed automatically because it had no activity during the week since the last message.'
+          stale-pr-label: 'lifecycle/stale'
+          close-pr-label: 'lifecycle/stale-closed'
+          exempt-pr-labels: 'lifecycle/keep'
