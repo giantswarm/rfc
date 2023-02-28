@@ -140,7 +140,7 @@ We can put the secret into customers' git repositories and use GitOps templates 
 
 #### 6.c Management Cluster Fleet
 
-We can put the secret into our `management-clusters-fleet` repo. We will need to give reference to that secret in customers' git repository.
+We can put the secret into our `management-clusters-fleet` repo and refer that secret in `extraConfigs` in cluster apps. We can use GitOps templates to inject this configuration in all cluster apps.
 
 #### 6.d Catalog configuration
 
@@ -148,12 +148,11 @@ We can use catalog configurations (See <mc-name>/appcatalog folder in `installat
 
 #### Decision
 
-`6.d` is selected.
+`6.c` is selected.
 
 - Regarding 6.a, we don't want to add another responsility to `cluster-apps-operator`. 
 - Regarding 6.b, we want to manage the credentials in our side and to have a full control over them.
-- Regarding 6.c, management of the secrets can be so costly when we need to create the secret in each organization namespace.
-- Regarding 6.d, it is not the ideal solution we want to have since catalog configurations are hard to track. Nevertheless, we decided to start with this. Since the configurations are passed by the app platform, we can change this in the future without changing anything in cluster-$provider apps and users' inputs.
+- Regarding 6.d, people think catalog configurations are hard to track since there is no references in app CRs.
 
 ### 7. Configuration interface
 
