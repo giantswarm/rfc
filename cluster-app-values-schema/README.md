@@ -8,7 +8,7 @@ This RFC defines basic requirements for all cluster apps provided by Giant Swarm
 
 - [R1: JSON Schema dialect (draft 2020-12) must be specified](#r1)
 - [R2: A single type must be declared](#r2)
-- [R3: Schema must explicitly cover all allowed properties](#r3)
+- [R3: Explicitly cover all allowed properties](#r3)
 - [R4: Array item schema must be defined](#r4)
 - [R5: Properties must have a title](#r5)
 - [R6: Properties should have descriptions](#r6)
@@ -81,11 +81,13 @@ For validation, there is no difference between an array with a single member or 
 }
 ```
 
-### R3: Schema must explicitly cover all allowed properties {#r3}
+### R3: Explicitly cover all allowed properties {#r3}
 
 All properties that can be used in values MUST be covered in the schema explicitly.
 
-To enforce this and to disable the use of any undefined properties, the keyword `additionalProperties` SHOULD be set to `false` on all object schemas.
+To enforce this and to disable the use of any undefined properties, the keyword `additionalProperties` MUST be set to `false` on the schema's root object.
+
+For objects deeper in the schema hierarchy, keyword `additionalProperties` SHOULD be set to `false`, too.
 
 ### R4: Array item schema must be defined {#r4}
 
