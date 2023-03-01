@@ -353,6 +353,14 @@ In addition, the cluster app values schema SHOULD offer the following root level
 | `internal` | object | Settings which are not supposed to be configured by end users, and which won't be exposed via user interfaces. Also experimental features that undergo schema changes. |
 | `providerSpecific` | object | Configuration specific to the infrastructure provider. |
 
+For compatibility reasons, the schema MAY have the following properties in the root level:
+
+- `managementCluster`
+- `baseDomain`
+- `provider`
+
+The schema MUST NOT define any other properties on the root level, in addition to the ones mentioned above.
+
 ## TODO
 
 I haven't gotten to these yet, or I'm not sure about them.
