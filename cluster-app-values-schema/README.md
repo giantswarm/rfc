@@ -358,6 +358,7 @@ For compatibility reasons, the schema MAY have the following properties in the r
 - `managementCluster`
 - `baseDomain`
 - `provider`
+- `cluster-shared`
 
 The schema MUST NOT define any other properties on the root level, in addition to the ones mentioned above.
 
