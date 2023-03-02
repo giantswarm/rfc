@@ -348,7 +348,7 @@ Each cluster app values schema MUST offer the following root level properties:
 
 In addition, the cluster app values schema SHOULD offer the following root level properties:
 
-| Property name | title | description |
+| Property name | Property type | Description |
 |-|-|-|
 | `internal` | object | Settings which are not supposed to be configured by end users, and which won't be exposed via user interfaces. Also experimental features that undergo schema changes. |
 | `providerSpecific` | object | Configuration specific to the infrastructure provider. |
