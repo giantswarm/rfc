@@ -12,7 +12,7 @@ This RFC defines basic requirements for all cluster apps provided by Giant Swarm
 - [R4: Array item schema must be defined](#r4)
 - [R5: Properties must have a title](#r5)
 - [R6: Properties should have descriptions](#r6)
-- [R7: Properties should provide examples](#r7)
+- [R7: Some properties should provide examples](#r7)
 - [R8: Constrain values as much as possible](#r8)
 - [R9: Required properties must be marked as such](#r9)
 - [R10: Use `anyOf` and `oneOf` only for specific purposes](#r10)
@@ -149,9 +149,9 @@ If a description is given, additional requirements apply to the value:
 - Descriptions SHOULD be between 50 and 200 characters long.
 - Descriptions SHOULD be written in simple language.
 
-### R7: Properties should provide examples {#r7}
+### R7: Some properties should provide examples {#r7}
 
-Each property (except for type `boolean`) SHOULD provide one or more examples using the `examples` keyword.
+Properties of type `string` SHOULD provide at least one value example using the `examples` keyword.
 
 Example:
 
@@ -161,6 +161,7 @@ Example:
   "properties": {
     "name": {
         "type": "string",
+        "pattern": "^[a-z0-9]{5,10}$",
         "examples": ["devel001"],
         ...
     }
@@ -168,11 +169,9 @@ Example:
 }
 ```
 
-An example can give users easy-to-understand guideance on how to use a property. Ideally, examples SHOULD be valid cases, fulfilling the contstraints of the property.
+An example can give users easy-to-understand guideance on how to use a property. Ideally, examples SHOULD be valid cases, fulfilling the contstraints of the property (if given).
 
-Multiple examples can be provided. Per property, there SHOULD be at least one example. Additional examples should only be provided to indicate the range of different values possible. There SHOULD NOT be more than five examples per property.
-
-TODO: We could decide to use the examples for testing purposes, replacing ci-values.yaml and the likes. In that case, we should make it a MUST requirement.
+Multiple examples can be provided. Additional examples should only be provided to indicate the range of different values possible. There SHOULD NOT be more than five examples per property.
 
 ### R8: Constrain values as much as possible {#r8}
 
