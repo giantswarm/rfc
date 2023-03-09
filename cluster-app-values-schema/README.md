@@ -151,7 +151,7 @@ If a description is given, additional requirements apply to the value:
 
 ### R7: Some properties should provide examples {#r7}
 
-Properties of type `string` SHOULD provide at least one value example using the `examples` keyword.
+Properties of type `string` SHOULD provide at least one value example using the `examples` keyword, if the property is restricted either using `pattern` or `format`.
 
 Example:
 
