@@ -169,7 +169,7 @@ Example:
 }
 ```
 
-An example can give users easy-to-understand guideance on how to use a property. Ideally, examples SHOULD be valid cases, fulfilling the contstraints of the property (if given).
+An example can give users easy-to-understand guidance on how to use a property. Ideally, examples SHOULD be valid cases, fulfilling the constraints of the property (if given).
 
 Multiple examples can be provided. Additional examples should only be provided to indicate the range of different values possible. There SHOULD NOT be more than five examples per property.
 
