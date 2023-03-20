@@ -8,6 +8,8 @@ For example in CAPI installation, if the `baseDomain` is `gaws.gigantic.io`, a c
 In `vintage`, if the `baseDomain` is `goku.germanywestcentral.azure.gigantic.io` (notice that it contains the name of the management cluster), the management cluster kubernetes API endpoint will be listening at `g8s.goku.germanywestcentral.azure.gigantic.io`.
 While a workload cluster called `mycluster` will have its kubernetes API endpoint listening at `api.x6rtd.k8s.goku.germanywestcentral.azure.gigantic.io`.
 
+There are different problems with our current approach.
+
 ## Problems
 
 ### Global value
@@ -31,7 +33,10 @@ The fact that we reuse the same variable name for values that could potentially 
 ### Different clusters in the same installation can't use different `baseDomain` values
 
 We have several controllers reconciling workload clusters, and these controllers receive the `baseDomain` configuration value to create resources for the reconciled clusters.
-Because we pass the `baseDomain` as a parameter to the controllers, all clusters in a single installation must share the same `baseDomain`. There is no way to use different a `baseDomain` for two workload clusters on the same installation.
+Because we pass the `baseDomain` as a parameter to the controllers, all clusters in a single installation must share the same `baseDomain`. This has some big drawbacks
+
+- Different workload clusters managed by the same management cluster can't use different domains. If the customer wants a workload cluster with a different `baseDomain`, a new management cluster needs to be created.
+- Workload clusters can't be moved to a different management cluster, the `baseDomain` creates a dependency between the management cluster and the workload cluster.
 
 ### Same variable name for different values
 
@@ -46,8 +51,11 @@ These differences here and there are confusing.
 
 ## Proposal #1: Add `baseDomain` as an annotation to Cluster Custom Resource in CAPI installations
 
-There are some operators that we deploy in management clusters which reconcile workload clusters, and use the `baseDomain` to perform their business logic. As explained above, these operators receive the `baseDomain` through the `config` repository.
-Instead, we could add a new annotation `"giantswarm.io/dns-zone"` to the `Cluster` Custom Resources. That way, when reconciling clusters, our operators could read the annotation from the `Cluster` object instead of requiring to configure the `baseDomain` in the `config` repository.
+There are two types of applications running on the Management clusters that use the `baseDomain` value.
+There are applications that reconcile CAPI Custom Resources, and there are other applications that need the Management cluster `baseDomain` for different things, like creating `Ingress` objects.
+
+For the first group, instead of passing the `baseDomain` value as a parameter through the `config` repo, we could add a new annotation `"giantswarm.io/dns-zone"` to the `Cluster` Custom Resources instead.
+That way, when reconciling clusters, our operators could read the annotation from the `Cluster` object instead of requiring to configure the `baseDomain` in the `config` repository.
 
 ```yaml
 apiVersion: cluster.x-k8s.io/v1beta1
@@ -70,6 +78,9 @@ metadata:
   namespace: org-giantswarm
 ```
 
+The `baseDomain` would still be used by the applications that we deploy to management clusters that don't reconcile clusters, because these applications need the DNS zone of the management cluster.
+This variable could potentially be renamed to something like `managementClusterDNSZone` in the future to make clear its purpose, but it's not in the scope of this RFC to discuss this.
+
 ### Advantages
 
 On top of reducing the usage of the global `baseDomain` value, there are other advantages when using this approach.
@@ -82,7 +93,7 @@ This is a better scenario than our current approach having the controller receiv
 
 #### Reduce coupling
 
-Controllers fetching this value from the `cluster-values` configmap depend on the `cluster-apps-operator` or `cluster-operator` deployed and creating the configmap.
+Controllers fetching the `baseDomain` value from the `cluster-values` configmap depend on the `cluster-apps-operator` or `cluster-operator` deployed and creating the configmap.
 Using the value from the annotation instead of depending on the configmap reduces coupling between our controllers.
 
 #### Potential to use different DNS hosted zones on the same Management Cluster
@@ -126,7 +137,7 @@ It needs it to create the hosted zone and DNS records for the cluster that's rec
 
 For CAPI clusters it loads the `cluster-values` configmap from the management cluster. It should also take the value from the annotation instead.
 
-## Proposal #2: Stop using the `baseDomain` from the `cluster-values` configmap in CAPI installations
+## Proposal #2: Set value in default-apps-* config instead of using `baseDomain` from the `cluster-values` configmap in CAPI installations
 
 The `cluster-apps-operator` in CAPI installations, (and the `cluster-operator` in `vintage` installations) is creating a configmap called `$clustername-cluster-values` that contains values related to the workload cluster called `$clustername`.
 One of these values is the `baseDomain` for that cluster.
