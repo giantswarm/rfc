@@ -8,7 +8,7 @@ Our logging infrastructure will rely on [Promtail](https://grafana.com/docs/loki
 
 After deploying Promtail we need to control 3 elements :
 
-- The `scrape_config`, which describe how Promtail will discover targets to collect logs from.
+- The `scrape_config`, which describes how Promtail will discover targets to collect logs from.
 - The `credentials`, for Promtail to be able to ship logs to Loki via the remote write API.
 - The toggle flag, to enable/disable Promtail.
 
