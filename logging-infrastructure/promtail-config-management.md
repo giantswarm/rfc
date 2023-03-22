@@ -38,6 +38,6 @@ We have 3 distinct source of truth :
 
 ## Limitation
 
-* Using the same `scrape_config` for all cluster regardless of provider and version. This has the benefit for us to deploy update easily. Also this should not be a problem regarding target discovery, learning from Promtheus scrape config we should be able to define a clear interface.
+* Using the same `scrape_config` for all installations/clusters regardless of provider and version. This has the benefit for us to deploy update easily. Also this should not be a problem regarding target discovery, learning from Prometheus scrape config we should be able to define a clear interface.
 * toggle flag do not allow for individual cluster toggling, we can only enable/disable Promtail for all cluster of an installation. This can be improved later on.
 
