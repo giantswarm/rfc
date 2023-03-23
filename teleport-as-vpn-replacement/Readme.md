@@ -63,10 +63,10 @@ spec:
 ```
 ### Install teleport on MC during MC bootstrap
 We will install the [helm chart](https://goteleport.com/docs/reference/helm-reference/teleport-kube-agent/) of teleport agent for API access via the app collections. We label the clusters as with  for better searchability  as documented [here](https://github.com/gravitational/teleport/tree/branch/v12/examples/chart/teleport-kube-agent#kubernetes-access). <!-- TODO come up with a labeling shema -->  
-Example: `labels.installation=guppy labels.customer=giantswarm labels.environment=testing labels.mc=true labels.wc=false`
+Example: `labels.installation=guppy labels.customer=giantswarm labels.environment=testing labels.mc=true`
 
 ### Install teleport on WC with default-apps
-We will install the [helm chart](https://goteleport.com/docs/reference/helm-reference/teleport-kube-agent/) as a default app. and use the same labels as for the managment clsuters, except that we set `labels.mc=false, labels.wc=true`
+We will install the [helm chart](https://goteleport.com/docs/reference/helm-reference/teleport-kube-agent/) as a default app. and use the same labels as for the managment clsuters, except that we set `labels.mc=false`
 
 ## Open Questions
 - Join token life time and managment
