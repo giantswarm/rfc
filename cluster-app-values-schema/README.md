@@ -23,6 +23,7 @@ This RFC defines basic requirements for all cluster apps provided by Giant Swarm
 - [R15: Avoid `unevaluatedProperties`, `unevaluatedItems`](#r15)
 - [R16: Array items and tuple validation](#r16)
 - [R17: Common schema structure](#r17)
+- [R18: Avoid using empty values in defaults](#r17)
 
 ## Background
 
@@ -360,6 +361,20 @@ For compatibility reasons, the schema MAY have the following properties in the r
 - `cluster-shared`
 
 The schema MUST NOT define any other properties on the root level, in addition to the ones mentioned above.
+
+### R18: Avoid using empty values in defaults
+
+If a property specifies a default via the default keyword, then the default MUST not be an empty value.
+
+The definition of an empty value differs by type.
+| type    | empty value                           |
+|---------|---------------------------------------|
+| Boolean | `false`                               |
+| String  | `""`                                  |
+| Integer | `0`                                   |
+| Number  | `0` or everthing that's equal (`0.0`) |
+| Array   | `[]`                                  |
+| Object  | `{}`                                  |
 
 ## TODO
 
