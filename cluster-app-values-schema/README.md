@@ -362,7 +362,7 @@ For compatibility reasons, the schema MAY have the following properties in the r
 
 The schema MUST NOT define any other properties on the root level, in addition to the ones mentioned above.
 
-### R18: Avoid using empty values in defaults
+### R18: Avoid using empty values in defaults {#r18}
 
 If a property specifies a default via the default keyword, then the default MUST not be an empty value.
 
