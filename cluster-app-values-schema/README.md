@@ -344,7 +344,7 @@ Each cluster app values schema MUST offer the following root level properties:
 | `metadata` | object | Descriptive settings like name, description, cluster labels (e. g. service priority), owner organization |
 | `connectivity` | object | Settings related to connectivity and networking, and defining how the cluster reaches the outside world and how it can be reached. |
 | `controlPlane` | object | Configuration of the cluster's control plane, Etcd, API server and more. |
-| `nodePools` | array | Configuration of node pools (groups of worker nodes), regardless of their implentation flavour. |
+| `nodePools` | array or object | Configuration of node pools (groups of worker nodes), regardless of their implentation flavour. |
 
 In addition, the cluster app values schema SHOULD offer the following root level properties:
 
@@ -359,6 +359,8 @@ For compatibility reasons, the schema MAY have the following properties in the r
 - `baseDomain`
 - `provider`
 - `cluster-shared`
+- `defaultMachinePools`
+- `kubectlImage`
 
 The schema MUST NOT define any other properties on the root level, in addition to the ones mentioned above.
 
