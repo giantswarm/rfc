@@ -1,6 +1,6 @@
 # Sharing Kyverno Policies with Customers
 
-This mini-RFC documents the result of a discussion about Kyverno policies we deploy in customer clusters.
+This mini-RFC documents the result of [a discussion](https://github.com/giantswarm/giantswarm/issues/26365) about Kyverno policies we deploy in customer clusters.
 
 The outcome of this RFC should be to clarify the general expectation of Kyverno policies in workload clusters, and optionally to generate additional discussions for the points that remain unclear.
 
