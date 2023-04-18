@@ -527,7 +527,7 @@ containerRegistries:
 
 ## R20: Node pools configuration (`nodePools`) {#r20}
 
-The root-level value of `nodePools` should be an `object`. Some cluster templates still use `array` and should be adapted over time. Rationale: based on customer requests, we offer the ability to merge several configurations to form the final node pools. For example, kustomize with base and dev/stag/prod-specific patches could be used to create several _extra configs_. Our app platform then merges those together.
+The root-level value of `nodePools` should be an `object`. Some cluster templates still use `array` and should be adapted over time. Rationale: based on customer requests, we offer the ability to merge several configurations to form the final node pools. For example, [kustomize with base and dev/stag/prod-specific patches](https://github.com/giantswarm/gitops-template/tree/main/bases/environments/stages) could be used to create several _extra configs_. Our app platform then merges those together.
 
 Example:
 
