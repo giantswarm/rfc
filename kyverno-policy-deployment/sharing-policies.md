@@ -8,7 +8,7 @@ The outcome of this RFC should be to clarify the general expectation of Kyverno 
 
 We used a Kyverno policy to implement some behavior, and didn't anticipate that customers might also use the policy. When we changed the policy for our usage, it broke the functionality for the customer.
 
-Since we will give customers lots of Kyverno policies for PSS in the future, we should let them assume that policies we deploy are intended for their usage.
+Since we will give customers lots of Kyverno policies for Pod Security Standards (PSS) in the future, we should let them assume that policies we deploy are intended for their usage.
 
 If that isn't true for a certain policy, the responsibility is on us to make that clear and reduce the likelihood that customers will use it mistakenly.
 
