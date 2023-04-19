@@ -59,7 +59,7 @@ We currently include a default restricted PSP in each workload cluster. This wil
 
 Customers will have great flexibility in how they deliver `PolicyExceptions` to the cluster for any workloads which are not compliant with the `restricted` standard. Examples of possible exception models are included below.
 
-A newly-created workload cluster will contain the `PolicyException` resources deployed with our applications, described above.
+A newly-created workload cluster will contain `PolicyException` resources deployed for our applications, described above.
 
 ### Migration Implications
 
@@ -80,6 +80,21 @@ Customers:
 
 Shield's experience with early Kyverno adopters is that organizations have drastically different ability and willingness to enforce security policies.
 We will provide resources based on what we already know from early adopters, what we learn from Giant Swarm's migration, and the unknown needs that we will inevitably learn from customers as they begin the move.
+
+### Migration Path
+
+More detailed information on the migration path will be published after agreement is reached on this RFC. To help understand the path to PSS adoption, the high-level migration process would be:
+
+1. Kyverno and PSS policies (audit) are added to an upcoming release. This could be a new v19 minor.
+    - Result: customers now have information about non-compliant workloads
+1. Customers begin creating `PolicyExceptions` for workloads which require them
+    - Shield provides docs and support
+    - Optionally: customers change individual policies to `enforce` as compliance is achieved
+    - Optionally: customers can elect to completely disable PSPs
+1. Kubernetes 1.25 release is published, containing policies in `enforce` mode by default
+    - Result: PSPs are removed
+    - Result: remaining non-compliant workloads will be rejected
+    - Result: customers must deploy exceptions for remaining workloads or grant more widely-scoped exceptions (e.g. disabling enforcement of certain policies)
 
 ## Alternatives
 
@@ -116,7 +131,7 @@ This would be very error-prone and simply would not scale.
 
 #### Centralized Exceptions
 
-Some customers prefer to centralize the approval and management of policy exceptions. This has historically included policies of several types, including Pod Security Policies and Network Policies, among others.
+Most customers prefer to centralize the approval and management of policy exceptions. This has historically included policies of several types, including Pod Security Policies and Network Policies, among others.
 These organizations already have established approval processes, in some cases including automated portals where users can request an exception to be automatically deployed to clusters after review by cluster administrators and/or a security team.
 
 Customers operating under this model may prefer to restrict PolicyException creation only to cluster administrators and approved automation.
