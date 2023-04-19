@@ -4,7 +4,7 @@
 
 The purpose of this RFC is to communicate Team Shield's plan for moving forward with Kyverno PSS policies as a replacement for PSPs and the associated implications for teams and customers regarding management of policy exceptions.
 
-This RFC will be merged and considered to be accepted on or after 1 May 2023 as soon as no blocker remains (indicated by the "Request changes" PR review option).
+This RFC will be merged and considered to be accepted on or after 8 May 2023 as soon as no blocker remains (indicated by the "Request changes" PR review option).
 
 ## Background
 
