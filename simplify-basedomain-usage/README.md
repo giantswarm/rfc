@@ -35,7 +35,7 @@ The fact that we reuse the same variable name for values that could potentially 
 We have several controllers reconciling workload clusters, and these controllers receive the `baseDomain` configuration value to create resources for the reconciled clusters.
 Because we pass the `baseDomain` as a parameter to the controllers, all clusters in a single installation must share the same `baseDomain`. This has some big drawbacks
 
-- Different workload clusters managed by the same management cluster can't use different domains. If the customer wants a workload cluster with a different `baseDomain`, a new management cluster needs to be created.
+- Different workload clusters managed by the same management cluster can't use different domains easily. If the customer wants a workload cluster with a different baseDomain, they would have to create a CNAME for the new domain and pass special configuration for that specific cluster (they could also create a new management cluster).
 - Workload clusters can't be moved to a different management cluster, the `baseDomain` creates a dependency between the management cluster and the workload cluster.
 
 ### Same variable name for different values
@@ -105,6 +105,10 @@ If we move the value to be part of the `Cluster` CR, different clusters could po
 
 One side effect from this is that by decoupling the `baseDomain` from the Management Cluster would also help moving clusters between installations, if that would be desired.
 
+#### Make kubectl-gs more reliable when creating client certificates for WCs
+
+`kubectl-gs` could also use this annotation when creating client certificates for workload clusters. 
+Currently, it gets the cluster domain from the `Spec.ControlPlaneEndpoint.Host` property of the Cluster CR, which is not always accurate. Getting the domain from the annotation would fix it.
 
 ### Downsides
 
@@ -112,6 +116,8 @@ One side effect from this is that by decoupling the `baseDomain` from the Manage
 
 For the migration to this approach, we would need to annotate all `Cluster` Custom Resources to have the annotation.
 We also would need to change our operators so that they read this value instead of the parameter they currently receive using the `config` repository.
+
+This also means that our operators would add `cluster-api` as a Go dependency. From the list below, all operators but `dex-operator` already depend on `cluster-api`.
 
 ##### List of controllers that reconcile clusters and use the `baseDomain`
 
@@ -184,3 +190,13 @@ It uses the `baseDomain` to talk to the k8s api. It already receives the `baseDo
 ###### external-dns-app
 
 It uses the `baseDomain` to filter which DNS records to take care of. We could do the same thing we do with `cilium` and pass the `baseDomain` in the `default-apps-$provider` bundle.
+
+## Concerns raised during discussions and open questions.
+
+- Would these proposals add more differences between `capi` and `vintage` installations?
+- Could we default the new annotation somehow?
+
+
+## Deadline
+
+The RFC will be closed on the 04/05/2023.
