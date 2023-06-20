@@ -34,9 +34,9 @@ See the [upstream project](https://gateway-api.sigs.k8s.io/).
 
 Gateway API can be described as a possible future replacement for the current [Ingress API object](https://kubernetes.io/docs/concepts/services-networking/ingress/), aiming to provide a more well-rounded API for describing service networking in Kubernetes.
 
-We need to firm up our strategy with Ingress generally, and more specifically our plans with the nginx-ingress-controller. 
+We need to firm up our strategy with Ingress generally, and more specifically our plans with the Ingress NGINX Controller.
 
-Given upstream direction, it is likely that we will need to provide a managed Gateway API solution. We also have concerns about the maintainership of nginx-ingress-controller - there is currently a lack of support for Gateway API, and no clear plans for adding that support.
+Given upstream direction, it is likely that we will need to provide a managed Gateway API solution. We also have concerns about the maintainership of Ingress NGINX Controller - there is currently a lack of support for Gateway API, and no clear plans for adding that support.
 
 There are alternative solutions we're considering offering, such as Contour / Envoy, Kong, or Traefik, among others. These support Gateway API, and appear to be better maintained.
 
@@ -88,9 +88,9 @@ We can work on improving our Linkerd offering, by improving the Helm chart and o
 
 The effort here is higher than with Kong, but we do already have a workable offering. The customer value is quite high.
 
-### Scaling nginx-ingress-controller on custom metrics
+### Scaling Ingress NGINX Controller on custom metrics
 
-We currently offer horizontal pod autoscaling for nginx-ingress-controller based on the CPU and memory usage of the nginx-ingress-controller Pods. CPU and memory are not the best metrics to scale on - the number of requests currently being served would be more suitable. We could build support in our nginx-ingress-controller offering to scale on these custom metrics.
+We currently offer horizontal pod autoscaling for Ingress NGINX Controller based on the CPU and memory usage of the Ingress NGINX Controller Pods. CPU and memory are not the best metrics to scale on - the number of requests currently being served would be more suitable. We could build support in our Ingress NGINX Controller offering to scale on these custom metrics.
 
 We have some customers with extremely bursty traffic patterns, meaning they need to pre-scale their clusters before high load events. We would likely not be able to enable them to scale on demand, even with the ability to scale on custom metrics.
 
@@ -122,9 +122,9 @@ Given our move to re-using Workload Clusters as Management Clusters in the futur
 
 ### Moving to upstream charts
 
-We currently use our own Helm charts for some components owned by Team Cabbage, notably nginx-ingress-controller and external-dns. We could move to use upstream charts for these components. This would reduce time and effort required to keep them up to date. 
+We currently use our own Helm charts for some components owned by Team Cabbage, notably Ingress NGINX Controller and external-dns. We could move to use upstream charts for these components. This would reduce time and effort required to keep them up to date.
 
-The effort could be fairly high here with nginx-ingress-controller as it is a critical component, and there would be minimal customer impact.
+The effort could be fairly high here with Ingress NGINX Controller as it is a critical component, and there would be minimal customer impact.
 
 ## Roadmap
 

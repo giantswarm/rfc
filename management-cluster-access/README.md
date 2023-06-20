@@ -123,7 +123,7 @@ The goal is to have SSO access by default on all our clusters (MC and WC) and ea
 - Adapting kubectl gs to work with more dex connectors.
 - Deprecate k8s authenticator
 - Make OIDC a default in all clusters
-- This would need athena, nginx ingress controller, cert manager and dex to be default apps.
+- This would need athena, Ingress NGINX Controller, cert manager and dex to be default apps.
 
 ### Adding azure AD as a second identity provider for SSO
 
