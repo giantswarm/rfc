@@ -92,11 +92,11 @@ spec:
       name: ingress-controller-values
       namespace: m2m01
   configs: []  # <-- new
-  name: nginx-ingress-controller-app
+  name: ingress-nginx
   namespace: kube-system
   userConfig:
     configMap:
-      name: nginx-ingress-controller-app-user-values
+      name: ingress-nginx-user-values
       namespace: m2m01
   version: 2.7.0
 ```
@@ -114,16 +114,16 @@ spec:
          namespace: m2m01
    configs:
       - kind: secret
-        name: nginx-ingress-controller-admin-login
+        name: ingress-nginx-admin-login
         namespace: m2m01
       - kind: configMap
-        name: nginx-ingress-controller-admin-account
+        name: ingress-nginx-admin-account
         namespace: m2m01
-   name: nginx-ingress-controller-app
+   name: ingress-nginx
    namespace: kube-system
    userConfig:
       configMap:
-         name: nginx-ingress-controller-app-user-values
+         name: ingress-nginx-user-values
          namespace: m2m01
    version: 2.7.0
 ```
@@ -131,14 +131,14 @@ spec:
 In the above example the order for config maps will be:
 
 1. Catalog (P = 0)
-1. ConfigMap: nginx-ingress-controller-admin-account (P = 25)
+1. ConfigMap: ingress-nginx-admin-account (P = 25)
 1. ConfigMap: ingress-controller-values (P = 50)
-1. ConfigMap: nginx-ingress-controller-app-user-values (P = 100)
+1. ConfigMap: ingress-nginx-user-values (P = 100)
 
 And for secrets it is simply (because not cluster or user layer is defined):
 
 1. Catalog
-1. Secret: nginx-ingress-controller-admin-login
+1. Secret: ingress-nginx-admin-login
 
 And an example with some `priority` fields set on `extraConfigs` entries:
 
@@ -153,29 +153,29 @@ spec:
          namespace: m2m01
    configs:
       - kind: configMap
-        name: nginx-ingress-controller-post-user
+        name: ingress-nginx-post-user
         namespace: m2m01
         priority: 125
       - kind: configMap
-        name: nginx-ingress-controller-pre-user
+        name: ingress-nginx-pre-user
         namespace: m2m01
         priority: 75
       - kind: configMap
-        name: nginx-ingress-controller-pre-cluster
+        name: ingress-nginx-pre-cluster
         namespace: m2m01
       - kind: configMap
-        name: nginx-ingress-controller-final
+        name: ingress-nginx-final
         namespace: m2m01
         priority: 125
       - kind: configMap
-        name: nginx-ingress-controller-high-priority
+        name: ingress-nginx-high-priority
         namespace: m2m01
         priority: 10
-   name: nginx-ingress-controller-app
+   name: ingress-nginx
    namespace: kube-system
    userConfig:
       configMap:
-         name: nginx-ingress-controller-app-user-values
+         name: ingress-nginx-user-values
          namespace: m2m01
    version: 2.7.0
 ```
@@ -183,13 +183,13 @@ spec:
 The merge order for config maps will be:
 
 1. Catalog (P = 0)
-1. ConfigMap: nginx-ingress-controller-high-priority (P = 10)
-1. ConfigMap: nginx-ingress-controller-pre-cluster (P = 25)
+1. ConfigMap: ingress-nginx-high-priority (P = 10)
+1. ConfigMap: ingress-nginx-pre-cluster (P = 25)
 1. ConfigMap: ingress-controller-values (P = 50)
-1. ConfigMap: nginx-ingress-controller-pre-user (P = 75)
-1. ConfigMap: nginx-ingress-controller-app-user-values (P = 100)
-1. ConfigMap: nginx-ingress-controller-post-user (P = 125, position in the list: 1)
-1. ConfigMap: nginx-ingress-controller-final (P = 125, position in the list: 4)
+1. ConfigMap: ingress-nginx-pre-user (P = 75)
+1. ConfigMap: ingress-nginx-app-user-values (P = 100)
+1. ConfigMap: ingress-nginx-post-user (P = 125, position in the list: 1)
+1. ConfigMap: ingress-nginx-final (P = 125, position in the list: 4)
 
 #### Pros
 
