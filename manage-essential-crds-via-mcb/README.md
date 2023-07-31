@@ -28,6 +28,10 @@ solution uses `curl` and `kubectl` apply to get teh job done:
 - https://github.com/giantswarm/flux-app/pull/209
 - https://github.com/giantswarm/roadmap/issues/2480
 
+### Related experiment pull requests
+
+- https://github.com/giantswarm/management-cluster-bases/pull/28/files
+- https://github.com/giantswarm/giantswarm-management-clusters/pull/138/files
 
 ## Proposed solution
 
@@ -97,6 +101,8 @@ resources:
   # ...
 ```
 
+As a result of the above `all` kustomization, we should rename `flux-crds` kustomization to `crds`.
+
 ### Solving mc-bootstrap
 
 For `flux` CRDs we currently have a `make` command exposed in the shared Makefile: https://github.com/giantswarm/management-cluster-bases/blob/9170ca4d74e5564ff85d5260a281dab03f94a297/bases/tools/Makefile.custom.mk#L50
@@ -141,7 +147,32 @@ We don't need to worry about `kustomize` or `yq` as the Makefile downloads these
 
 ## Migration process
 
-...
+### Renamed flux-crds kustomization to crds
+
+Since `prune` is false - right?! - we can do this in the following steps:
+
+- in CMCs, update `bases/flux-app/crds/kustomization.yaml`. This is the current one used by `flux-crds` kustomization,
+  should be updated to:
+  ```yaml
+  resources: []
+  ```
+- in CMCs, add `bases/crds/kustomization.yaml` with contents of (of course change `ref` when testing):
+  ```yaml
+  resources:
+  - https://github.com/giantswarm/management-cluster-bases//bases/crds/all?ref=main
+  ```
+- in MCB update the `flux-crds` kustomization to be called `crds` and make it point to `path: "./bases/crds"` instead of
+  `path: "./bases/flux-app/crds"`
+  ```yaml
+  name: "crds"
+  path: "./bases/flux-app/crds"
+  ```
+
+### Update build scripts
+
+Beyond adding the new targets to build the CRDs as shown above, the `ensure-versions` target in MCB needs to be updated
+to point to the new local cache folder of Flux CRDs. (Tho with the proxy in better state in CN cluster we could try to
+go back to remote resources as well, could also be done separately.)
 
 ### Considerations for Giant Swarm CRDs
 
@@ -150,4 +181,14 @@ CRDs will be rolled out much faster too from now on.
 
 ### Considerations for Chart managed CRDs
 
-...
+I think the best would be to manage all of these essential CRDs the same way. We can use `kustomize` helm chart
+rendering as shown above for using the same method. This adds the flux labels fine to the already existing resources,
+but it makes no sense to keep them as Helm charts, so purging the releases should be done manually by KEEEPing existing
+resource either via `"helm.sh/resource-policy": keep` annotation (could be added via flux then removed later),
+see [docs](https://helm.sh/docs/howto/charts_tips_and_tricks/#tell-helm-not-to-uninstall-a-resource) or simply deleting
+the related secrets used by Helm.
+
+Note, that Flux helm releases do not work here for multiple reasons:
+
+- flux is not up at this point
+- currently it is not possible to render Flux helm releases to manually apply the resources
