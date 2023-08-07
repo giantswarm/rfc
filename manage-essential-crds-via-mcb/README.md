@@ -192,3 +192,14 @@ Note, that Flux helm releases do not work here for multiple reasons:
 
 - flux is not up at this point
 - currently it is not possible to render Flux helm releases to manually apply the resources
+
+## Decision
+
+Implement for Giant Swarm CRDs and get rid of `opsctl ensure crds`.
+
+This creates the framework and precedence for anyone to use it - whether raw CRDs, remote bases or helm charts - for any
+CRDs without further migrations.
+
+### Next steps
+
+Implement for Giant Swarm CRDs and get rid of `opsctl ensure crds`.
