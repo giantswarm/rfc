@@ -51,6 +51,22 @@ In a Go project, the fact that a module depends on another module is encoded in 
 
 Other languages we use (Python, JavaScript/Typescript, ...) have similar concepts and may be explored, however each of thise is only a niche in our landscape and we will have to evaluate whether the value gained is worth the effort.
 
+## Components depending on other components (services)
+
+We have cases where a certain service can only function when another service is also deployed with it. Examples:
+
+- `kubectl-gs` (CLI) depends on `athena` (service) running in whatever cluster to sign in to.
+
+- `api` (deprecated Rest API) depends on tokend, companyd, userd, cluster-service, credentiald.
+
+- `cluster-services` depends on vault and kubernetesd.
+
+- `passage` depends on `userd`.
+
+TODO: Find some more modern examples
+
+While some of these dependencies might be useful to depict, it's also possible to take this too far. For example, every app (as in the Giant Swarm app platform) relies on app-operator and chart-operator to deliver it. Howevwer, rendering this dependency for hundreds of apps is likely not helping anyone. So we need human judgement when deciding which dependencies to depict.
+
 ## App collections and the apps they include
 
 TODO Can we detect an app collection?
