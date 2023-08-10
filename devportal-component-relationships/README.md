@@ -49,7 +49,7 @@ Let's have the dependency relationship between components and the libraries they
 
 In a Go project, the fact that a module depends on another module is encoded in the `go.sum` file. Alternatively, we can also investigate the [Github API for exorting a bill of materials](https://docs.github.com/en/rest/dependency-graph/sboms?apiVersion=2022-11-28).
 
-Other languages we use (Python, JavaScript/Typescript, ...) have similar concepts and may be explored, however each of thise is only a niche in our landscape and we will have to evaluate whether the value gained is worth the effort.
+Other languages we use (Python, JavaScript/Typescript, ...) have similar concepts and may be explored, however each of those is only a niche in our landscape and we will have to evaluate whether the value gained is worth the effort.
 
 ## Components depending on other components (services)
 
