@@ -20,14 +20,33 @@ for `aws`, `azure` and `kvm`.
 
 ## Solutions
 
+### Each MC has their own `crds` kustomization
+
+Just like each management cluster in each CMC repository has a `managmenet-clusters/<MC_NAME>/catalogs` kustomization
+we follow this pattern and each can references their own set of CRDs they want to install before everything else.
+
+Since all CAPIx are the same, and they don't need special stuff they can reference the `all` one from MCB.
+
+For vintage, we can prepare the provider specific CRDs, and they just need to be referenced where needed.
+
+#### Pros
+
+- We already do something like this with catalogs and actually flux-extras abd crossplane too. We set the convention
+  that something need to exist at a specific location which is good UX guidance and support wise too.
+- Provider customers a nice extension point
+- Easy to use, very generic solution
+- Easy to implement (maybe some hassle with `auto_branches` as always)
+
+#### Cons
+
+- Needs the usual patch in the `flux` kustomization to point to the MC specific path in the CMC.
+  For example: https://github.com/giantswarm/giantswarm-management-clusters/blob/c3fdb97382bed3585b48bdce8ed074f23ba5a8f7/management-clusters/giraffe/kustomization.yaml#L12-L44
+- Maybe a bit of boilerplate in CMC repos
+
 ### Unique `crds` kustomization per MCB `bases/provider` via new MCB flux source
 
-...
-
-### Sidestep - Handle Vintage provider specific CRDs from new `crds-vintage` kustomization
-
-In MCB we create a new Flux kustomization for the vintage providers that point to a k8s kustomization in MCB
-that lists the resources stored in the respective `helm/crds-<PROVIDER>` folder in `apiextensions`.
+Instead of a concreate, single `crds` Flux kustomization resource there is rather a convention that we have one
+called `crds`. Then each provider in MCB under `bases/provider` is responsible to create it.
 
 For this to work we need a new MCB Flux source that is optimally deployed to all clusters, tho for this issue
 itself we can just deploy it to vintage clusters. However, there are already some other use cases where
@@ -38,6 +57,21 @@ Related links to reconciliation trigger by different source workaround:
 
 - https://github.com/giantswarm/management-cluster-bases/compare/main...experiment-with-trigger
 - https://github.com/giantswarm/giantswarm/issues/27597#issuecomment-1632630001
+
+#### Pros
+
+- Sort of drop-in and implicit for customers (tho this can be interpreted as a con too in some use cases)
+- We probably need the MCB source soon anyway
+
+#### Cons
+
+- We take away control and the extension point from customers
+- Complex and leads to some duplication in MCB repository
+
+### Sidestep - Handle Vintage provider specific CRDs from new `crds-vintage` kustomization
+
+In MCB we create a new Flux kustomization for the vintage providers that point to a k8s kustomization in MCB
+that lists the resources stored in the respective `helm/crds-<PROVIDER>` folder in `apiextensions`.
 
 #### Pros
 
