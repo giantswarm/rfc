@@ -2,6 +2,8 @@
 
 Essential CRDs are widely used ones by all / most of Giant Swarm apps in MCs, like VPA or Service Monitors.
 
+Extended by: [Extension to Giant Swarm CRD management via Flux](../giantswarm-crd-managmenet-via-flux-extension/README.md)
+
 ## Context
 
 We are currently managing CRDs for MCs in many ways:
