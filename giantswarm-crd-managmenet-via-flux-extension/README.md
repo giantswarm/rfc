@@ -22,8 +22,10 @@ for `aws`, `azure` and `kvm`.
 
 ### Each MC has their own `crds` kustomization
 
-Just like each management cluster in each CMC repository has a `managmenet-clusters/<MC_NAME>/catalogs` kustomization
-we follow this pattern and each can references their own set of CRDs they want to install before everything else.
+Just like each management cluster in each CMC repository has a `managmenet-clusters/<MC_NAME>/catalogs` kustomization.
+We have the same convention for `flux-extras` and `crossplane-providers` as an additional example.
+
+We follow this pattern and each can references their own set of CRDs they want to install before everything else.
 
 Since all CAPIx are the same, and they don't need special stuff they can reference the `all` one from MCB.
 
