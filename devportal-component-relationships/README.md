@@ -49,6 +49,43 @@ Let's have the dependency relationship between components and the libraries they
 
 In a Go project, the fact that a module depends on another module is encoded in the `go.sum` file. Alternatively, we can also investigate the [Github API for exorting a bill of materials](https://docs.github.com/en/rest/dependency-graph/sboms?apiVersion=2022-11-28).
 
+<details>
+<summary>PoC</summary>
+
+Listing all giantswarm libraries used by kubectl-gs:
+
+```nohighlight
+gh api \
+    -H "Accept: application/vnd.github+json" \
+    -H "X-GitHub-Api-Version: 2022-11-28" \
+    /repos/giantswarm/kubectl-gs/dependency-graph/sbom | jq -r ".sbom.packages[].name" | sed -n -E 's|go:github.com/giantswarm/([^/]+).*|\1|p'
+
+apiextensions-application
+apiextensions
+app
+appcatalog
+backoff
+k8sclient
+k8smetadata
+microerror
+micrologger
+organization-operator
+release-operator
+```
+
+Listing all actions used by kubectl-gs:
+
+```nohighlight
+gh api \
+    -H "Accept: application/vnd.github+json" \
+    -H "X-GitHub-Api-Version: 2022-11-28" \
+    /repos/giantswarm/kubectl-gs/dependency-graph/sbom | jq -r ".sbom.packages[].name" | sed -n -E 's|actions:giantswarm/(.+)|\1|p'
+
+install-binary-action
+```
+
+</details>
+
 Other languages we use (Python, JavaScript/Typescript, ...) have similar concepts and may be explored, however each of those is only a niche in our landscape and we will have to evaluate whether the value gained is worth the effort.
 
 ## Components depending on other components (services)
