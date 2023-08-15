@@ -100,7 +100,7 @@ install-binary-action
 
 Other languages we use (Python, JavaScript/Typescript, ...) have similar concepts and may be explored, however each of those is only a niche in our landscape and we will have to evaluate whether the value gained is worth the effort.
 
-## Components depending on other components (services)
+### Components depending on other components (services)
 
 We have cases where a certain service can only function when another service is also deployed with it. Examples:
 
@@ -112,17 +112,19 @@ We have cases where a certain service can only function when another service is 
 
 - `passage` depends on `userd`.
 
-TODO: Find some more modern examples
+- `happa` depends `athena` and in some cases on the `api` and `passage`.
+
+TODO: Find some more modern examples, e. g. an operator depending on some webhook?
 
 While some of these dependencies might be useful to depict, it's also possible to take this too far. For example, every app (as in the Giant Swarm app platform) relies on app-operator and chart-operator to deliver it. Howevwer, rendering this dependency for hundreds of apps is likely not helping anyone. So we need human judgement when deciding which dependencies to depict.
 
-## App collections and the apps they include
+### App collections and the apps they include
 
 TODO Can we detect an app collection?
 
 TODO Can we find the apps belonging to a collection in a robust way? [Example](https://github.com/giantswarm/capa-app-collection/blob/2e34e0580e50418897d1b169771e3d92aadf4eb1/flux-manifests/athena.yaml)
 
-## App bundles and the apps they provide
+### App bundles and the apps they provide
 
 App bundles should point to the apps they provide, using the `hasParts` relation. In the opposite direction, this also means that from an app, there would be relation to an app bundle (or, potentially, several app bundles) including this app.
 
@@ -134,3 +136,26 @@ TODO: Verify how various bundles enode their child app info. Is this consistent?
 
 TODO: Verify if we have a robust way to detect a bundle among other non-bundle apps.
 
+### Where does configuration for a component come from?
+
+Currently it's hard to understand where an app's configuration is managed. It would be great to make that more visible and navigatable in the portal.
+
+E. g. happa
+
+- Some configuration comes from `config` [defaults](https://github.com/giantswarm/config/tree/main/default/apps/happa), [installation specific](https://github.com/giantswarm/config/blob/main/installations/antelope/apps/happa/configmap-values.yaml.patch)
+
+- Instance type / VM size metadata for happa _might_ come from giantswarm/installations.
+
+E. g. backstage
+
+- Some config in workload-clusters-fleet
+
+TODO: any other cases that involve the giantswarm/installations repo?
+
+QUESTION: Is there a standard configuration logic for a component (running in a management cluster, in a workload cluster)?
+
+## Technical solution
+
+Currently we import the entire catalog content using backstage-catalog-importer, running in an automation. The more information we want to gather for repositories, the longer this process will take. Eventually, it will take too long to be executed on a regular basis for all repositories. So we need an alternative way to gather relations info.
+
+TODO: Can backstage combine reading entities from local files AND "enrich" relationships ansynchronously?
