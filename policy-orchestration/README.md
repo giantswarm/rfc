@@ -1,8 +1,7 @@
 # Policy Orchestration System
 
-:::info
-:bulb: This RFC describes a subsystem of the security platform which is an intended long-term approach to improving policy management.
-:::
+> [!NOTE]
+> :bulb: This RFC describes a subsystem of the security platform which is an intended long-term approach to improving policy management.
 
 ## :beginner: Current state / context
 
@@ -28,9 +27,8 @@ The top pain points with the current state of policy management using the securi
 
 ### Implementation-specific technical examples
 
-:::warning
-Only read this section if you're interested. This content is not needed to understand the next sections.
-:::
+> [!IMPORTANT]
+> Only read this section if you're interested. This content is not needed to understand the next sections.
 
 - Kyverno policies have two modes: `audit` and `enforce`. Resources which are exempt from enforcement of an `enforced` policy are also excluded from audits because they, by definition, are exempt from the policy. To audit them, a second, identical,`audit`-mode copy of the policy must be deployed. Further, some policies could be optionally defaulted to make incoming resources compliant. This requires a third copy of the policy. The 3 policy approach has technical side effects in metric names, reporting, and exceptions (e.g. the `enforce` policy must be exempted, but not the `audit` policy, in order to continue auditing the resource). An abstraction layer allows the customer to deal only with a single policy name and simplified options while we deploy the 3 policies and update associated exceptions behind the scenes.
 - Kyverno policies written at the Pod level can have analogous policies automatically generated at the various Pod controller levels. This is useful so that a policy can be written only once for Pods, but users receive immediate feedback whether they are creating a Deployment, DaemonSet, StatefulSet, [Cron]Job, or just a Pod. But, each of those automatically generated policies must be individually excluded if a resource is to be exempt, and the exception must also include the other affected resource types. The abstraction layer can hide these implementation details and let customers use a simpler syntax for declaring exceptions, which we can also reuse in other tools.
@@ -57,17 +55,14 @@ Possible approaches to this problem include:
 
 ## :feet: Implementation
 
-:::success
-We intend to build a new subsystem which allows customers to declare their intent to enforce/disable/exempt resources from policies on their clusters and transforms that declared intent into the resources and configuration needed to achieve the intent in the underlying tools.
-:::
+> [!NOTE]
+> We intend to build a new subsystem which allows customers to declare their intent to enforce/disable/exempt resources from policies on their clusters and transforms that declared intent into the resources and configuration needed to achieve the intent in the underlying tools.
 
-:::warning
-Non-goal: We are not building a policy language. This abstraction does not allow writing arbitrary policies which are "translated" into the underlying tools' native syntax.
-:::
+> [!IMPORTANT]
+> Non-goal: We are not building a policy language. This abstraction does not allow writing arbitrary policies which are "translated" into the underlying tools' native syntax.
 
-:::warning
-Non-goal: this does not prevent customers from writing their own policies directly for the managed tools.
-:::
+> [!IMPORTANT]
+> Non-goal: this does not prevent customers from writing their own policies directly for the managed tools.
 
 The policies supported by this abstraction are a limited set of curated policies which Giant Swarm intends to manage. The abstraction allows customers who only need the officially managed policies to work exclusively within our abstraction layer and never interact with the underlying implementations.
 
@@ -76,6 +71,7 @@ It provides a clear delineation between customer and Giant Swarm areas of respon
 ### :small_blue_diamond: Flow
 
 Example of the flow for configuring Kyverno-native resources using the policy orchestration subsystem:
+![Policy orchestration diagram](policy-orchestration.jpg)
 
 ### :small_blue_diamond: Design
 
@@ -103,9 +99,8 @@ We expect to eventually implement the following operators to support the behavio
 
 ### :small_blue_diamond: Specs
 
-:::warning
-These are partial specs only for illustration.
-:::
+> [!IMPORTANT]
+> These are partial specs only for illustration.
 
 #### Policy
 
@@ -241,7 +236,7 @@ Using `PolicyExceptions`, cluster admins can exclude certain resources from poli
 #### PolicyExceptionRequest / PolicyExceptionDraft
 
 `PolicyExceptionRequest` - represents the un-validated intent of a user to exempt a workload from a policy. Facilitates building request/response workflows.
-`PolicyExceptionDraft` - represents a possible implementation of a `PolicyException`, which is awaiting review and approval from a cluster admin. Generated by platform controllers to automatically suggest exceptions to assist with migrations or phasing in new policies. 
+`PolicyExceptionDraft` - represents a possible implementation of a `PolicyException`, which is awaiting review and approval from a cluster admin. Generated by platform controllers to automatically suggest exceptions to assist with migrations or phasing in new policies.
 
 `PolicyExceptionDraft` and `PolicyExceptionRequest` are very similar and may be combined into a single type for actual implementation.
 
