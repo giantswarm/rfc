@@ -104,7 +104,7 @@ Other languages we use (Python, JavaScript/Typescript, ...) have similar concept
 
 We have cases where a certain service can only function when another service is also deployed with it. Examples:
 
-- `kubectl-gs` (CLI) depends on `athena` (service) running in whatever cluster to sign in to.
+- The `kubectl-gs` (CLI) command `login` depends on `athena` (service) running in whatever cluster to sign in to.
 
 - `api` (deprecated Rest API) depends on tokend, companyd, userd, cluster-service, credentiald.
 
