@@ -116,7 +116,7 @@ We have cases where a certain service can only function when another service is 
 
 TODO: Find some more modern examples, e. g. an operator depending on some webhook?
 
-While some of these dependencies might be useful to depict, it's also possible to take this too far. For example, every app (as in the Giant Swarm app platform) relies on app-operator and chart-operator to deliver it. Howevwer, rendering this dependency for hundreds of apps is likely not helping anyone. So we need human judgement when deciding which dependencies to depict.
+While some of these dependencies might be useful to depict, it's also possible to take this too far. For example, every app (as in the Giant Swarm app platform) relies on app-operator and chart-operator to deliver it. However, rendering this dependency for hundreds of apps is likely not helping anyone. So we need human judgement when deciding which dependencies to depict.
 
 ### App collections and the apps they include
 
