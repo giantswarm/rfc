@@ -19,6 +19,8 @@ Since July 2023 we run an internal developer portal based on Backstage. The cata
 
 The Backstage catalog supports additional kinds, like API, Template, Resource, System, and Domain, which we don't use yet.
 
+The System entity kind is of special importance here, as each component entity can point to one system, forming an implicit "belongs to" relationship. This can help form clusters/groups in the software landscape.
+
 Entities can have various types of relations to other entities. In the user interface, this is display in various ways, including a graph visulization. There is usually also a way to use a relation for navigating back and forth between entities.
 
 We currently present three types of releationships already:
@@ -43,7 +45,17 @@ Especially for entities of kind API:
 
 ## Proposal
 
-## Components depending on libraries
+### Assign components to systems
+
+We can introduce System entities to assign components to, in order to create meaningful clusters within our components. Improtant detail:by the design od the Backstage catalog model, each component can be assigned to one system only.
+
+The main question here is: which systems should we depict?
+
+One obvious candidate: the **app platform**. We have numerous projects and repositories that form the app platform. Being able to select a system and see which components actually belong to it would likely simplify an engineers high-level understanding.
+
+TODO: What other systems do we have or could be introduced? Is there a system around CAPI cluster management?
+
+### Components depending on libraries
 
 Let's have the dependency relationship between components and the libraries they are using visible in the portal. Here we refer only to the libraries we own (in Go that's any module named `github.com/giantswarm/*`), since adding entities for the thousands of third party libraries we use would bloat our catalog heavily and probably make it unusable.
 
