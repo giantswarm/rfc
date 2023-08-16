@@ -1,3 +1,11 @@
+---
+type: general
+stakeholders:
+    - sig-architecture
+    - team-shield
+issue: "tbd"
+---
+
 # Policy Orchestration System
 
 > [!NOTE]
@@ -38,7 +46,7 @@ The top pain points with the current state of policy management using the securi
 - Common security workflows include opening Jira issues, sending messages to Slack channels, or forwarding events to external services like Splunk or Elastic. These routes must currently be configured separately for Falco, Kyverno, Trivy, Alertmanager, Loki/fluentd, etc., but could be unified.
 - Whenever a new, restrictive policy is introduced, customers must decide how to phase it in. If they enforce it immediately, all workloads must be made compliant or fail. If they introduce it in a permissive mode, it is very difficult to enforce later. Abstraction would allow us to implement "rolling" enforcement features like time-limited exceptions and logic like "existing workloads are exempt but new workloads must comply".
 
-## 📈  Solution space
+## 📈 Solution space
 
 Possible approaches to this problem include:
 
