@@ -15,23 +15,15 @@ We intend to introduce a new CRD and build two new controllers, based on our lar
 
 ## :triangular_flag_on_post: Problem space
 
-:::success
-Describe the problems your users are expecting to solve.
-:::
-
 For various reasons, customers may find that the move to PSS involves significant effort.
 
 - At minimum, resources which were permitted under PSP will need to receive Kyverno exceptions if they are to continue running
-    - Platform teams or workload owners will need to create a new exception per failing resource
-    - There is a slight learning curve to creating Kyverno PolicyExceptions
-    - With many workloads requiring exceptions, this is either a large task done centrally or smaller tasks coordinated across many teams
+  - Platform teams or workload owners will need to create a new exception per failing resource
+  - There is a slight learning curve to creating Kyverno PolicyExceptions
+  - With many workloads requiring exceptions, this is either a large task done centrally or smaller tasks coordinated across many teams
 - Per organizational policy or implementation reasons, teams may need to re-apply for previously approved exceptions
 
 ## 📈  Solution space
-
-:::success
-Collect ideas that may solve the problems here.
-:::
 
 Some approaches to ease the PSS transition are:
 
