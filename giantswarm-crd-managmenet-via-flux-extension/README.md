@@ -47,7 +47,7 @@ For vintage, we can prepare the provider specific CRDs, and they just need to be
 
 ### Unique `crds` kustomization per MCB `bases/provider` via new MCB flux source
 
-Instead of a concreate, single `crds` Flux kustomization resource there is rather a convention that we have one
+Instead of a concrete, single `crds` Flux kustomization resource there is rather a convention that we have one
 called `crds`. Then each provider in MCB under `bases/provider` is responsible to create it.
 
 For this to work we need a new MCB Flux source that is optimally deployed to all clusters, tho for this issue
