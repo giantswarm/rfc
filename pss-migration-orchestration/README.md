@@ -1,4 +1,12 @@
-# PSS migration assistance
+---
+type: general
+stakeholders:
+    - sig-architecture
+    - team-shield
+issue: "tbd"
+---
+
+# PSS migration orchestration
 
 > [!NOTE]
 > :bulb: This RFC describes a minimal implementation of a small piece of the policy orchestration subsystem described in a parallel RFC. It is designed to meet an immediate need as customers begin PSS migration but will be adapted to meet the more general needs outlined in the linked RFC.
@@ -18,10 +26,10 @@ We intend to introduce a new CRD and build two new controllers, based on our lar
 For various reasons, customers may find that the move to PSS involves significant effort.
 
 - At minimum, resources which were permitted under PSP will need to receive Kyverno exceptions if they are to continue running
-  - Platform teams or workload owners will need to create a new exception per failing resource
+  - Platform teams or workload owners will need to create a new exception per failing resource (or, though not ideal, create more broadly-scoped exceptions or disable policies entirely)
   - There is a slight learning curve to creating Kyverno PolicyExceptions
   - With many workloads requiring exceptions, this is either a large task done centrally or smaller tasks coordinated across many teams
-- Per organizational policy or implementation reasons, teams may need to re-apply for previously approved exceptions
+- Per organizational policy or implementation reasons, teams may need to re-apply (e.g. for security approval) for previously approved exceptions
 
 ## 📈  Solution space
 
