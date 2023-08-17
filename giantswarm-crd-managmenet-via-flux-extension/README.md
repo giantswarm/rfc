@@ -34,7 +34,7 @@ For vintage, we can prepare the provider specific CRDs, and they just need to be
 #### Pros
 
 - We already do something like this with catalogs and actually flux-extras abd crossplane too. We set the convention
-  that something need to exist at a specific location which is good UX guidance and support wise too.
+  that something needs to exist at a specific location which is good UX guidance and support wise too.
 - Provides customers a nice extension point
 - Easy to use, very generic solution
 - Easy to implement (maybe some hassle with `auto_branches` as always)
