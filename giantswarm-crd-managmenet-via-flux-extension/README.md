@@ -85,3 +85,20 @@ that lists the resources stored in the respective `helm/crds-<PROVIDER>` folder 
 
 - Not a generic solution, if CAPx clusters need something like this in the future
 - A new Flux kustomization is added to vintage clusters and this means a new dependency to `flux` kustomization too
+
+## Decision
+
+The chosen solution is: "Each MC has their own `crds` kustomization"
+
+This gives us a lot of flexibility in the future, we can easily do exception or rolling migrations for example.
+
+Additionally, for `vintage` CRDs we decided to version them based on the `apiextensions` library cos some of them still
+seem to run a slightly older version of CRDs. For common `giantswarm` ones and `flux-app` ones we keep them as latest,
+shared across all clusters in the same state for now, but nothing prevents us versioning them in the long run either.
+
+Since with the exception mechanism we cannot really talk about the `all` composite kustomization, it is replaced
+by the `common` composite instead that will contain `giantswarm` and `flux-app` for now.
+
+### Next steps
+
+Implement and migrate all CMC repositories, improve `mc-bootstrap` and finally, actually get rid of `opsctl ensure crds`.
