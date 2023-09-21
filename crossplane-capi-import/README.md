@@ -228,7 +228,8 @@ arbitrary amount of time and the property or annotation may be removed
 accidentally allowing the resources to immediately fall under CAPI control.
 
 Once under control of CAPI, they cannot be removed from its control without
-considerable additional effort.
+considerable additional effort. (see [What happens when a user converts an
+externally managed InfraCluster to a managed InfraCluster?](https://github.com/kubernetes-sigs/cluster-api/blob/main/docs/proposals/20210203-externally-managed-cluster-infrastructure.md#what-happens-when-a-user-converts-an-externally-managed-infracluster-to-a-managed-infracluster))
 
 It is better to be explicit via the use of the `cluster.x-k8s.io/managed-by`
 annotation which at least offers baked in clarity of its existence.
