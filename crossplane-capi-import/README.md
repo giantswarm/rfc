@@ -214,7 +214,8 @@ attempts to import the cluster, managing status' and attempting to reconcile
 the cluster.
 
 For the existing PoC, this is blocked via cloud IAM and can be additionally
-mitigated using `spec.paused: true` but not without certain risk.
+mitigated using `spec.paused: true` but not without certain risk and the
+preference would be for this to be implemented upstream.
 
 ### Why not just use `spec.paused` or annotation `cluster.x-k8s.io/paused`
 
