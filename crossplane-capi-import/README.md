@@ -93,10 +93,10 @@ To enable management of resources inside each cloud, the importer will require
 the following additional providers depending on the cloud being managed through
 that management cluster.
 
-| AWS              | Azure                  | GCP                      |
-|------------------|------------------------|--------------------------|
-| provider-aws-ec2 | provider-azure-azure   | provider-gcp-compute     |
-| provider-aws-eks | provider-azure-compute | provider-gcp-container   |
+| AWS              | Azure                           | GCP                      |
+|------------------|---------------------------------|--------------------------|
+| provider-aws-ec2 | provider-azure-azure            | provider-gcp-compute     |
+| provider-aws-eks | provider-azure-containerservice | provider-gcp-container   |
 
 The full PoC of how this may work for EKS clusters can be found in the
 repository [crossplane-eks-capi-import](https://github.com/giantswarm/crossplane-eks-capi-import/)
@@ -118,6 +118,14 @@ for a minimum of the following to be defined
 
 This information is then used to look up the cluster details inside the cloud
 provider to be fed to the CAPI resources being generated.
+
+To achieve this lookup, we use crossplane resources for the cloud being searched
+
+| provider-aws-eks                 | provider-azure-containerservice                               | provider-gcp-[container,compute]   |
+|----------------------------------|---------------------------------------------------------------|------------------------------------|
+| Cluster (eks.aws.upbound.io)     | KubernetesCluster (containerservice.azure.upbound.io)         | Cluster (container.gcp.upbound.io) |
+| NodeGroup (eks.aws.upbound.io)   | KubernetesClusterNodePool (containerservice.azure.upbound.io) | NodeGroup (compute.gcp.upbound.io) |
+| ClusterAuth (eks.aws.upbound.io) |                                                               |                                    |
 
 During the generation process, there are certain details that may (excluding the
 use of composition functions) require the editing of specific blocks of the
@@ -183,6 +191,20 @@ This cannot be controlled via crossplane and in order to make this secret
 compatible with our own deployments via `App-Platform` we may need to enhance
 our `App` CR to accept a secret data key, or include this location in the list
 of key locations checked for a `kubeconfig` value.
+
+### Discovery
+
+With the introduction of EKS/AKS/GKE clusters to CAPI management clusters, we
+need to be able to differentiate between the different types and usage.
+
+This can be achieved through the use of the type of cluster defined as
+`infrastructureRef` and the presence or absense of the `clusters.x-k8s.io/managed-by`
+annotation:
+
+|                   | Normal CAPI                          | CAPI Managed                                              | CAPI Adopted                                              |
+|-------------------|--------------------------------------|-----------------------------------------------------------|-----------------------------------------------------------|
+| infrastructureRef | AWSCluster, AzureCluster, GCPCluster | AWSManagedCluster, AzureManagedCluster, GCPManagedCluster | AWSManagedCluster, AzureManagedCluster, GCPManagedCluster |
+| annotation        | -                                    | -                                                         | clusters.x-k8s.io/managed-by: crossplane                  |
 
 ### Preventing CAPI takeover
 
