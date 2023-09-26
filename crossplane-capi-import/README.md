@@ -43,20 +43,28 @@ The caveat to this is that we are under the assumption that only read access
 will be granted and that the customer may place strict limitations on our
 visibility of components inside their accounts.
 
-Whilst there is some functionality to read resources directly from CAPI, it
-would require additional development effort to realise in order to generate
-both the `kubeconfig`, and any resources required for the delivery of apps and
-app-bundles to the cluster.
+Should any form of write permission be granted to the service account being used
+for importing the clusters, there is an enhanced risk of accidental adoption by
+CAPI operators in a manner that violates the contract of import.
 
 This in itself places risk of accidental adoption of the cluster by CAPI in such
 a manner that the cluster would be brought fully under the control of CAPI
-operators in such a manner that violates the contract of adoption.
+operators in such a manner that violates the contract of adoption. This is
+discussed in more detail in the section on [Preventing CAPI takeover](#preventing-capi-takeover)
+below.
 
 ### Options
 
 1. We create our own custom importer based on CAPI that can create the
    `kubeconfig` and any CRs that may be required to deliver functionality for
    import to be successful
+
+   Whilst it is feasibly possible to use CAPI directly to read and reflect cluster
+   resources, this would require the development of a custom operator that can
+   interact with the cloud architecture and directly import any required resources
+   as well as generate the `kubeconfig` to be used by other components requiring
+   access to the cluster, such as those required for the delivery of apps and
+   app-bundles.
 
 2. We leverage an existing technology outside of CAPI to create the resources
    required.
