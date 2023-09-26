@@ -165,6 +165,42 @@ via patching.
 It may be feasible to correct this through the use of composition functions but
 this has not yet been explored as an option.
 
+### Clusters with multiple nodepools
+
+Crossplane requires a direct one to one mapping between Custom Resource and
+Cloud Infrastructure types. This makes it more difficult to directly reconcile
+multiple nodepools without building custom compositions for each variant of
+customer infrastructure we may encounter.
+
+There are two potential solutions to this problem:
+
+1. We develop a library of common structures that we encounter. This will be
+   built as part of discovery with a custom using boilerplate code to  enhance
+   the compositions for each customer.
+
+   The drawback to this method is that it isn't flexible and relies on a degree
+   of human interaction in the initial stages as we start to develop the library
+
+2. We attempt to hook into crossplanes composition functions. Allow the
+   `nodeGroupName` parameter to accept a list of existing names, then iterate
+   a new resource into the composition based on the values specified in the list.
+
+One drawback that is applicable to either solution is the ability to recognise
+when nodegroups are removed from the cluster. As we're not managing the
+infrastructure, this would have an impact on the cluster resources, potentially
+causing failures both in crossplane and in CAPI as the values in the claim drift
+away from the nodegroups existing as real cloud infrastructure.
+
+This can be mitigated by maintaining that we only need know about the primary
+nodegroup for the cluster, and work with the customer to understand the level
+of reflection that can be maintained for imported clusters.
+
+The reflection of nodegroups is not strictly required for cluster import to be
+successful but is considered a "nice to have" for the customer as it presents
+an opportunity towards a "Single pane of glass" view of their cluster either as
+resources tracked inside the cluster, or through Happa where the resources are
+considered read only.
+
 ### CAPI resources
 
 Compositions implementing this RFC will create the following CAPI resources:
