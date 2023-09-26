@@ -31,9 +31,9 @@ process.
    We work on the basis that we only have read only access to see only components
    necessary for the import of the cluster.
 
-1. The capability of reading existing customer resources
+2. The capability of reading existing customer resources
 
-1. Reflection of customer resources in CAPI
+3. Reflection of customer resources in CAPI
 
 For the purposes of this RFC, point 1, Security of the cloud account is
 considered out of scope and will be managed on a cloud by customer basis as part
