@@ -160,8 +160,24 @@ via patching.
   toFieldPath: spec.forProvider.manifest.spec.network.subnets[5].id
 ```
 
-It may be feasible to correct this through the use of composition functions but
-this has not yet been explored as an option.
+This issue can to a large degree be solved through the use of composition
+functions and to support this, there is a proof of concept on how this can work
+placed at [https://github.com/giantswarm/crossplane-fn-generate-subnets/](https://github.com/giantswarm/crossplane-fn-generate-subnets/).
+
+To provide 100% accurate results for CAPA, not all fields can be recovered
+directly through composition functions, in particular the capability of
+identifying public vs private subnets.
+
+This would be solvable in future iterations as the upstream issue on [Querying
+and filtering for import and observe](https://github.com/crossplane/crossplane/issues/4141)
+is resolved as it would enable the discovery of route tables in the same manner
+CAPA tracks this today.
+
+Within the PoC, I "fake" this by proposing either a custom tag be added to the
+subnet, or by looking to see if `mapPublicIpOnLaunch` is set to true on the
+subnet, although I dislike the second option as not every public subnet would
+have this flag set. For the first option, the PoC offers that a tag of
+`giantswarm.io/public` be set although this is open to refinement.
 
 ### Clusters with multiple nodepools
 
