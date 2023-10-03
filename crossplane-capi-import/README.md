@@ -13,8 +13,9 @@ operate and manage their own infrastructure, whilst we provide support and
 deployment strategies for our own applications to run inside the customers
 cluster.
 
-Throughout this RFC, where the words __import__ and/or __adopt__ are used, they
-are to be read as "unmanaged".
+Throughout this RFC, where the word __import__ is used, this should be read as
+"unmanaged", whereas the word __adopt__ refers specifically to the full
+management and control of clusters.
 
 ## Problem Statement
 
@@ -45,12 +46,10 @@ visibility of components inside their accounts.
 
 Should any form of write permission be granted to the service account being used
 for importing the clusters, there is an enhanced risk of accidental adoption by
-CAPI operators in a manner that violates the contract of import.
+CAPI operators in a manner that violates the contract of import and would result
+in the cluster being brought fully under the control of CAPI operators.
 
-This in itself places risk of accidental adoption of the cluster by CAPI in such
-a manner that the cluster would be brought fully under the control of CAPI
-operators in such a manner that violates the contract of adoption. This is
-discussed in more detail in the section on [Preventing CAPI takeover](#preventing-capi-takeover)
+This is discussed in more detail in the section on [Preventing CAPI takeover](#preventing-capi-takeover)
 below.
 
 ### Options
@@ -81,8 +80,7 @@ without requiring full ownership.
 
 It is recognised from the team that `ObserveOnly` resource functionality is still
 considered alpha functionality on a per provider basis but testing has shown this
-to be stable enough for adoption and use given our current requirements for the
-product.
+to be stable enough to be used given our current requirements for the product.
 
 ## Architecture
 
@@ -242,7 +240,7 @@ With the introduction of EKS/AKS/GKE clusters to CAPI management clusters, we
 need to be able to differentiate between the different types and usage.
 
 This can be achieved through the use of the type of cluster defined as
-`infrastructureRef` and the presence or absense of the `clusters.x-k8s.io/managed-by`
+`infrastructureRef` and the presence or absence of the `clusters.x-k8s.io/managed-by`
 annotation:
 
 |                   | Normal CAPI                          | CAPI Managed                                              | CAPI Adopted                                              |
