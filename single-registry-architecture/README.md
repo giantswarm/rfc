@@ -48,8 +48,8 @@ More specifically, our aim is to:
 - Stop using Docker Hub by the end of 2023.
 - Simplify registries architecture.
 - Switch entirely to OCI based registries for both container images and helm charts.
-  - Flux developers have already declared that no new feature will come to Flux for users of HTTP based repos, only for
-  - OCI. Currently, we use a mix of HTTP and OCI repos, but charts discovery uses HTTP based ones only.
+  - Flux developers have already declared that no new feature will come to Flux for users of HTTP-based repos, only for OCI. 
+  - Currently, we use a mix of HTTP and OCI repos, but chart discovery uses HTTP-based ones only.
 - If possible, switch to single OCI provider.
 - Increase availability and lower the network transfer cost by providing a pull-through cache service.
 - Automatically clean old dev release artifacts.
