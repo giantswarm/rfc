@@ -73,7 +73,7 @@ We checked for the single best registry and chose ACR. We did some evaluation be
 - <https://github.com/giantswarm/roadmap/issues/2382>
 - <https://hackmd.io/gqF6PT53RcG_i4OhrmtWIw#Note-on-compatibility>
 
-Additionally, ACR offers th following:
+Additionally, ACR offers the following:
 
 - High availability by definition.
 - Automatic geo-replication, including geo-replication between Europe and China (confirmed by Azure support, requires
