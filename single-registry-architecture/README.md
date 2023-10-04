@@ -197,7 +197,7 @@ Before we start on the implementation, we have to figure out answers to question
    accept that some customers might want us to configure `containerd` to use their Docker Hub credentials to avoid
    rate limiting. How do we do that?
 
-1. How too reconfigure existing and future nodes to use the cache as a basic registry and upstream ACR as a backup
+1. How to reconfigure existing and future nodes to use the cache as a basic registry and upstream ACR as a backup
    registry for our images?
 
    We have to reconfigure existing MCs and WCs, but also future ones. We have to track and check all the configuration
