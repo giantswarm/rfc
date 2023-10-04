@@ -97,7 +97,7 @@ There are at least a few solutions possible, below is a list of solutions evalua
   - seems to support container images only, works by a webhook rewriting pod's image - doesn't meet assumptions.
 - <https://gitlab.cronce.io/foss/oci-registry>
   - OCI compliant, works with `containerd` by registering as a mirror, no webhooks, optional S3 storage - seems
-    like exactly what w need.
+    like exactly what we need.
   - Tested it, but I unfortunately [couldn't make it work](https://github.com/mcronce/oci-registry/issues/14) even for a simple test case, doesn't seem to be well supported.
 - [ACR connected registry](https://learn.microsoft.com/en-us/azure/container-registry/intro-connected-registry)
         - there's no mention of how to deploy outside of AKS edge cluster, seems Azure IoT edge thing only
