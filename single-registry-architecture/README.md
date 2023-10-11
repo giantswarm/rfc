@@ -108,6 +108,22 @@ There are at least a few solutions possible, below is a list of solutions evalua
   - exposes reasonable prometheus metrics (transfer times, cache hit ratio)
   - <https://github.com/distribution/distribution/blob/main/docs/configuration.md#proxy>
   - <https://github.com/docker/docs/blob/main/content/registry/recipes/mirror.md>
+- [zot](https://github.com/project-zot)
+  - full standalone OCI registry that directly implements OCI standards
+  - reviewed when in `v2.0.0-rc6`, while majority of docs are valid for `v1.4.3`
+  - has some really nice options, including caching as an optional extension
+    - ability to scan images with `trivy`
+    - multiple upstream repos to track
+    - on-demand (pull-through) and in advance image caching
+    - single binary with no dependencies
+    - supports local and S3 storage
+      - S3 is required for "cluster mode": running more than 1 Pod
+    - monitoring with prometheus
+    - hard to configure, as docs for v2.0.0 are not there yet
+    - it seams there's no cache prune configuration for the cache (potential show-stopper)
+    - has a simple "status" web UI
+    - had to be configured with auth even for public repos (weird, potential bug)
+    - definitely needs more attention/evaluation when the v2.0.0 stable is released (and hopefully docs are updated)
 
 As a result, it seems we can use the `distribution` project from docker.
 
@@ -144,6 +160,7 @@ High level migration plan:
 #### China extension
 
 - we try to setup automated geo-replication between Europe and China
+  - we have to go through [the formal procedure](https://learn.microsoft.com/en-us/azure/china/overview-sovereignty-and-regulations)
 - switch China clusters to use the new ACR-China registry
 - shut down `crsync` entirely
 - delete Aliyun registry
