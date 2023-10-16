@@ -80,7 +80,7 @@ Therefore, we will automatically render the merged RFCs into our [handbook](http
 
     ```text
     ---
-    creation_date: 2023-07-13
+    creation_date: YYYY-MM-DD # please fill this in
     issues:
       - https://github.com/giantswarm/giantswarm/issues/FILL_IN_YOUR_ISSUE
     owners:
@@ -99,12 +99,12 @@ Therefore, we will automatically render the merged RFCs into our [handbook](http
 
   - For example, the SIG's regular sync meetings can be used to discuss open RFCs, but discussions should end up in GitHub PR comments.
   - For engineering RFCs, typically the members of SIG Architecture would take responsibility.
-  - If discussions do not progress and the PR is open for quite a while, the author has the option to merge the PR containing `state: review`. This way, a new review can be done by proposing changes and `state: approved` in a _second PR_. Hopefully, we won't need this last resort hack. Let's see if this makes sense. If not, we can remove the state `review` and immediately go for `state: approved` ❓.
+  - If discussions do not progress and the PR is open for quite a while, the author should escalate to the SIG, or if the RFC still cannot be concluded, address Team Horizon.
 - **Before merging the PR, these conditions must hold**
 
   - If we're done discussing and it's clear what we want, fill in `state: approved` or `state: declined`, depending on the outcome. We could come to a conclusion by meetings, giving PR approvals, etc. _This process_ does not dictate _how_ you come to approving or declining a decision!
   - Add a field `last_review_date: YYYY-MM-DD`. See [Future ideas](#future-ideas) why this is relevant. This avoids that owners have to review the Markdown file again very soon.
-- **Author merges the PR and notifies in relevant Slack channels, linking to the [RFC list](https://handbook.giantswarm.io/docs/rfcs/) or directly to the rendered RFC page in the handbook.** The rendering result is not ready immediately after merging, so it's okay to wait until the RFC is displayed in the handbook before sending out a link. You can manually trigger the **_TODO IMPLEMENT ME_** GitHub action in the [`handbook` repo](https://github.com/giantswarm/handbook/actions) to render immediately.
+- **Author merges the PR and notifies in `#news-*` or other Slack channels, linking to the [RFC list](https://handbook.giantswarm.io/docs/rfcs/) or directly to the rendered RFC page in the handbook.** The rendering result is not ready immediately after merging, so it's okay to wait until the RFC is displayed in the handbook before sending out a link. You can manually trigger the **_TODO IMPLEMENT ME_** GitHub action in the [`handbook` repo](https://github.com/giantswarm/handbook/actions) to render immediately.
 - **Once the decision is approved, start implementing.** Implementation really should not happen before approving a decision, unless it's a proof of feasability. If you already developed something, you present an RFC as if others still have the choice of saying no, but actually the decision was already taken – please avoid that.
 - **Amendments can be made to an RFC later, requiring a simple PR, consensus, and notification in Slack.** The same goes for marking an RFC as `state: obsolete`.
 
