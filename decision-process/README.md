@@ -22,6 +22,7 @@ Goals of the process:
 - Quick progress on RFCs and decision making
 - Relevant groups have seen and approved the decision
 - More structured RFC format to add rendering and further automation
+- Keep each decision in one RFC file. Do not create multiple alternative files in the future. This is done by amending existing RFC files or marking old ones as obsolete.
 - Better overview by rendering RFCs
 - Replace the [rfc repository's README](https://github.com/giantswarm/rfc/blob/b3f4d2af6ff8965e542baae7d0e8fadb9163f356/README.md)
 - Giant Swarm folks using RFCs more readily and happily because they see that the process is working
@@ -92,10 +93,12 @@ Therefore, we will automatically render the merged RFCs into our [handbook](http
     ```
 
   - Replace the placeholders
+  - Write the RFC and commit
   - Push your branch and open a pull request
-- **Author asks their own team/SIG for a short review.** They should check if the content and grammar make sense. There should be no discussion yet about the decision since not all stakeholders are invited at this time.
+- **Author adds the PR to the team/SIG board on GitHub** for visibility. The column could be "In progress" or "Review", for example, depending on the board.
+- Optional: **Author asks their own team/SIG for a short check.** They should verify if the content and grammar make sense and match expectations. This preflight check prevents major text and goal changes during the review and discussion phase.
 - **Review phase begins.** The author posts a link to the PR to appropriate `#news-*` or other Slack channels, and adds stakeholders as reviewers on the PR. The reviewers use GitHub comments on the PR. They should not push directly to the PR branch unless agreed with the author(s).
-- **Any employee can review. The relevant SIG takes care that the RFC progresses and does not become stale.**
+- **Any employee can review. The author is the primary driver to finish the PR. The relevant SIG also takes care that the RFC progresses and does not become stale.**
 
   - For example, the SIG's regular sync meetings can be used to discuss open RFCs, but discussions should end up in GitHub PR comments.
   - For engineering RFCs, typically the members of SIG Architecture would take responsibility.
@@ -106,7 +109,7 @@ Therefore, we will automatically render the merged RFCs into our [handbook](http
   - Add a field `last_review_date: YYYY-MM-DD`. See [Future ideas](#future-ideas) why this is relevant. This avoids that owners have to review the Markdown file again very soon.
 - **Author merges the PR and notifies in `#news-*` or other Slack channels, linking to the [RFC list](https://handbook.giantswarm.io/docs/rfcs/) or directly to the rendered RFC page in the handbook.** The rendering result is not ready immediately after merging, so it's okay to wait until the RFC is displayed in the handbook before sending out a link. You can manually trigger the **_TODO IMPLEMENT ME_** GitHub action in the [`handbook` repo](https://github.com/giantswarm/handbook/actions) to render immediately.
 - **Once the decision is approved, start implementing.** Implementation really should not happen before approving a decision, unless it's a proof of feasability. If you already developed something, you present an RFC as if others still have the choice of saying no, but actually the decision was already taken – please avoid that.
-- **Amendments can be made to an RFC later, requiring a simple PR, consensus, and notification in Slack.** The same goes for marking an RFC as `state: obsolete`.
+- **Amendments can be made to an RFC later, by means of a simple PR, consensus, and notification in Slack.** Please edit the existing RFC file and consider marking the changes as "amendment", for example using a new heading or paragraph. There should be a single file per decision, not multiple documents that need to be read and understood together. Replaced or old RFC files can remain as they are, in separate files, but marked as `state: obsolete` through a PR.
 
 ### State transitions
 
