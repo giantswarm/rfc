@@ -1,7 +1,7 @@
 name: Close Stale Issues
 on:
   schedule:
-    - cron: '21 * * * *'
+    - cron: '0 9 * * MON-FRI'
 
 jobs:
   stale:
