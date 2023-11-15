@@ -1,3 +1,12 @@
+---
+creation_date: 2023-10-26
+issues: []
+owners:
+- https://github.com/orgs/giantswarm/teams/wg-cluster-api
+state: approved
+summary: 'In order for Giant Swarm to import/adopt customer clusters on bring-your-own infrastructure, use Crossplane `ObserveOnly` functionality for resources to discover existing infrastructure of customers without managing it. Use `clusters.x-k8s.io/managed-by: crossplane` annotation to prevent CAPI from reconciling clusters. Do not rely on "paused" objects.'
+---
+
 # Importing EKS/AKS/GKE clusters to CAPI using crossplane
 
 ## Introduction

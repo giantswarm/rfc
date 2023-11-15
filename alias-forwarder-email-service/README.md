@@ -1,3 +1,8 @@
+---
+creation_date: 2022-02-15
+state: approved
+---
+
 # A better customer email management solution
 
 This RFC investigates ways for managing (urgent) requests from customers received via email.
@@ -16,7 +21,7 @@ We would like to be able to configure email aliases (where *alias*="some smart w
 
 For instance, some emails (`urgent`) could be redirected to Opsgenie, while others (`support`) could be redirected to Slack.
 
-A possible format could be the following: `customer-priority-area@giantswarm.io`. This would allow us to correctly address an email received from e.g. `adidas-urgent-aws@giantswarm.io` vs. `vodafone-support-security@giantswarm.io`. 
+A possible format could be the following: `customer-priority-area@giantswarm.io`. This would allow us to correctly address an email received from e.g. `adidas-urgent-aws@giantswarm.io` vs. `vodafone-support-security@giantswarm.io`.
 
 ## Questions to answer
 
@@ -102,7 +107,7 @@ Considering the pros and cons of each solution and the number of comments receiv
     - `kvm`
     - `openstack`
     - `vmware`
-  
+
   Cloud native packs:
     - `devex`
     - `connectivity`

@@ -1,3 +1,8 @@
+---
+creation_date: 2021-09-17
+state: approved
+---
+
 # RFC 0015 - Automatic workload cluster upgrades
 
 ## Resources
@@ -38,7 +43,7 @@ Based on the fact Giant Swarm is moving to Cluster API this is story let us defi
 
 ### Cluster upgrade entity
 
-There are different reason why we are interested in having an object to define the upgrade intent. 
+There are different reason why we are interested in having an object to define the upgrade intent.
 
 - As we define in the user stories, we/customers would like to schedule upgrades on certain date from running version to a specific one. That way customer can plan upgrades ahead and so do we.
 
@@ -52,7 +57,7 @@ There are different reason why we are interested in having an object to define t
 
 Our customer can have a different set of constraints when it comes to allow changes in their clusters. The maintenance schedule would define those and then the clusters can rely on a policy to enforce the desired behavior.
 
-The maintenance schedule would be reconciled by the cluster upgrade scheduler and it will program the upgrades based on that restrictions. 
+The maintenance schedule would be reconciled by the cluster upgrade scheduler and it will program the upgrades based on that restrictions.
 
 The maintenance schedule would contain
 
@@ -71,7 +76,7 @@ We envision aforementioned concepts would become custom resource definitions and
 Example resource:
 
 ```yaml
-apiVersion: 
+apiVersion:
 kind: ClusterUpgrade
 metadata:
   name: upgrade-to-cluster-openstack-v1.20
@@ -104,7 +109,7 @@ status:
 Example resource:
 
 ```yaml
-apiVersion: 
+apiVersion:
 kind: MaintenanceSchedule
 metadata:
   name: working-hours-except-month-start
@@ -128,7 +133,7 @@ This would allow upgrades to happen between 07:00 UTC and 17:00 UTC on Monday-Fr
 
 #### Cluster upgrade executor
 
-There will be an operator that based on the `Cluster Upgrade` CRs will trigger the upgrades changing the labels on the specific CR(s) when date matches or it will create the pull requests in Git repo to trigger the upgrade (Flux controllers could be used here for that). 
+There will be an operator that based on the `Cluster Upgrade` CRs will trigger the upgrades changing the labels on the specific CR(s) when date matches or it will create the pull requests in Git repo to trigger the upgrade (Flux controllers could be used here for that).
 
 This operator can also check on the `maintenance schedule` to verify the upgrade fulfil or not the criteria, and in case it does not, alert or set an appropriate status on the object status.
 

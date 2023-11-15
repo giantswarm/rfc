@@ -1,3 +1,8 @@
+---
+creation_date: 2023-08-07
+state: approved
+---
+
 # Manage essential CRDs via MCB
 
 Essential CRDs are widely used ones by all / most of Giant Swarm apps in MCs, like VPA or Service Monitors.

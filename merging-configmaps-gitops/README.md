@@ -1,3 +1,8 @@
+---
+creation_date: 2022-04-01
+state: approved
+---
+
 # Merging config in a gitops context
 
 Our app platform utilizes configmaps / secrets heavily to pass configuration into apps.

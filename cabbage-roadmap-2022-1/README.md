@@ -1,3 +1,8 @@
+---
+creation_date: 2022-04-07
+state: approved
+---
+
 # Team Cabbage Roadmap 2022
 
 This RFC describes the roadmap for Team Cabbage for the first part of 2022.
@@ -8,7 +13,7 @@ Since the formation of Team Cabbage just after the Croatia onsite (~September 20
 
 This involved the usual work for team formation, including defining Jobs To Be Done and overall mission statement. We had a number of issues to clean up or sort out, such as dissolving Team Halo, postmortems, and app upgrades. We also updated the monitoring and alerting for our apps.
 
-Finally, we continued improving our support for shipping Kong as a Managed App, and shipped the AWS LB Controller as a Managed App. 
+Finally, we continued improving our support for shipping Kong as a Managed App, and shipped the AWS LB Controller as a Managed App.
 
 ## Jobs To Be Done
 

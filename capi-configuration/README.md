@@ -1,3 +1,8 @@
+---
+creation_date: 2021-11-10
+state: approved
+---
+
 # Configuration management with Cluster API
 
 This RFC describes how we can handle configuration management with Cluster API - focusing on defaulting, upgrades and interactions.

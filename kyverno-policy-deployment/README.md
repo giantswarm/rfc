@@ -1,3 +1,8 @@
+---
+creation_date: 2022-03-24
+state: approved
+---
+
 # RFCs Related to Kyverno Policy Management and Deployment
 
 - [Handling Kyverno Policy Deployment][policy-deployment] details the repository structure used for storing Kyverno policies

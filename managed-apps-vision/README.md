@@ -1,3 +1,8 @@
+---
+creation_date: 2021-11-24
+state: approved
+---
+
 # Managed Apps Vision
 
 This RFC describes a general vision for improving the user experience of Managed Apps.

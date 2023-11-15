@@ -1,3 +1,8 @@
+---
+creation_date: 2023-01-12
+state: approved
+---
+
 # Logging infrastructure
 
 As a Giant Swarm engineer, I want to be able to access a history of logs for components managing our platform in order to both investigate ongoing operational issues and provide details for incident reports.

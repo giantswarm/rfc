@@ -1,9 +1,8 @@
 ---
-type: general
-stakeholders:
-    - sig-architecture
-    - team-shield
-issue: "tbd"
+creation_date: 2023-10-09
+owners:
+- https://github.com/orgs/giantswarm/teams/team-shield
+state: approved
 ---
 
 # PSS migration orchestration

@@ -1,3 +1,8 @@
+---
+creation_date: 2021-07-12
+state: approved
+---
+
 # RFC 0002 - Enable customers to use gitops in management clusters
 
 We currently give customers access to the management clusters but do not support them in utilizing this access effectively in terms of git ops related management (e.g. for apps).
