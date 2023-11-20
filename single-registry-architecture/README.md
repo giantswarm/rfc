@@ -1,16 +1,13 @@
+---
+creation_date: 2023-10-12
+issues: []
+owners:
+- https://github.com/orgs/giantswarm/teams/chapter-architecture
+state: approved
+summary: Switch to Azure Container Registry (ACR), even for China. Instead of replicating images across our multiple registries, trust this single provider to solve high availability. Run a local pull-through proxy to fall back during provider outage.
+---
+
 # Leaving docker hub and simplifying registries architecture
-
-## Date created
-
-03.10.2023
-
-## Last modified
-
-11.10.2023
-
-## Authors' emails
-
-<lukasz@giantswarm.io>
 
 ## Intro
 

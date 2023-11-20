@@ -1,3 +1,8 @@
+---
+creation_date: 2022-10-18
+state: approved
+---
+
 # Making parts of the intranet public
 
 ## Status quo

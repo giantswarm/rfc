@@ -1,3 +1,8 @@
+---
+creation_date: 2022-09-07
+state: approved
+---
+
 # Assigning installation names
 
 The purpose of this RFC is to specify how we select installation names.

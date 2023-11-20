@@ -1,10 +1,15 @@
+---
+creation_date: 2023-08-24
+state: approved
+---
+
 # Extension to Giant Swarm CRD management via Flux
 
 Related to: [Manage essential CRDs via MCB](../manage-essential-crds-via-mcb/README.md)
 
 ## Context
 
-The original solution does not leave room for provider specific resources in the sense that all `crds` 
+The original solution does not leave room for provider specific resources in the sense that all `crds`
 Flux kustomization reconciles CMC `bases/crds` meaning all management clusters in the given CMC will
 have the same set of CRDs installed. (Note, that with the current solution we need to have a file in the CMC
 that is pointed to by the `crds` kustomization because the flux source is the CMC repository and from there

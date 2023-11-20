@@ -1,3 +1,8 @@
+---
+creation_date: 2023-03-01
+state: approved
+---
+
 # Container Registry Configuration
 
 The purpose of this RFC is to specify how we configure Kubernetes clusters for container registries.
@@ -25,8 +30,8 @@ explicit k8s.gcr.io 12
   - We will not use any other public registry (e.g. `quay.io`) as secondary registry because of some security concerns.
   - We will use our own Azure Container Registry as secondary registry.
 
-- In vintage, we configure [containerd for docker registry mirrors](https://github.com/giantswarm/giantnetes-terraform/blob/13700c6d1b1adf8d65fba8b1b37eccf31e1ce4f3/templates/files/conf/containerd-config.toml#L37). 
-  
+- In vintage, we configure [containerd for docker registry mirrors](https://github.com/giantswarm/giantnetes-terraform/blob/13700c6d1b1adf8d65fba8b1b37eccf31e1ce4f3/templates/files/conf/containerd-config.toml#L37).
+
 ## Design proposals
 
 ### 1. How to solve ImagePullErrors
@@ -77,13 +82,13 @@ password = "my_token_from_docker_hub"
 #### Decision
 
 `1.c` is selected.
-We will use containerd configuration. 
+We will use containerd configuration.
 
 ### 2. Authentication
 
 #### 2.a Using unauthenticated accounts
 
-Using only public images without authentication is an option to avoid complexity of securing credentials. However, registry providers have pull/rate limits per account. We will be limited by total of [free account limit](https://docs.docker.com/docker-hub/download-rate-limit/) of Docker Hub (100 pulls per 6 hours per IP address) and [tier limit](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-skus) of Azure Container Registry (3000 ReadOps per minute for standard). Anyone can pull images from our registry and spend our limits, which makes us vulnerable. 
+Using only public images without authentication is an option to avoid complexity of securing credentials. However, registry providers have pull/rate limits per account. We will be limited by total of [free account limit](https://docs.docker.com/docker-hub/download-rate-limit/) of Docker Hub (100 pulls per 6 hours per IP address) and [tier limit](https://learn.microsoft.com/en-us/azure/container-registry/container-registry-skus) of Azure Container Registry (3000 ReadOps per minute for standard). Anyone can pull images from our registry and spend our limits, which makes us vulnerable.
 
 #### 2.b Using authenticated accounts
 
@@ -136,7 +141,7 @@ We can propogate credentials from MC to WC by using `cluster-apps-operator`. It 
 
 #### 6.b Customer's Git Repository
 
-We can put the secret into customers' git repositories and use GitOps templates to use the same credentials for all WCs. 
+We can put the secret into customers' git repositories and use GitOps templates to use the same credentials for all WCs.
 
 #### 6.c Management Cluster Fleet
 
@@ -150,7 +155,7 @@ We can use catalog configurations (See <mc-name>/appcatalog folder in `installat
 
 `6.c` is selected.
 
-- Regarding 6.a, we don't want to add another responsility to `cluster-apps-operator`. 
+- Regarding 6.a, we don't want to add another responsility to `cluster-apps-operator`.
 - Regarding 6.b, we want to manage the credentials in our side and to have a full control over them.
 - Regarding 6.d, people think catalog configurations are hard to track since there is no references in app CRs.
 
@@ -169,7 +174,7 @@ We can define a configuration interface like below and render containerd configu
 ```
 connectivity:
  containerRegistries:
-   docker.io: 
+   docker.io:
     - endpoint: "registry-1.docker.io"
        credentials:
          username: "my_user_name"

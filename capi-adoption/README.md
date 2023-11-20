@@ -1,3 +1,8 @@
+---
+creation_date: 2021-07-19
+state: approved
+---
+
 # Road to Cluster API (over the potholes)
 
 ## About

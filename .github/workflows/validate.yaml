@@ -1,0 +1,25 @@
+name: Validate
+on:
+  push: {}
+jobs:
+  apply:
+    name: Check RFCs
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+
+      - name: Setup python
+        uses: actions/setup-python@v4
+        with:
+          python-version: 3.12
+
+      - name: Install dependencies
+        run: |
+          python -m pip install -r .github/rfc-format/requirements.txt
+
+      - name: Check RFCs format
+        run: |
+          .github/rfc-format/check-rfc-format.py -o /tmp/rfc-output.json .
+
+          [ -s /tmp/rfc-output.json ] || { echo "RFC JSON output is empty - please check that the script still works"; exit 1; }

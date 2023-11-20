@@ -1,3 +1,8 @@
+---
+creation_date: 2022-11-09
+state: approved
+---
+
 # Crossplane MVP on Management Clusters
 
 Managed Crossplane offering is under development as per customers' requests.

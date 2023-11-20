@@ -1,3 +1,8 @@
+---
+creation_date: 2023-01-25
+state: approved
+---
+
 # Ensure no single point of failure in management cluster access
 
 ## Access to management clusters for Giant Swarm staff
@@ -66,7 +71,7 @@ In the CAPI product, a kubeconfig is stored in LastPass as an emergency fallback
 
 - This method of authentication is completely separate from SSO and does not have shared dependencies.
 - It is not integrated in our tooling and we need to pull the kubeconfig using lastpass cli.
-- As it is right now, access is neither easily revokable nor is there a rotation. 
+- As it is right now, access is neither easily revokable nor is there a rotation.
 - In case of a security threat this implies rotating the api server CA and all certificates.
 - Since it is already integrated, it makes sense to keep it for emergencies while there is no alternative.
 - If we want to support this for a longer time we need to improve security.
@@ -101,7 +106,7 @@ Service account tokens are another one which we could revisit in the future. How
 
 This discussion is focused on management cluster access by GS staff and removing the single point of failure here should remain the goal.
 However, our chosen solution for other access related problems has impact on the issue of management cluster access by giant swarm staff. We should aim to resuse the same mechanisms for workload clusters and management clusters as much as possible. Likewise we should strive to dogfood mechanisms we offer to our customers.
-On the other hand, we should be conscious of differences between access for automation and controllers versus access for humans. 
+On the other hand, we should be conscious of differences between access for automation and controllers versus access for humans.
 Related problems include:
 
 - Access to management clusters for controllers
@@ -147,7 +152,7 @@ We already use lastpass as a fallback and we should keep it if possible. However
 We want to unify the way we authenticate to services. This also means deprecating auth0.
 - Identify which services still use auth0.
 - Migrate from auth0 to other identity providers. (Likely azure AD)
-  
+
 ### PKI story and future of client certificates
 
 This is largely reliant on the development of the CAPI product. Therefore we want to focus on SSO first and revisit client certificates at a later point in time.

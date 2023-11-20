@@ -1,3 +1,8 @@
+---
+creation_date: 2023-05-08
+state: approved
+---
+
 # Default PSS and Policy Exceptions with Kyverno
 
 ## Objective

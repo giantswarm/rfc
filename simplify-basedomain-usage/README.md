@@ -1,3 +1,8 @@
+---
+creation_date: 2023-05-31
+state: approved
+---
+
 # Simplify `baseDomain` usage in our applications
 
 The `baseDomain` is the common suffix that we use as a base for the DNS records created for our clusters.
@@ -87,7 +92,7 @@ On top of reducing the usage of the global `baseDomain` value, there are other a
 
 #### Custom Resources triggering changes rather than controllers
 
-Moving configuration from operators to custom resources is always preferable. Starting by the obvious, the cluster configuration is right there explicitly in the `Cluster` Custom resource rather than hidden in controllers configuration. 
+Moving configuration from operators to custom resources is always preferable. Starting by the obvious, the cluster configuration is right there explicitly in the `Cluster` Custom resource rather than hidden in controllers configuration.
 Furthermore, if the value is part of the `Cluster` CR, it's the `Cluster` the one driving and triggering changes on cloud resources, allowing clusters to change or update their values independently of each other.
 This is a better scenario than our current approach having the controller receive this configuration as a parameter, because changing the parameter would trigger changes in cloud resources on all clusters.
 
@@ -107,7 +112,7 @@ One side effect from this is that by decoupling the `baseDomain` from the Manage
 
 #### Make kubectl-gs more reliable when creating client certificates for WCs
 
-`kubectl-gs` could also use this annotation when creating client certificates for workload clusters. 
+`kubectl-gs` could also use this annotation when creating client certificates for workload clusters.
 Currently, it gets the cluster domain from the `Spec.ControlPlaneEndpoint.Host` property of the Cluster CR, which is not always accurate. Getting the domain from the annotation would fix it.
 
 ### Downsides

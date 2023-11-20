@@ -1,3 +1,8 @@
+---
+creation_date: 2021-07-26
+state: approved
+---
+
 # RFC 0003 - Monitoring System End To End Tests
 
 We're currently building a monitoring system that supports a large number of

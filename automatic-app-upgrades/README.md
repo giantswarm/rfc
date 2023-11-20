@@ -1,3 +1,8 @@
+---
+creation_date: 2022-04-15
+state: approved
+---
+
 # Automatic App upgrades
 
 ## Solution proposal

@@ -1,3 +1,8 @@
+---
+creation_date: 2021-07-23
+state: approved
+---
+
 # Defaulting of CAPI clusters with webhooks
 
 This RFC describes a pattern for defaulting of CAPI clusters by utilizing Kubernetes webhooks extensively.

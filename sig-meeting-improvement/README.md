@@ -1,3 +1,8 @@
+---
+creation_date: 2022-07-08
+state: approved
+---
+
 # SIG Meeting Improvement Initiative
 
 ## What are the problems we are experiencing?

@@ -1,12 +1,13 @@
 ---
 creation_date: 2023-10-10
 issues:
-  - https://github.com/giantswarm/giantswarm/issues/24661
+- https://github.com/giantswarm/giantswarm/issues/24661
 owners:
-  - https://github.com/orgs/giantswarm/teams/sig-architecture
-  - https://github.com/orgs/giantswarm/teams/team-horizon
-  - https://github.com/orgs/giantswarm/teams/team-team
-state: review
+- https://github.com/orgs/giantswarm/teams/sig-architecture
+- https://github.com/orgs/giantswarm/teams/team-horizon
+- https://github.com/orgs/giantswarm/teams/team-team
+state: approved
+summary: This contains the explicit procedure to follow for creating an RFC and having it reviewed. Introduce a structured YAML header for the Markdown file. List of RFCs gets rendered in the handbook.
 ---
 
 # RFC and decision making process
@@ -34,11 +35,11 @@ To allow for a decision making process without removing the current free-form na
 The following changes will be introduced:
 
 - All RFCs will have a YAML header with structured information that can be parsed and used e.g. for rendering the RFCs in our [handbook](https://handbook.giantswarm.io/)
-- The YAML header must contain the following fields in this order:
+- The YAML header must contain the following fields in alphabetical order:
 
   - `creation_date: YYYY-MM-DD`
   - `issues` containing links to GitHub issues. Can be null or an empty list. The issues can be the origin of the RFC or where the work for implementing the decision takes place.
-  - `owners` containing GitHub team URLs. This list must not be empty. Please enter only the team and/or SIG names of the author and owners, not the teams who should comment on the RFC (the _stakeholders_, for which we don't have a structured field). The `owners` field contains teams who have the expertise to check the RFC after a few months. It may later be used to automatically create GitHub issues "Please review if this RFC is still relevant" (see [Future ideas](#future-ideas)).
+  - `owners` containing GitHub team URLs. This list must not be empty. Please enter only the team and/or SIG names of the author and owners, not the teams who should comment on the RFC (the _stakeholders_, for which we don't have a structured field). The `owners` field contains teams who have the expertise to check the RFC after a few months. It may later be used to automatically create GitHub issues "Please review if this RFC is still relevant" (see [Future ideas](#future-ideas)). Single person URLs (`https://github.com/TheUsername`) are allowed but not recommended.
   - `state` having one of the values
 
     - `review` – The RFC pull request is in review and waiting for comments. The decision is not in effect.
@@ -56,9 +57,9 @@ The following is an entire and valid start of an RFC markdown file:
 ---
 creation_date: 2023-07-13
 issues:
-  - https://github.com/giantswarm/giantswarm/issues/24661
+- https://github.com/giantswarm/giantswarm/issues/24661
 owners:
-  - https://github.com/orgs/giantswarm/teams/team-horizon
+- https://github.com/orgs/giantswarm/teams/team-horizon
 state: review
 ---
 
@@ -83,9 +84,9 @@ Therefore, we will automatically render the merged RFCs into our [handbook](http
     ---
     creation_date: YYYY-MM-DD # please fill this in
     issues:
-      - https://github.com/giantswarm/giantswarm/issues/FILL_IN_YOUR_ISSUE
+    - https://github.com/giantswarm/giantswarm/issues/FILL_IN_YOUR_ISSUE
     owners:
-      - https://github.com/orgs/giantswarm/teams/team-FILL_IN_YOUR_TEAM # or https://github.com/orgs/giantswarm/teams/sig-FILL_IN_YOUR_SIG
+    - https://github.com/orgs/giantswarm/teams/team-FILL_IN_YOUR_TEAM # or https://github.com/orgs/giantswarm/teams/sig-FILL_IN_YOUR_SIG
     state: review
     ---
 
