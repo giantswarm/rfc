@@ -64,5 +64,5 @@ There are some open technical questions with this proposal.
 
 Gitlab follows a similar pattern as the one proposed here:
 1. https://about.gitlab.com/handbook/ is the public documentation of gitlab itself (hiring, development, meeting guidelines, ...)
-2. The private part is https://internal-handbook.gitlab.io/ but is insaccessible to the public.
+2. The private part (different domain) is inaccessible to the public.
 3. https://docs.gitlab.com/ is the product documentation which is purely user focussed.
