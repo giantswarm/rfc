@@ -1,0 +1,18 @@
+name: Render
+on:
+  push:
+    branches:
+      - main
+jobs:
+  apply:
+    name: Trigger handbook RFC rendering
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger workflow in handbook repo
+        uses: convictional/trigger-workflow-and-wait@v1.6.5
+        with:
+          owner: giantswarm
+          repo: handbook
+          github_token: ${{ secrets.TAYLORBOT_GITHUB_ACTION }}
+          workflow_file_name: render-rfcs-pr.yaml
+          ref: main

@@ -125,7 +125,7 @@ We deploy a provider that best matches the Cloud Provider's infrastructure:
 - AWS <https://github.com/crossplane-contrib/provider-aws>
 - Azure <https://github.com/crossplane-contrib/provider-azure>
 - CAPA <https://github.com/crossplane-contrib/provider-aws>?
-- GCP <https://github.com/crossplane/provider-gc>
+- GCP <https://github.com/crossplane-contrib/provider-gcp>
 - KVM is not supported; obviously, it's the customers' infrastructure
 - OpenStack TBD (<https://github.com/crossplane-contrib/provider-terraform>???)
 
