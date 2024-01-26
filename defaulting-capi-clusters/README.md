@@ -53,7 +53,7 @@ It will be necessary to package webhooks (such as `Kyverno policies`) as apps wh
 
 The workflow for a developer to add a new default configuration is then the following:
 1. `Developer` adds logic to new defaulting (e.g. a `kyverno policy`).
-2. `Developer` adds templating to the app (e.g. [kyverno policies for aws](https://github.com/giantswarm/kyverno-policies/blob/main/helm/policies-aws/values.yaml) with local defaults in `values.yaml`.
+2. `Developer` adds templating to the app (e.g. [kyverno policies for aws](https://github.com/giantswarm/kyverno-policies/blob/release-v0.13.x/helm/policies-aws/values.yaml) with local defaults in `values.yaml`.
 3. `Developer` adds global and installation specific defaults through the [config](https://github.com/giantswarm/config) repository.
 
 The workflow for a developer to then update the default configuration is simple:

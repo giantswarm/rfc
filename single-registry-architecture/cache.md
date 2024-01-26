@@ -24,8 +24,8 @@ There are at least a few solutions possible, below is a list of solutions evalua
   - tested, works with `containerd` for single upstream repo, works as well with `helm` charts
   - no extra dependencies, can work with just local filesystem storage
   - exposes reasonable prometheus metrics (transfer times, cache hit ratio)
-  - <https://github.com/distribution/distribution/blob/main/docs/configuration.md#proxy>
-  - <https://github.com/docker/docs/blob/main/content/registry/recipes/mirror.md>
+  - <https://distribution.github.io/distribution/about/configuration/>
+  - <https://docs.docker.com/docker-hub/mirror/>
 - [zot](https://github.com/project-zot)
   - full standalone OCI registry that directly implements OCI standards
   - reviewed when in `v2.0.0-rc6`, while majority of docs are valid for `v1.4.3`
