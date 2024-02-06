@@ -5,7 +5,7 @@ issues:
 owners:
 - https://github.com/orgs/giantswarm/teams/team-horizon
 state: review
-summary: Revamp our docs to be Platform Dev ready considering new Cluster API (CAPI) architecture. Instead of modifying existing doc content find a way to create those from a clean plate and avoid stale content.
+summary: Revamp our docs to be Platform Dev ready considering the new Cluster API (CAPI) architecture. Instead of modifying existing docs content find a way to create a new site from a clean plate and avoid stale content.
 ---
 
 # Revamp our docs
