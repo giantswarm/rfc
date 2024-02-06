@@ -12,21 +12,25 @@ summary: Revamp our docs to be Platform Dev ready considering the new Cluster AP
 
 ## Intro
 
-As part of the Documentation Overhaul that Horizon is working on during first quarter of 2024 there was idea of how to transition for our current docs to a desired state where the new Dev Platform product is described correctly and precisely.
+As part of the [Documentation Overhaul](https://github.com/giantswarm/giantswarm/issues/29503) that Horizon is working on during the first quarter of 2024 there was an idea of how to transition our current docs to a desired state where the new Dev Platform product is described correctly and precisely.
 
 ## State of the documentation
 
-Our [current documentation hub](https://docs.giantswarm.io) is an ongoing effort to maintain old Vintage entries that not longer are valid for our new product and at the same time adequate to the new Dev Platform concept. Those are the current works streams our docs have today:
+Our [current documentation hub](https://docs.giantswarm.io) is an ongoing effort to maintain old Vintage entries that are no longer valid in our new product, and at the same time adequate to the new Dev Platform and CAPI concept. 
 
-1) Horizon and SIG docs maintaining a coherent docs structure that follow new product developments.
-2) Teams updating doc entries for out of date documents. Most of the times they don`t have the time to rewrite the content to make it Platform/CAPI ready, so they stays out of date.
+Today we have several work streams trying to achieve that goal:
+
+1) Horizon and SIG docs maintaining a coherent docs structure that follows new product developments.
+2) Teams updating doc entries for out-of-date documents. Most of the time they don`t have the time to rewrite the content to make it Platform/CAPI ready, so they stay out of date.
 3) Teams, KaaS and platform, adding new content that is only working for the new implementations (CAPI).
 
 ## Goals
 
-- To have a good documentation portal that does not have entries out of date. Only new implementation (since we have completely deprecated Vintage).
-- Stop trying to bring current articles to life, most of them are not longer valid in new implementation.
-- To have a period for transition. Customer or support still have access to Vintage docs but new docs are also available.
+The described scenario is not working and ideally we find an alternative that has these goals:
+
+- Have a good documentation portal that does not have entries out of date. Only new implementation (since we have completely deprecated Vintage).
+- Stop trying to bring current articles to life, most of them are no longer valid in the new implementation. Just add what is relevant and possibly identify spots to fill by teams.
+- Have a period for transition where everyone can look for content in Vintage and Dev Platform docs. Customers or support still have access to Vintage docs but new docs are also available.
 
 ## Process
 
