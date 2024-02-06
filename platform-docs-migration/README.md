@@ -49,12 +49,13 @@ __Note__: Personally I was trying to deprecate a doc entry last week and spent m
 
 **How?**
 
-General steps to achieve the goals
+General steps to achieve the aforementioned goals_
 
 1) Create a new repo for the new docs hub. Just the skeleton, configuration, CI/CD and new domain/server.
-2) Create the main structure. Already discussions [here](https://miro.com/app/board/uXjVO2Dh15w=/).
-3) Migrate the part of the content that already exists in the current docs. Adapt to the new structure and style.
-4) Create tickets for the teams with missing documentation pages.
+2) Work iteratively by top-level section (Ex: Platform Overview, Getting Started,...)
+  2.1) Create the top-level structure proposal. It will be mapped from [here](https://miro.com/app/board/uXjVO2Dh15w=/). When SIG docs and teams approve it, create the structure empty.
+  2.2) Identity owners for the sections to be completed or created or adapted. Create tickets for teams. Help and guide them to complete it. Think of the docs entry structure to have a similar outline for similar pages.
+3) Iterate over step 2 till all top-level sections are done
 5) Once we migrate all customers (or almost), move new docs to become our current docs. We can still maintain old docs in the a (sub)domain (vintage-docs.giantswarm.io).
 
 ## Few clarifications
