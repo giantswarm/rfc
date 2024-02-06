@@ -1,6 +1,7 @@
 ---
 creation_date: 2024-02-01
-issues: [https://github.com/giantswarm/giantswarm/issues/29503]
+issues:
+- https://github.com/giantswarm/giantswarm/issues/29503
 owners:
 - https://github.com/orgs/giantswarm/teams/team-horizon
 state: review
