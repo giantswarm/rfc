@@ -16,7 +16,7 @@ As part of the [Documentation Overhaul](https://github.com/giantswarm/giantswarm
 
 ## State of the documentation
 
-Our [current documentation hub](https://docs.giantswarm.io) is an ongoing effort to maintain old Vintage entries that are no longer valid in our new product, and at the same time adequate to the new Dev Platform and CAPI concept. 
+Our [current documentation hub](https://docs.giantswarm.io) is an ongoing effort to maintain old Vintage entries that are no longer valid in our new product, and at the same time adequate to the new Dev Platform and CAPI concept.
 
 Today we have several work streams trying to achieve that goal:
 
