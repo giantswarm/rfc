@@ -34,28 +34,28 @@ The described scenario is not working and ideally we find an alternative that ha
 
 ## Process
 
-Instead of creating a Pull Request in [our docs repository](https://github.com/giantswarm/docs) where we work in parallel (accumulating lot of changes and drifts in configuration), we create a new clean repository for the new docs. This new repo can be deployed in a temporal domain where we can visualize the changes till we reach a point of satisfaction and customers are migrated from Vintage product.
+Instead of creating a huge Pull Request in [our docs repository](https://github.com/giantswarm/docs) where we work in parallel (accumulating a lot of changes and configuration drifts), I propose to create a new clean repository for the new docs. This new repo can be deployed in a temporal (sub)domain where we can visualize the changes till we reach a point of satisfaction and furthermore, customers are migrated from Vintage product.
 
 **But why?**
 
-- In the new repository we can creating a structure according to the new necessities without having to transition from existing content.
+- In the new repository we can create a structure according to the new necessities without having to transition from existing content.
 - We don`t need to maintain aliases or links to old entries or sections.
 - It is way easier to organize the work between teams to add needed minimal content for every section.
 - We can work in iterations.
-- Both docs hub will be publicly available.
-- The end result of docs will be simpler and cleaner since we are not influence by old structure and content.
+- Both docs sites will be publicly available.
+- The end result of our docs will be simpler and cleaner since we are not influenced by old structure and content.
 
-__Note__: Personally I was trying to deprecate a doc entry last week and spent more than an hour because link dependencies and inconsistencies in the content.
+__Note__: Personally I was trying to deprecate a doc entry last week and spent more than an hour because of linked dependencies and inconsistencies in the content.
 
 **How?**
 
 General steps to achieve the goals
 
-1) Create new repo for new docs hub. Just the skeleton, configuration, CI/CD and new domain/server.
+1) Create a new repo for the new docs hub. Just the skeleton, configuration, CI/CD and new domain/server.
 2) Create the main structure. Already discussions [here](https://miro.com/app/board/uXjVO2Dh15w=/).
-3) Migrate the part of the content already exist in the current docs.
+3) Migrate the part of the content that already exists in the current docs. Adapt to the new structure and style.
 4) Create tickets for the teams with missing documentation pages.
-5) Once migrated all customer (or almost), move new docs to become our current docs. We can still maintain old docs in new domain (vintage-docs.giantswarm.io).
+5) Once we migrate all customers (or almost), move new docs to become our current docs. We can still maintain old docs in the a (sub)domain (vintage-docs.giantswarm.io).
 
 ## Few clarifications
 
