@@ -1,8 +1,10 @@
 ---
 creation_date: 2024-02-08
-state: review
 issues:
 - https://github.com/giantswarm/roadmap/issues/2771
+owners:
+- https://github.com/orgs/giantswarm/teams/team-atlas
+state: review
 summary: How GiantSwarm manages multi-tenancy to isolate data by tenants (i.e. metrics, logs, traces).
 ---
 
