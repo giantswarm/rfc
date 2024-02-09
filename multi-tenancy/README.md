@@ -106,6 +106,21 @@ We are considering a number of options that are not ideal at the moment:
 - having double grafana (same idea than above but for the all grafana instance, not just the datasource).
 - other ideas are welcome!
 
+#### Operator
+
+`logging-operator` is an existing component responsible to create a secret for the multi-tenant-proxy. That secret contains a mapping between credentials and tenant (now, it's equivalent to the cluster id).
+Do we add a feature in that operator to handle the multi-tenant-proxy configuration we described above ?
+In that case, we should rename it: any suggestion ?
+If we don't reuse `logging-operator`, we will need to implement a new one: any suggestion for its name ?
+
+#### Mapping groups-tenants
+
+What interface could we offer our customers to enable them to define the mapping between their groups and their tenants:
+
+- Custom resources like TenantCR, GroupCR
+- UI in happa
+- other ideas ?
+
 ## Write path
 
 ### Current architecture for the write path
