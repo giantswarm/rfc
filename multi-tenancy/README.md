@@ -26,4 +26,8 @@ We need to discuss how we handle multi-tenancy when accessing data (read path) a
 
 ## Read path
 
+Below is a graph exposing the current state of multi-tenancy:
+
+<img src="./assets/loki-multi-tenancy.png" width="300">
+
 ## Write path
