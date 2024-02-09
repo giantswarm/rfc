@@ -30,7 +30,7 @@ We need to discuss how we handle multi-tenancy when accessing data (read path) a
 
 Below is a graph exposing the current state of multi-tenancy:
 
-<img src="./assets/loki-multi-tenancy.png" width="300" alt="Loki multi-tenancy on the read path">
+<img src="./assets/current-multi-tenancy.png" width="300" alt="Loki multi-tenancy on the read path">
 
 The read path queries `loki` providing an `X-Scope-OrgID` header which contains the identifier of all clusters: the management cluster plus all workload clusters.
 
@@ -86,7 +86,25 @@ groups:
 That configuration should be dynamically created and updated regardless of the data source.
 We are thinking of having an operator to manage that mapping. The operator will be able to reconcile any kind of data source and generate the configuration expected by `grafana-multi-tenant-proxy`.
 
+Below is a graph exposing multi-tenancy proposal:
+
+<img src="./assets/future-multi-tenancy.png" width="300" alt="Multi-tenancy proposal on the read path">
+
 ### Opened questions
+
+#### Teleport issue
+
+We are currently facing an issue with `teleport` authentication:
+[Teleport JWT issue](https://github.com/giantswarm/giantswarm/issues/29719)
+
+We are authentified on Grafana through a JWT token provided by teleport.
+But that token is not forwarded to the datasource.
+So we are not able to authenticate the user into the multi-tenant proxy.
+We are considering a number of options that are not ideal at the moment:
+
+- having double datasource: one for customer with OAuth authentication and another dedicated to GiantSwarm people authenticated throw teleport.
+- having double grafana (same idea than above but for the all grafana instance, not just the datasource).
+- other ideas are welcome!
 
 ## Write path
 
