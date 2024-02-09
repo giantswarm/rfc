@@ -26,8 +26,26 @@ We need to discuss how we handle multi-tenancy when accessing data (read path) a
 
 ## Read path
 
+### Current architecture for the read path
+
 Below is a graph exposing the current state of multi-tenancy:
 
-<img src="./assets/loki-multi-tenancy.png" width="300">
+<img src="./assets/loki-multi-tenancy.png" width="300" alt="Loki multi-tenancy on the read path">
+
+The read path queries `loki` providing an `X-Scope-OrgID` header which contains the identifier of all clusters: the management cluster plus all workload clusters.
+
+### Configuring multi-tenancy on the read path
+
+### Opened questions
 
 ## Write path
+
+### Current architecture for the write path
+
+### Configuring multi-tenancy on the write path
+
+#### Metrics
+
+#### Logging
+
+#### Traces/Profiles
