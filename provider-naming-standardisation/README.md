@@ -17,9 +17,9 @@ summary: Giant Swarm cluster providers should use a consistent naming scheme acr
 Depending on the provider, we use a different naming scheme. Our current provider names are:
 
 - CAPA
-- CAPG
 - CAPZ
 - cloud-director
+- gcp
 - openstack
 - vsphere
 
@@ -53,3 +53,13 @@ Pros:
 Cons:
 
 - Creates a 1:1 mapping between provider and plaform (see CAPA vs EKS above).
+
+## Outcome
+
+I would suggest that given the possibility of having multiple providers for a single platform, we should rename gcp/vcd/vsphere/openstack in order to align with the CAPx naming scheme.
+
+This will require changes in at least the following places:
+
+- configuration (config repo, flux etc)
+- repo names
+- operators which use provider names as logic
