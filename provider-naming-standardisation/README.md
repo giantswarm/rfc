@@ -27,6 +27,8 @@ For CAPA/CAPZ, this is currently unavoidable as the aws/azure names refer to our
 
 Having this split in naming conventions causes some confusion, and whilst this is relatively minor it makes sense to pick a specific scheme (especially before adding any more providers). There appears to be no documented reason for choosing either scheme (aside from the aforementioned collision with our vintage providers) - this RFC aims to address that.
 
+Note: a _platform_ as used in this document can be thought of as a _location_ (e.g. I deployed on AWS). Whereas a _provider_ is the mechanism used to deploy (e.g. I deployed on AWS using CAPA).
+
 ## Moving forward
 
 There are two options moving forward. One is to use the CAPx acronym, and the other is to use the platform name.
