@@ -39,6 +39,8 @@ Pros:
 
 - Caters for multiple providers per platform (e.g. CAPA and EKS clusters on AWS).
 - More uniform than platform names.
+- Widely used and understood in the Kubernetes industry.
+- Unique and unambiguous.
 
 Cons:
 
