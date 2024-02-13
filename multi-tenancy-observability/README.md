@@ -5,22 +5,24 @@ issues:
 owners:
 - https://github.com/orgs/giantswarm/teams/team-atlas
 state: review
-summary: How GiantSwarm manages multi-tenancy to isolate data by tenants (i.e. metrics, logs, traces).
+summary: How GiantSwarm manages multi-tenancy to isolate observability data by tenants (i.e. metrics, logs, traces).
 ---
 
-# Multi-tenancy proposal
+# Multi-tenancy proposal on observability
 
 ## Introduction
 
 Since we have a logging infrastructure, we are thinking about the multi-tenancy.
-The observability stack with metrics, logs, traces is treating a lot of data.
-According the role of people, some data must be accessible or not.
+The observability stack with metrics, logs, traces is managing a lot of data.
+According to the role of people, some data must be accessible or not.
 We would like to propose our customers the option of defining their tenants so that they can isolate the data as they want.
 
 Our product currently allows anyone with access to Grafana to request all the data: metrics and logs.
 Those datas are written with a tenant id that corresponds to the cluster id.
 
 Our idea of multi-tenancy is to be able to isolate data by tenant. A tenant can be anything: a namespace, a cluster id, a group of people, a feature, etc.
+
+In this document we will talk mostly about the logs (with `Loki`), but we expect to share the same logic for all components.
 
 We need to discuss how we handle multi-tenancy when accessing data (read path) and when sending it to object storage (write path).
 
@@ -64,7 +66,7 @@ Below an example of OAuth token content coming from Dex:
 The component `loki-multi-tenant-proxy` should be renamed `grafana-multi-tenant-proxy` to be more generic because it will handle multi-tenancy for logs, metrics, traces, etc.
 That component should have a configuration in which the mapping between groups of people and tenants is defined.
 
-Below a proposal such of configuration:
+Below a proposal of such a configuration:
 
 ```yaml
 groups:
@@ -84,7 +86,7 @@ groups:
 ```
 
 That configuration should be dynamically created and updated regardless of the data source.
-We are thinking of having an operator to manage that mapping. The operator will be able to reconcile any kind of data source and generate the configuration expected by `grafana-multi-tenant-proxy`.
+We are thinking of having an operator to manage that mapping. The operator would be able to reconcile any kind of data source and generate the configuration expected by `grafana-multi-tenant-proxy`.
 
 Below is a graph exposing multi-tenancy proposal:
 
@@ -104,14 +106,16 @@ We are considering a number of options that are not ideal at the moment:
 
 - having double datasource: one for customer with OAuth authentication and another dedicated to GiantSwarm people authenticated throw teleport.
 - having double grafana (same idea than above but for the all grafana instance, not just the datasource).
+- share an authentication secret via cookies.
 - other ideas are welcome!
 
 #### Operator
 
-`logging-operator` is an existing component responsible to create a secret for the multi-tenant-proxy. That secret contains a mapping between credentials and tenant (now, it's equivalent to the cluster id).
-Do we add a feature in that operator to handle the multi-tenant-proxy configuration we described above ?
-In that case, we should rename it: any suggestion ?
-If we don't reuse `logging-operator`, we will need to implement a new one: any suggestion for its name ?
+`logging-operator` is an existing component responsible for creating a secret for the multi-tenant-proxy. That secret contains a mapping between credentials and tenant (it's currently equivalent to the cluster id).
+
+- Do we add a feature in that operator to handle the multi-tenant-proxy configuration we described above ?
+- In that case, we should rename it: any suggestion ?
+- If we don't reuse `logging-operator`, we will need to implement a new one: any suggestion for its name ?
 
 #### Mapping groups-tenants
 
