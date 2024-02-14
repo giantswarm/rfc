@@ -5,7 +5,7 @@ issues:
 owners:
 - https://github.com/orgs/giantswarm/teams/team-atlas
 state: review
-summary: How GiantSwarm manages multi-tenancy to isolate observability data by tenants (i.e. metrics, logs, traces).
+summary: How Giant Swarm manages multi-tenancy to isolate observability data by tenants (i.e. metrics, logs, traces).
 ---
 
 # Multi-tenancy proposal on observability
