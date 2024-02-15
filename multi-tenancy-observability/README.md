@@ -5,26 +5,42 @@ issues:
 owners:
 - https://github.com/orgs/giantswarm/teams/team-atlas
 state: review
-summary: How Giant Swarm manages multi-tenancy to isolate observability data by tenants (i.e. metrics, logs, traces).
+summary: How Giant Swarm manages multi-tenancy to isolate observability data per tenants (i.e. metrics, logs, traces).
 ---
 
-# Multi-tenancy proposal on observability
+# Multi-tenancy for observability
+
+## Glossary
+
+- `tenant`: a group of users who share a common access with specific privileges to observability data
+- `observability data`: all data related to metrics, logs, traces, profiles
+- `read path`: path used by users to access observability data
+- `write path`: path used by components to store observability data
 
 ## Introduction
 
-Since we have a logging infrastructure, we are thinking about the multi-tenancy.
-The observability stack with metrics, logs, traces is managing a lot of data.
+Giant Swarm managed components produce a lot of observability data (metrics, logs, traces and so on).
+For instance, we have reached our ingestion limits in Prometheus more than a year ago.
+On top of this, as part of the developer platform, we want to be able to ingest all sorts of customer observability data and provide data isolation between tenants.
+
+To that end, we now need to move towards multi-tenancy in our observability stack.
+Thankfully, our logging solution Loki supports multi-tenancy based on a http header (`X-Org-ID`) and we already had to implement things.
+
+To be able to support multi-tenancy in our monitoring stack, we are currently working on moving to mimir on CAPI as mimir supports the same multi-tenancy mechanism as Loki, see our current status on the [epic](https://github.com/giantswarm/roadmap/issues/3039).
+
 According to the role of people, some data must be accessible or not.
 We would like to propose our customers the option of defining their tenants so that they can isolate the data as they want.
 
-Our product currently allows anyone with access to Grafana to request all the data: metrics and logs.
-Those datas are written with a tenant id that corresponds to the cluster id.
+Presently, our product allows anyone with access to Grafana to request all the data (metrics and logs) for all tenants. This is part of the reason why only a subset of our customers (only the platform teams) have access to our managed grafana and it also why our shared installation grafana is not accessible to customers.
 
-Our idea of multi-tenancy is to be able to isolate data by tenant. A tenant can be anything: a namespace, a cluster id, a group of people, a feature, etc.
+For technical reasons, our logging stack already has some basic multi-tenancy:
+<img src="./assets/scope-orgid.png" width="500" alt="Loki multi-tenancy and X-Scope-OrgID header">
 
-In this document we will talk mostly about the logs (with `Loki`), but we expect to share the same logic for all components.
+Our idea of multi-tenancy is to be able to isolate data per tenant. A tenant can be anything: a namespace, a cluster id, a group of people, a feature, etc.
 
-We need to discuss how we handle multi-tenancy when accessing data (read path) and when sending it to object storage (write path).
+In this document we will talk mostly about the logs (with `Loki`), but we expect to share the same logic for all our observability stack components.
+
+Because the read and write path for the multi-tenancy is technically different, we decided to split it into different sections.
 
 ## Read path
 
