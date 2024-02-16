@@ -25,16 +25,15 @@ On top of this, as part of the developer platform, we want to be able to ingest 
 
 To that end, we now need to move towards multi-tenancy in our observability stack.
 Thankfully, our logging solution Loki supports multi-tenancy based on a http header (`X-Org-ID`) and we already had to implement things.
+The graph below shows our current implementation of the multi-tenancy on logs:
+<img src="./assets/scope-orgid.png" width="500" alt="Loki multi-tenancy and X-Scope-OrgID header">
 
 To be able to support multi-tenancy in our monitoring stack, we are currently working on moving to mimir on CAPI as mimir supports the same multi-tenancy mechanism as Loki, see our current status on the [epic](https://github.com/giantswarm/roadmap/issues/3039).
 
 According to the role of people, some data must be accessible or not.
 We would like to propose our customers the option of defining their tenants so that they can isolate the data as they want.
 
-Presently, our product allows anyone with access to Grafana to request all the data (metrics and logs) for all tenants. This is part of the reason why only a subset of our customers (only the platform teams) have access to our managed grafana and it also why our shared installation grafana is not accessible to customers.
-
-For technical reasons, our logging stack already has some basic multi-tenancy:
-<img src="./assets/scope-orgid.png" width="500" alt="Loki multi-tenancy and X-Scope-OrgID header">
+Presently, our product allows anyone with access to Grafana to request all the data (metrics and logs) for all tenants. This is part of the reason why only a subset of our customers (only the platform teams) have access to our managed grafana and is also why our shared installation grafana is not accessible to customers.
 
 Our idea of multi-tenancy is to be able to isolate data per tenant. A tenant can be anything: a namespace, a cluster id, a group of people, a feature, etc.
 
@@ -115,7 +114,7 @@ Below is a graph exposing multi-tenancy proposal:
 We are currently facing an issue with `teleport` authentication:
 [Teleport JWT issue](https://github.com/giantswarm/giantswarm/issues/29719)
 
-We are authentified on Grafana through a JWT token provided by teleport.
+We are authenticated on Grafana through a JWT token provided by teleport.
 But that token is not forwarded to the datasource.
 So we are not able to authenticate the user into the multi-tenant proxy.
 We are considering a number of options that are not ideal at the moment:
