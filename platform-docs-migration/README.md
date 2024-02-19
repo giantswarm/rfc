@@ -1,5 +1,6 @@
 ---
 creation_date: 2024-02-19
+last_review_date: 2024-02-19
 issues:
 - https://github.com/giantswarm/giantswarm/issues/29503
 owners:
