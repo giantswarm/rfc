@@ -4,7 +4,7 @@ issues:
 - https://github.com/giantswarm/giantswarm/issues/29503
 owners:
 - https://github.com/orgs/giantswarm/teams/team-horizon
-state: review
+state: approved
 summary: Revamp our docs to describe the Dev Platform product, considering the new Cluster API (CAPI) architecture. Temporarily move vintage to a subpath and create the new content in the top level. The docs entry point can still point to the old till renovation is over.
 ---
 
