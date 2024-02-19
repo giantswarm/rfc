@@ -52,7 +52,7 @@ General steps to achieve the aforementioned goals:
 1) Moved the `vintage` content to a subpath so we leave a clean space in the top level docs site.
 2) Add aliases from old content entries to include the old path so we don`t break links.
 3) Leave the main docs entry page where it is now but pointing to the vintage path, so the appearance still the same.
-4) Avoid bots to scrape the docs for now on to avoid temporal indexes.
+4) Avoid bots to scrape the docs from now on to avoid temporal indexes. Add a banner to the vintage path to warn users of the state.
 5) Work iteratively by top-level section adding new content (Ex: Platform Overview, Getting Started,...)
   2.1) Team Horizon will create a the top-level structure proposal. It will be mapped from [here](https://miro.com/app/board/uXjVO2Dh15w=/). When SIG docs and teams approve it,  we will create the structure empty.
   2.2) Identify owners for the sections to be completed, created or adapted. Create tickets for teams. Help and guide them to complete it. Think of the docs entry structure to have a similar outline for similar pages.
