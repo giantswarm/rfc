@@ -62,7 +62,7 @@ General steps to achieve the aforementioned goals:
 ## Few clarifications
 
 - This is a proposal, feedback welcome.
-- I have consider migration within the repo and it will be way complex and difficult.
+- I have considered the migration will take time and this approach will allow teams to take their time till we decide to make it public.
 - We don`t plan to change the style at the moment. But we might align with handbook and intranet.
 
 ## References
