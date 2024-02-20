@@ -1,6 +1,12 @@
 ---
 creation_date: 2023-05-08
+issues:
+- https://github.com/giantswarm/roadmap/issues/256
+last_review_date: 2024-02-20
+owners:
+- https://github.com/orgs/giantswarm/teams/team-shield
 state: approved
+summary: Outlines the suggested replacement of Pod Security Policies with a Kyverno-backed implementation of the official Pod Security Standards guidelines in Giant Swarm clusters.
 ---
 
 # Default PSS and Policy Exceptions with Kyverno
