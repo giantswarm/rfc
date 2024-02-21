@@ -1,8 +1,12 @@
 ---
 creation_date: 2023-10-09
+issues:
+- https://github.com/giantswarm/giantswarm/issues/27976
+last_review_date: 2024-02-20
 owners:
 - https://github.com/orgs/giantswarm/teams/team-shield
 state: approved
+summary: Describes the implementation of early Policy API features to assist with customer migrations to Kyverno-enforced Pod Security Standards.
 ---
 
 # PSS migration orchestration

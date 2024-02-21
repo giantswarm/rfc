@@ -1,8 +1,12 @@
 ---
 creation_date: 2023-10-09
+issues:
+- https://github.com/giantswarm/roadmap/issues/256
+last_review_date: 2024-02-20
 owners:
 - https://github.com/orgs/giantswarm/teams/team-shield
 state: approved
+summary: Introduces the Policy API as an abstraction for declaratively managing several external tools through a single customer interface.
 ---
 
 # Policy Orchestration System
