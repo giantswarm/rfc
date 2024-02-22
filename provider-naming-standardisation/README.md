@@ -60,7 +60,16 @@ Cons:
 
 I would suggest that given the possibility of having multiple providers for a single platform, we should rename gcp/vcd/vsphere/openstack in order to align with the CAPx naming scheme.
 
-This will require changes in at least the following places:
+### Changes
+
+- CAPA (no change)
+- CAPZ (no change)
+- cloud-director > CAPVCD
+- gcp > CAPG
+- openstack > CAPO
+- vsphere > CAPV
+
+Achieving this will require changes in at least the following places:
 
 - configuration (config repo, flux etc)
 - repo names
