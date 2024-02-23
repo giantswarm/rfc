@@ -1,7 +1,7 @@
 ---
 creation_date: 2021-09-17
 issues:
-- [https:/](https://github.com/giantswarm/giantswarm/issues/27420)
+- https://github.com/giantswarm/giantswarm/issues/27420
 last_review_date: 2024-02-23
 owners:
 - https://github.com/orgs/giantswarm/teams/team-horizon
