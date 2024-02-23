@@ -5,6 +5,7 @@ issues:
 last_review_date: 2024-02-23
 owners:
 - https://github.com/orgs/giantswarm/teams/team-horizon
+- https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: approved
 summary: As part of the Cluster API hackathon the idea of how to automate the cluster upgrades allows us to brainstorm how it can be achieved taking into account customer requirements and technical limitations brought under the new upstream implementation.
 ---
