@@ -1,6 +1,13 @@
 ---
 creation_date: 2021-09-17
+issues:
+- https://github.com/giantswarm/giantswarm/issues/27420
+last_review_date: 2024-02-23
+owners:
+- https://github.com/orgs/giantswarm/teams/team-horizon
+- https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: approved
+summary: As part of the Cluster API hackathon we brainstormed how to automate the cluster upgrades taking into account customer requirements and technical limitations brought under the new upstream implementation.
 ---
 
 # RFC 0015 - Automatic workload cluster upgrades
