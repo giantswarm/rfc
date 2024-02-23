@@ -26,6 +26,7 @@ On top of this, as part of the developer platform, we want to be able to ingest 
 To that end, we now need to move towards multi-tenancy in our observability stack.
 Thankfully, our logging solution Loki supports multi-tenancy based on a http header (`X-Org-ID`) and we already had to implement things.
 The graph below shows our current implementation of the multi-tenancy on logs:
+
 <img src="./assets/scope-orgid.png" width="500" alt="Loki multi-tenancy and X-Scope-OrgID header">
 
 To be able to support multi-tenancy in our monitoring stack, we are currently working on moving to mimir on CAPI as mimir supports the same multi-tenancy mechanism as Loki, see our current status on the [epic](https://github.com/giantswarm/roadmap/issues/3039).
