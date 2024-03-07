@@ -181,7 +181,7 @@ Here is what the flow looks like:
 
 #### Different tenant configuration options
 
-After a few different customer calls, we find out that they have different needs when it comes to multi-tenancy.
+After a few different customer calls, we found out that they have different needs when it comes to multi-tenancy.
 
 ##### Cluster == Tenant
 
