@@ -261,6 +261,6 @@ Cons:
 ### Open questions
 
 - How do we handle managed apps logs? We are currently not able to only get specific logs for managed apps in workload clusters as we only get logs from the giantswarm and kube-system namespaces.
-- What is the danger of being to open in customer custom configs?
+- What is the danger of being too open in customer custom configs?
 - How do we managed out of cluster logs? (this might come up)
 - What about data retention? Should we allow custom retention per tenants? If yes up to how long?
