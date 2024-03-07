@@ -171,7 +171,7 @@ We currently need those 2 tools because:
 1. Promtail cannot get kubernetes events
 2. Grafana Agent is going through quite a big rewrite in it's configuration and all features we needed were not supported when we deployed it
 
-The flow is like this:
+Here is what the flow looks like:
 1. The logging-operator creates a `password` for the cluster's logging agents to be able to send logs to Loki and configures them (actual configuration of what to scrape and so on) via an extra-config.
 2. The logging-operator adds the new cluster_id/password pair to the proxy configuration
 3. The logging agents collect and send logs to the loki-multi-tenant-proxy which validates the basic authentication sent in the http header and transform it into a tenant information (X-Scope_OrgID)
