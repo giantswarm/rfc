@@ -59,7 +59,7 @@ We would like to propose our customers the option of defining their tenants so t
 
 __Disclaimer:__ We might change this flexibility later on based on product (e.g. project CR) or operational decisions ( e.g. too many tenants).
 
-In this document we will talk mostly about the logging implementation (with `Loki`) as this is where we are the more advanced, but we expect to share the same logic for all our observability stack components.
+In this document we will look at the multi-tenancy concept on the example of the logging implementation (with `Loki`) as this is where we already collected experience with it. But we expect to share the same logic across all of our observability stack components.
 
 Because the read and write path for the multi-tenancy is technically different and have different requirements, we decided to split it into different sections.
 
