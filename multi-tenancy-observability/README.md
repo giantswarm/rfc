@@ -75,7 +75,7 @@ The read path queries `loki` providing an `X-Scope-OrgID` header which contains 
 
 ### Configuring multi-tenancy on the read path
 
-We have asserted that we can retrieve users groups through the OAuth token that is received from Grafana when we enable Oauth forwarding on the Loki datasource.
+We have asserted that we can retrieve users groups through the OAuth token that is received from Grafana when we enable OAuth-forwarding on the Loki datasource.
 
 Below is an example of OAuth token content coming from Dex:
 
