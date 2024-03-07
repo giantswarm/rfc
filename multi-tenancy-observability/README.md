@@ -206,7 +206,7 @@ This approach would allow customers to be able to set the tenancy as they want (
 #### Implementation details
 
 This part is a bit gray because we are still ensure what tool we want to use. We would prefer to use only 1 as opposed to the 2 we have today (namely grafana-agent and promtail) but they are currenly not feature complete.
-We would love to use [PodLogs](https://grafana.com/docs/agent/latest/operator/api/#podlogs-a-namemonitoringgrafanacomv1alpha1podlogsa) the equivalent of a Service or PodMonitor for metrics but the existing implementation at the time of this RFC is fully compliant with our needs.
+One preferred alternative would be [PodLogs](https://grafana.com/docs/agent/latest/operator/api/#podlogs-a-namemonitoringgrafanacomv1alpha1podlogsa), the equivalent of a Service or PodMonitor for metrics, but the existing implementation at the time of this RFC is not yet fully compliant with our needs as well.
 
 We envisionned different distinct approaches here:
 
