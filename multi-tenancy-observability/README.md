@@ -247,7 +247,7 @@ Pros:
 Cons:
 - MC needs to be aware of the state of all WCs (has all namespaces and so on). How can customers be sure they have all logs?
 
-#### Approach 4: We enforce 1 namespace == 1 tenant with possibility of opting out
+#### Approach 4: We enforce 1 namespace == 1 tenant with flexibility by app and possibility of opting out
 
 It is quite easy to configure 1 tenant per namespace in our current setup and we could use a giantswarm.io/logging: false on specific namespace or containers to not get the logs.
 
