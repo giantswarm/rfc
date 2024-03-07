@@ -28,7 +28,7 @@ This issue got a whole lot bigger when we added logging with Loki to the mix.
 Second, our product presently allows anyone with access to Grafana on the management clusters to access all the data (metrics and logs) for all workload clusters without any kind of data isolation or federation. This is part of the reason why only a subset of our customers (generaly only the platform teams) have access to our managed grafana and is also why our shared installation grafana is not accessible to customers.
 
 
-As part of the developer platform, we want to be able to ingest all sorts of customer observability data. This will require Giant Swarm observability platform to be able to provide data isolation between tenants.
+As part of the developer platform, we want to be able to ingest all sorts of customer observability data. For example a lot of customers are interested in monitoring of application developers workloads. This will require Giant Swarm observability platform to be able to provide data isolation between tenants, so that customer teams have limited access to the data originating on clusters they own.
 
 To that end, we now need to move towards multi-tenancy in our observability.
 
