@@ -102,7 +102,7 @@ Below is an example of OAuth token content coming from Dex:
 
 The component `loki-multi-tenant-proxy` which has now been renamed to `grafana-multi-tenant-proxy` should be configured with the mapping between groups of people and tenants
 
-Below is a proposal of such a configuration:
+Below is a proposal of the configuration of the mapping between tenants and their assigned groups from the active directory:
 
 ```yaml
 groups:
