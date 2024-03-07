@@ -258,7 +258,7 @@ Pros:
 Cons:
 - Our existing customers want to start slow (team by team) and opting-out for all namespaces from the start will be a hassle. An idea to avoid this would be to be able to opt-out of the multi-tenancy features with a cluster label (`giantswarm.io/tenancy: false`).
 
-### Opened questions
+### Open questions
 
 - How do we handle managed apps logs? We are currently not able to only get specific logs for managed apps in workload clusters as we only get logs from the giantswarm and kube-system namespaces.
 - What is the danger of being to open in customer custom configs?
