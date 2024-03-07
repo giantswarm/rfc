@@ -19,7 +19,7 @@ summary: How Giant Swarm manages multi-tenancy to isolate observability data per
 
 ## Introduction
 
-Moving towards our observability platform, we have to consider to important topics.
+Moving towards our observability platform, we have to consider two important topics.
 
 First, we generate a lot of observability data.
 For instance, we reached our ingestion limits in Prometheus more than a year ago and each new component we add brings a lot more metrics so we have to be mindful about the metrics we keep.
