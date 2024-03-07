@@ -136,7 +136,7 @@ We will have to either create a new operator to handle multi-tenancy for all obs
 
 We are open to suggestions on this topic.
 
-### Opened questions
+### Open questions
 
 #### Teleport issue
 
