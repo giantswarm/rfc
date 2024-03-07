@@ -48,7 +48,7 @@ We already have plans to migrate our monitoring stack to Grafana Mimir, which su
 
 ## What we want to achieve
 
-We want to be able to segregate access to the observability data based on the user groups they have configured in their active directory.
+We want to be able to segregate access to the observability data based on the user groups our customers have configured in their active directory.
 
 But we also want to provide flexibility to customers to allow them to isolate their data as they want.
 For instance, some customers may want to map:
