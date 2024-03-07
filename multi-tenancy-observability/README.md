@@ -25,7 +25,7 @@ First, we generate a lot of observability data.
 For instance, we already reached our ingestion limits in Prometheus in the past and each new component we add brings a lot more metrics so we have to be mindful about the metrics we keep.
 This issue got a whole lot bigger when we added logging with Loki to the mix.
 
-Second, our product presentlyallows anyone with access to Grafana on the management clusters to access all the data (metrics and logs) for all workload clusters without any kind of data seggregration. This is part of the reason why only a subset of our customers (generaly only the platform teams) have access to our managed grafana and is also why our shared installation grafana is not accessible to customers.
+Second, our product presently allows anyone with access to Grafana on the management clusters to access all the data (metrics and logs) for all workload clusters without any kind of data isolation or federation. This is part of the reason why only a subset of our customers (generaly only the platform teams) have access to our managed grafana and is also why our shared installation grafana is not accessible to customers.
 
 
 As part of the developer platform, we want to be able to ingest all sorts of customer observability data. This will require Giant Swarm observability platform to be able to provide data isolation between tenants.
