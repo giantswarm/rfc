@@ -165,4 +165,102 @@ What interface could we offer our customers to enable them to define the mapping
 
 ### Current architecture for the write path
 
+On the write path, we currently use promtail to collect container and machine logs and grafana agent to collect kubernetes events.
+
+We currently need those 2 tools because:
+1. Promtail cannot get kubernetes events
+2. Grafana Agent is going through quite a big rewrite in it's configuration and all features we needed were not supported when we deployed it
+
+The flow is like this:
+1. The logging-operator creates a `password` for the cluster's logging agents to be able to send logs to Loki and configures them (actual configuration of what to scrape and so on) via an extra-config.
+2. The logging-operator adds the new cluster_id/password pair to the proxy configuration
+3. The logging agents collect and send logs to the loki-multi-tenant-proxy which validates the basic authentication sent in the http header and transform it into a tenant information (X-Scope_OrgID)
+4. Loki writes the data to storage for the configured tenant (cluster_id in that case)
+
 ### Configuring multi-tenancy on the write path
+
+#### Different tenant configuration options
+
+After a few different customer calls, we find out that they have different needs when it comes to multi-tenancy.
+
+##### Cluster == Tenant
+
+This is the approach we are currently using for technical reasons. We do not think this would match with customers workload as they mostly have a lot of customers sharing clusters.
+
+##### Namespace == Tenant
+
+This approach makes it really easy for us and customers to configure tenants and it would definitely be easy to onboard teams (e.g. adding a label on the namespace would make the agents collect logs from the containers in the namespace).
+
+But this approach brings a few questions:
+1. What tenancy should common internal apps use (e.g. prometheus-operator, api-server, cilium logs are accessed by multiple internal teams)? Do we need to ensure customers are putting those apps into a namespace accessible by all?
+2. What about teams that share namespaces?
+
+##### App == Tenant
+
+This approach is especially flexible for customers but we do not think this approach makes sense because the mapping configuration would be impossible to maintain and we would probably face technical limits pretty fast
+
+##### Hybrid mode
+
+This approach would allow customers to be able to set the tenancy as they want (per namespace or per app depending on the use case).
+
+#### Implementation details
+
+This part is a bit gray because we are still ensure what tool we want to use. We would prefer to use only 1 as opposed to the 2 we have today (namely grafana-agent and promtail) but they are currenly not feature complete.
+We would love to use [PodLogs](https://grafana.com/docs/agent/latest/operator/api/#podlogs-a-namemonitoringgrafanacomv1alpha1podlogsa) the equivalent of a Service or PodMonitor for metrics but the existing implementation at the time of this RFC is fully compliant with our needs.
+
+We envisionned different distinct approaches here:
+
+#### Approach 1: Customers provide their logs themselves
+
+In this approach, based on the tenant information that the customer provided to us, we would generate a user/password pair that the customer would then use in their favorite log shipper to send their logs to Loki.
+
+Pros:
+- This is quite easy for us to implement as we already have the password generation logic
+- We allow customers to use the tool they know and love.
+- We will not receive pages if the tool is not working properly
+
+Cons:
+- This is far from the idea of a platform
+- There is a high risk that configuration will be messy and hard for use to debug when we need to
+
+This approach might be useful for customers that want to send logs from outside the clusters
+
+#### Approach 2: Extract tenant information from a label/PodLog
+
+Existing logging agents support setting the tenant to send to loki using a custom log label.
+We can configure our logging agents to get the logs of specific namespaces/pods if they have a label like `giantswarm.io/tenant: my-tenant` or using a PodLog CR (if applicable).
+
+Pros:
+- Quite easy to configure for logs
+
+Cons:
+- Tenant configuration will need to be configured in multiple places (MC for the read path and WC for the write path)
+- Label approach would most likely not work for metrics OOTB (this would require customer to add new labels like metrics port, path and so on).
+
+#### Approach 3: Configure promtail based on the MC tenancy CR
+
+Altough the customer UX for the read path is still unclear, we can envision a CR like a Tenant CR that would map user's roles to namespaces/deployment under a given tenant name. The logging operator would then take care of applying all that logic
+
+Pros:
+- Everything is happening on the MC and it could map to the Project CR concept that has been talked in Product for a while.
+
+Cons:
+- MC needs to be aware of the state of all WCs (has all namespaces and so on). How can customers be sure they have all logs?
+
+#### Approach 4: We enforce 1 namespace == 1 tenant with possibility of opting out
+
+It is quite easy to configure 1 tenant per namespace in our current setup and we could use a giantswarm.io/logging: false on specific namespace or containers to not get the logs.
+
+Pros:
+- Customers would only have to fill out the read path configurations (unless they want to opt-out a lot)
+- With this approach, we could still have a `giantswarm.io/tenant: my-tenant` label on some apps that should have a specific tenant attached to them.
+
+Cons:
+- Our existing customers want to start slow (team by team) and opting-out for all namespaces from the start will be a hassle. An idea to avoid this would be to be able to opt-out of the multi-tenancy features with a cluster label (`giantswarm.io/tenancy: false`).
+
+### Opened questions
+
+- How do we handle managed apps logs? We are currently not able to only get specific logs for managed apps in workload clusters as we only get logs from the giantswarm and kube-system namespaces.
+- What is the danger of being to open in customer custom configs?
+- How do we managed out of cluster logs? (this might come up)
+- What about data retention? Should we allow custom retention per tenants? If yes up to how long?
