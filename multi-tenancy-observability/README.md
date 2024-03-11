@@ -136,6 +136,8 @@ Below is a graph exposing multi-tenancy proposal:
 
 We will have to either create a new operator to handle multi-tenancy for all observability tools (`observability-multi-tenancy-operator`) or add this feature into the `logging-operator` and rename it to `observability-operator`.
 
+Atlas' current preference is towards the second option : moving towards having a single, global `observability-operator` which would embed several different controllers, each dedicated to its own observability tool (i.e one controller for logging, another one for multi-tenancy, ...). This approach has the benefit of limiting the number of different operators - and thus related repos - which would not only ease the development process but also make troubleshooting a lot whole easier as one would have only 1 operator to check.
+
 We are open to suggestions on this topic.
 
 ### Open questions
