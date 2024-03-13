@@ -12,7 +12,7 @@ summary: How Giant Swarm manages multi-tenancy to isolate observability data per
 
 ## Glossary
 
-- `tenant`: a group of users who share a common access with specific privileges to observability data
+- `tenant`: a group of individuals (from our customers or Giant Swarm alike) who share a common access with specific privileges to observability data
 - `observability data`: metrics, logs, traces, profiles and so on
 - `read path`: path used by users to access observability data
 - `write path`: path used by components to store observability data
