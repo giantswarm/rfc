@@ -243,7 +243,7 @@ Cons:
 
 #### Approach 3: Configure promtail based on the MC tenancy CR
 
-Altough the customer UX for the read path is still unclear, we can envision a CR like a Tenant CR that would map user's roles to namespaces/deployment under a given tenant name. The logging operator would then take care of applying all that logic
+Altough the customer UX for the read path is still unclear, we can envision a CR like a Tenant CR that would map users' roles to namespaces/deployments under a given tenant name. The logging operator would then take care of applying all that logic
 
 Pros:
 - Everything is happening on the MC and it could map to the Project CR concept that has been talked in Product for a while.
