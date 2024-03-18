@@ -225,7 +225,7 @@ Pros:
 
 Cons:
 - This is far from the idea of a platform
-- There is a high risk that configuration will be messy and hard for use to debug when we need to
+- There is a high risk that configuration will be messy and hard to use to debug when we need to
 
 This approach might be useful for customers that want to send logs from outside the clusters
 
