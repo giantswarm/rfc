@@ -173,7 +173,7 @@ On the write path, we currently use promtail to collect container and machine lo
 
 We currently need those 2 tools because:
 1. Promtail cannot get kubernetes events
-2. Grafana Agent is going through quite a big rewrite in it's configuration and all features we needed were not supported when we deployed it
+2. Grafana Agent is going through quite a big rewrite in its configuration and all features we needed were not supported when we deployed it
 
 Here is what the flow looks like:
 1. The logging-operator creates a `password` for the cluster's logging agents to be able to send logs to Loki and configures them (actual configuration of what to scrape and so on) via an extra-config.
