@@ -42,7 +42,7 @@ The graph below shows our current implementation of the multi-tenancy on logs:
 
 <img src="./assets/scope-orgid.png" width="500" alt="Loki multi-tenancy and X-Scope-OrgID header">
 
-In summary, we use a Reverse Proxy in front of all Loki components. This Proxy sets the `X-Org-ID` header based on the authentication information it receives. The proxy configuration (tenant and user/password keypairs) are managed by an operator named `logging-operator`. This operator also configure the tenant and user/password keypairs information for the logging agents that they then use to send logs to loki via the Reverse Proxy.
+In summary, we use a Reverse Proxy in front of all Loki components. This Proxy sets the `X-Org-ID` header based on the authentication information it receives. The proxy configuration (tenant and user/password keypairs) are managed by an operator named `logging-operator`. This operator also configures the tenant and user/password keypairs information for the logging agents that they then use to send logs to loki via the Reverse Proxy.
 
 ### Future of monitoring
 
