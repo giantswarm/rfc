@@ -47,7 +47,7 @@ These are our constraints with Loki:
 * the list of tenants must be exact (no wildcards, regex or "all" magic words)
 * data is written in a separate path per tenant
 
-We already added the "GiantSwarm Multi-tenancy Layer" (AKA "Multi-Tenant Proxy"). This is the place where we can add/modify the `orgid` header, and we will discuss it further down in this document.
+We already added the "Giant Swarm Multi-tenancy Layer" (AKA "Grafana Multi-Tenant Proxy"). This is the place where we can add/modify the `orgid` header, and we will discuss it further down in this document.
 
 ### Our Logging stack
 
