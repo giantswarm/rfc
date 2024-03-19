@@ -9,7 +9,7 @@ This RFC investigates ways for managing (urgent) requests from customers receive
 
 ## Current setup
 
-In case of urgency, customers can open urgent tickets by sending an email to urgent@giantswarm.io. This will automatically create a ticket in Opsgenie.
+In case of urgency, customers can open urgent tickets by sending an email to our urgent mail address. This will automatically create a ticket in Opsgenie.
 
 In case of non-urgent need, customers can open tickets by sending an email to support@giantswarm.io. This will automatically be forwarded to the #support channel in Slack.
 
@@ -60,7 +60,7 @@ Let's consider customer `shiba`. We can create a dedicated email address `shiba@
 
 This proposal relies on using the `+` sign trick to correctly redirect requests.
 
-We can define two email addresses: `urgent@giantswarm.io` and `support@giantswarm.io`.
+We can define two email addresses like we have already, one for urgent and another for support.
 
 Let's consider customer `shiba`. We can discern between their requests depending on the additional information present after the first `+` sign. Some examples could be:
 
@@ -96,7 +96,7 @@ The following questions arise for both proposals:
 
 Considering the pros and cons of each solution and the number of comments received, I believe we can proceed as follows:
 
-- Only use the support@giantswarm.io and urgent@giantswarm.io email addresses
+- Only use the support and urgent email addresses
 - With `support`, we only specify the customer name, so that the message is forwarded to the customer's Slack channel: `support+customer@giantswarm.io`
 - With `urgent`, we only specify the area, so that the message is forwarded to the correct area in Opsgenie: `urgent+area@giantswarm.io`. The areas are the following:
 
