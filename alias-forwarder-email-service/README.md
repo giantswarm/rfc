@@ -11,7 +11,7 @@ This RFC investigates ways for managing (urgent) requests from customers receive
 
 In case of urgency, customers can open urgent tickets by sending an email to our urgent mail address. This will automatically create a ticket in Opsgenie.
 
-In case of non-urgent need, customers can open tickets by sending an email to support@giantswarm.io. This will automatically be forwarded to the #support channel in Slack.
+In case of non-urgent need, customers can open tickets by sending an email to our support mail address. This will automatically be forwarded to the #support channel in Slack.
 
 While this works -also thanks to the fact that the tickets are broadcast- we reckon that, as Giant Swarm grows and gathers customers, having such general entry points can become hard to scale and manage.
 
