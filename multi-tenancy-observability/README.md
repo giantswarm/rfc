@@ -34,6 +34,21 @@ To that end, we now need to move towards multi-tenancy in our observability.
 
 ## Current situation
 
+### Loki and multi-tenancy
+
+We will use Loki as an example, but the logic is the same with other Grafana Labs tools (Mimir, Tempo, Pyroscope...).
+
+Here is how Loki works with multi-tenancy and manages data:
+<img src="./assets/loki-multitenancy.png" width="500" alt="How Loki manages multi-tenancy">
+
+These are our constraints with Loki:
+* write path can only specify 1 tenant
+* read path can ask for multiple tenants
+* the list of tenants must be exact (no wildcards, regex or "all" magic words)
+* data is written in a separate path per tenant
+
+We already added the "GiantSwarm Multi-tenancy Layer" (AKA "Multi-Tenant Proxy"). This is the place where we can add/modify the `orgid` header, and we will discuss it further down in this document.
+
 ### Our Logging stack
 
 Our logging solution Loki supports multi-tenancy based on a http header (`X-Org-ID`) and we already had to implement some basic form of multi-tenancy to be able to support the logs coming from our clusters.
