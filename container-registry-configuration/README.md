@@ -1,6 +1,12 @@
 ---
 creation_date: 2023-03-01
+issues:
+- https://github.com/giantswarm/giantswarm/issues/24237
+last_review_date: 2024-02-26
+owners:
+- https://github.com/orgs/giantswarm/teams/team-turtles
 state: approved
+summary: Since Docker Hub has an image download rate limit which can lead to unhealthy clusters, configure containerd such that it uses other registries as mirrors (fallback).
 ---
 
 # Container Registry Configuration
