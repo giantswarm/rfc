@@ -6,7 +6,7 @@ last_review_date: 2024-02-26
 owners:
 - https://github.com/orgs/giantswarm/teams/team-turtles
 state: approved
-summary: This RFC is to specify how we configure Kubernetes clusters for container registries including the API in our charts and account management for installations.
+summary: Since Docker Hub has an image download rate limit which can lead to unhealthy clusters, configure containerd such that it uses other registries as mirrors (fallback).
 ---
 
 # Container Registry Configuration
