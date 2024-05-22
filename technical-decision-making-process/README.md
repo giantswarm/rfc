@@ -53,7 +53,7 @@ Team Horizon
 - Continue with current methods:
   - Pros: No change required.
   - Cons: Inefficiencies and inconsistencies remain.
-  
+
 - Adopt a free-form document process:
   - Pros: Flexibility in document format.
   - Cons: Lack of structure can lead to confusion and missed details.
