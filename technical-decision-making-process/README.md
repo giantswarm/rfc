@@ -9,6 +9,7 @@ summary: This contains the process for proposing, discussing, and formalizing te
 ---
 
 # Structured way to propose, discuss, and formalize technical decisions within an organization
+
 ### Problem statement
 
 The current technical decision-making process within our organization is inconsistent and inefficient, particularly when decisions impact multiple teams. This lack of a well-defined process leads to confusion, delays, and suboptimal decisions.
