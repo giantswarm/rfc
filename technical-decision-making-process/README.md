@@ -67,7 +67,6 @@ Preparation Phase:
  - By 13.06.2024: Develop the RFC template and guidelines.
  - By 1.07.2024: Onboard main stakeholders on the new process.
 
-Pilot Phase:
  - From 01.07.2024: Pilot the process with one team and gather feedback.
 Full Rollout:
  - From 01.07.2024: Implement the process organization-wide.
