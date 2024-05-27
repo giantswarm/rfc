@@ -36,7 +36,7 @@ Team Horizon
 
 ### Preferred solution
 
-#### 1. Technical decision-making process:
+#### Technical decision-making process:
 - Proposal Creation: Any team member can create an RFC document to propose a decision. See [RFC and decision making process](https://handbook.giantswarm.io/docs/rfcs/decision-process/) for a description of submitting an RFC.
 - Review and Discussion: The RFC is shared with relevant stakeholders for review and feedback.
 - Decision Meeting: If there is no agreement or insufficient feedback before the deadline, the decision owner schedules a formal meeting with relevant stakeholders to discuss the RFC and make a decision.
