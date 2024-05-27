@@ -387,7 +387,11 @@ Now let’s see how the above scenario would look like with the releases reposit
 
 #### 4.2.4. Multiple release models and release channels
 
-TBA
+With cluster-$provider app releases, while we can use git branches to have multiple major versions, all that is only one way to create releases. We can have multiple major versions, but it’s still the same apps being versioned in the same way in every release.
+
+Since app and component versions are embedded in the cluster-$provider app, we cannot combine different versions of different apps in different ways (unless we make app and component versions configurable, which then opens the door to a whole new set of issues). We cannot have another release model where e.g. versions of Kubernetes, OS, CNI and CPI are a part of the release, and all other apps are always at their latest versions. Or a release model where we use LTS release of OS, CPI, CNI and other apps that provide a LTS release (or something similar).
+
+OTOH with the releases repository, we can easily create different directories for different release models, where we can combine the versions of apps and components in whatever way and where we can update different release models with different frequency and with different rules. Therefore it would be relatively easy to have one release model where app versions are not even part of the release, or are decoupled and continuously updated. Or another “slower” release model with long-term support where apps and components are on their LTS versions and are updated more slowly.
 
 [RFC2119]: https://datatracker.ietf.org/doc/rfc2119/
 [RFC8174]: https://datatracker.ietf.org/doc/rfc8174/
