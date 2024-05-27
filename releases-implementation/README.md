@@ -105,31 +105,32 @@ Then it compares the proposed solution to the current one that we have for our n
 This document proposes to continue using `giantswarm/releases` repository for creating and delivering releases, albeit in a simplified way when compared to the vintage releases. Release resources are used in a minimal way, and cluster-$provider apps continue to be used for deploying workload clusters.
 
 Briefly put, cluster-$provider apps are still deployed in almost exactly same way, with the following few differences:
-- In cluster-$provider app manifest, instead of specifying `.spec.version`, we specify `release.giantswarm.io/version` label.
-- Information about app version, catalog and dependencies is obtained from the Release resource (during Helm rendering phase).
+- In cluster-$provider app manifest, instead of specifying `.spec.version`, we MUST specify `release.giantswarm.io/version` label.
+- Information about app version, catalog and dependencies MUST BE obtained from the Release resource (during Helm rendering phase) when deploying a production cluster.
+- Information about app version, catalog and dependencies CAN be overridden with Helm values when deploying a test cluster in e2e tests.
 
 The core of this proposal is the idea to decouple the app and component versions from the cluster-$provider apps, which will then enable us to have a very scalable process for working with releases, where we can easily create and manage many releases across many providers and develop mechanisms to enforce business logic across all of those.
 
 We will start with showing a slightly simplified version of the Release resource, then explain how it is delivered and finally consumed.
 
-Other parts the `giantswarm/releases` repository that we can continue to use are:
+Other parts the `giantswarm/releases` repository that we CAN continue to use are:
 - release notes,
 - announcements,
 - unit tests for releases (for enforcing various rules about releases).
 
-`requests.yaml` file would be probably deprecated in favour of more scalable and automated process based on GitHub actions and Renovate.
+`requests.yaml` file usage SHOULD be deprecated in favour of more scalable and automated process based on GitHub actions and Renovate.
 
 #### 4.1.1. Creating new release
 
 With the current Release CRD definition, we create a Release resource in the following way:
-- All apps, both those deployed as App resources and as HelmRelease resources, are added to Release `.spec.apps`. For every app we specify:
-	- app name,
-	- app version,
-	- name of the catalog from which the app is installed (“default” by default), and
-	- app’s dependencies.
-- Kubernetes version is specified as a `.spec.components` entry,
-- Flatcar version and image variant are specified as `.spec.components` entries,
-- cluster-$provider app version is specified as a `.spec.components` entry.
+- All apps, both those deployed as App resources and as HelmRelease resources, MUST be added to Release `.spec.apps`. For every app:
+	- we MUST specify app name,
+	- we MUST specify app version,
+	- we CAN OPTIONALLY specify the name of the catalog from which the app is installed (“default” by default), and
+	- we CAN OPTIONALLY specify the app’s dependencies.
+- Kubernetes version MUST BE specified as a `.spec.components` entry,
+- Flatcar version and image variant MUST BE specified as `.spec.components` entries,
+- cluster-$provider app version MUST BE specified as a `.spec.components` entry.
 
 With the above in mind, a Release resource that would correspond to the current cluster-aws release would like like this:
 
@@ -237,11 +238,11 @@ spec:
   state: active
 ```
 
-New releases are added via pull requests in the same way like vintage releases. After a pull request is merged, CircleCI job pushes the newly added Releases to the releases catalog and to the provider-specific app collection.
+New releases MUST BE added via pull requests in a similar way like for vintage releases. After a pull request is merged, CircleCI job pushes the newly added Releases to the releases catalog and to the provider-specific app collection.
 
 #### 4.1.2. Deploying a cluster
 
-Today workload clusters in our Cluster API-based KaaS product are deployed with cluster-$provider apps. That remains the same, with only one minor difference, which is how we specify the version, where instead of specifying App’s `.spec.version` property we specify `release.giantswarm.io/version` label and leave `.spec.version` empty.
+Today workload clusters in our Cluster API-based KaaS product are deployed with cluster-$provider apps. That remains the same, with only one minor difference, which is how we specify the version, where instead of specifying App’s `.spec.version` property we MUST specify `release.giantswarm.io/version` label and leave `.spec.version` empty.
 
 So the whole manifest for the cluster-$provider app and its config would look like this:
 
