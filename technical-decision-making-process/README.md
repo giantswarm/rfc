@@ -42,7 +42,7 @@ Team Horizon
 - Decision Meeting: If there is no agreement or insufficient feedback before the deadline, the decision owner schedules a formal meeting with relevant stakeholders to discuss the RFC and make a decision.
 - Approval and Implementation: Once agreed upon, the decision is documented, and an implementation plan is created.
 
-#### 2. Template for technical decision RFC:
+####  Template for technical decision RFC:
 - Title
 - Problem statement
 - Decision maker
