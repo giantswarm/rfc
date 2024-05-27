@@ -18,7 +18,7 @@ We need a structured approach to proposing, discussing, and formalizing decision
 The first [RFC and decision making process](https://handbook.giantswarm.io/docs/rfcs/decision-process/) proposed a file structure and introduced an overview of RFCs in the [Handbook](https://handbook.giantswarm.io/docs/rfcs/).
 It also suggested a process for submitting an RFC for a technical decision.
 
-The current RFC extends the latter with RFC structure and introduces fields necessary for submitting a decision proposal.
+This RFC extends the latter with a structure and introduces fields necessary for submitting a decision proposal.
 This enables a more structural approach to making decisions and specifies who the decision maker is, for whom it is mandatory to provide feedback, and in which timeframe. Additionally, it includes a communication plan to ensure clarity and alignment.
 
 ### Decision maker
