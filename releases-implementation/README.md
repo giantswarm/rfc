@@ -370,7 +370,20 @@ Worst case scenario, if cluster-$provider app had a breaking change itself, and 
 
 #### 4.2.3. Development and testing
 
-TBA
+With app versions being in cluster-$provider apps, almost all changes are done in a single place - in the cluster-$provider app.
+
+When a team wants to add new app version to the next release, they have to bump the app version in the cluster-$provider app (or in the cluster chart). This app version bump will get merged. Since many different types of change are done in the same repo, in addition to app version bump, the next release of the cluster-$provider app will probably contain not just the new version of the app, but also other Helm chart changes as well. Therefore a simple change such as releasing a new app patch version gets entangled with many other types of changes, which adds friction during development, testing and releasing.
+- When the app version bump is tested, it is not necessarily tested on top of the latest release, but actually on top of the latest release plus multiple merged, but unreleased changes in the cluster-$provider app.
+- After the app version bump is merged, it may be released right away, but it may also take some time until it is released, depending on the current state of the cluster-$provider app repo and what unreleased changes it has.
+- Here the team that owns the app is dependant on the provider-integration team and/or on the provider-independent team, because they are needed for the PR reviews and the new release. This practically means that the team that owns the app does not fully own the delivery of the app. More cross-team reviews, more cross-team communication required, more friction.
+
+Now let’s see how the above scenario would look like with the releases repository.
+- The team that owns the app opens a new PR in the releases repo where they create one or more new releases.
+- In the simplest case, app version bump is the only change in the new releases, so it is tested and delivered fully independently.
+- In case there is an existing/draft PR in the release repo where new releases are being added with new versions of other apps, that existing PR can be updated.
+	- If there is a need to have the new app version tested and delivered ASAP, e.g. in case of CVEs, the existing/draft releases repo PR does not have to be updated, and another PR can be created specifically for the new app version (after this the previously created PR can be rebased/updated).
+- The delivery of the new app versions is not entangled with the delivery of cluster-$provider app Helm chart changes.
+- The team that owns the app can create the new release on their own and they do not need to ask other teams for the review/approval, since the unit tests in the releases repository verify that the newly created releases respects the defined release rules, e.g. new app patch delivered to all providers, new app minor must be delivered in a new minor release, etc.
 
 #### 4.2.4. Multiple release models and release channels
 
