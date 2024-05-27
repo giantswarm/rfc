@@ -31,13 +31,15 @@ We have noticed that we miss few aspects of old releases, like a single release 
 
 We also missed a versioning scheme where it’s clear what we promise and what you can expect in a patch, minor or major release upgrade, which, although not strictly defined, it was mostly clear for releases of the vintage product. And equally important, we lack a mechanism to enforce this behaviour.
 
-### 3.2. Creating and maintaining multiple major releases
+### 3.2. Creating and maintaining multiple releases
 
 Our product is being developed for multiple providers, where we currently support 5 of them - AWS (CAPA), EKS (CAPA), Azure (CAPZ), vSphere (CAPV), VMware Cloud Director (CAPVCD). Hopefully we will work with more providers soon (e.g. GCP/GKE).
 
 We also need to support multiple major versions across those providers. Most of managed Kubernetes products support all community-supported Kubernetes versions, meaning the latest 3 minor versions. In our case that would mean 3 major versions, and that is per provider.
 
 Assuming we would like to support at least 2 major versions per provider, and that we work with 5 providers, we would regularly support 10 major versions across all providers. With 6 providers and 3 latest major releases, this number grows to 18 major releases across all providers.
+
+Additionally, it might be possible that for every major release, we would support more than 1 minor in some cases (e.g. last 2). Therefore, when there is a new patch version of some app (e.g. a security fix), we can easily be in a situation where we have to create a double-digit number of new patch releases in order to patch all affected minor releases.
 
 We will also have to maintain the latest vintage major release for some time, until we migrate all existing clusters to the new product.
 
@@ -299,13 +301,74 @@ We cover some of the topics mentioned in section 3. Motivation.
 
 #### 4.2.1. Release identifier and versioning
 
-TBA
+With the current cluster-$provider apps releases process, the cluster-$providers app version is the release identifier.
 
-#### 4.2.2. Creating and maintaining multiple major releases
+With the releases repository, release identifiers would be defined in the repository itself, in the same way like for vintage releases. In this process the cluster-$provider app is one of the release components.
 
-TBA
+In both cases there is a single release identifier, just defined in different places.
 
-#### 4.2.3 Development and testing
+Versioning logic, i.e. what and how can change in a major, minor  or a patch version, would be the same in both cases.
+
+#### 4.2.2. Creating and maintaining multiple releases
+
+Today, with the current cluster-$provider apps releases process, we only support the latest version of the cluster-$provider app. However this will change now, as we will have to support multiple major releases (e.g. to support multiple Kubernetes versions).
+
+As described in section *[3.2. Creating and maintaining multiple releases](#32-creating-and-maintaining-multiple-releases)*, we will be in a situation where we are supporting 10 or more major releases across all providers (5-6 providers, 2-3 major release per provider). In order to maintain all those major releases:
+- We need one cluster-$provider app git branch per major release, so for 10 major releases this means 10 git branches (across multiple repos).
+- We also need one git branch for every major version of the cluster chart.
+- In case we want to support more than 1 minor version for every  major, the number of git branches is even larger.
+
+##### 4.2.2.2. Scenario 1: new provider-independent app patch
+
+Now in the case above, let’s say we want to release a new patch version for some provider-independent app, and we have to do that in 5 providers, and for 2 major releases for every provider. The process would look like the following:
+- Renovate updates the version of the app in 2 git branches in the cluster chart. Here we have 2 pull requests, both created by Renovate.
+	- In case the patch is a change in the cluster chart itself (and not a new app patch version bump), we would have 1 PR to make the change in the main branch, and another PR to cherry-pick the change to the previous major version branch. Overall even more work then when “just” releasing new app patch versions.
+- We release new patch versions for the last 2 major releases of the cluster chart. Here we have 2 release pull requests, both triggered manually by pushing a new branch which then triggers the CI that opens the release pull request.
+- For all 5 providers, Renovate opens PRs for the last 2 major versions. Here we have 10 PRs opened by Renovate.
+- We release new patch versions for the last two major releases of all cluster-$provider apps. Here we have 10 release pull requests.
+
+In total, in the above scenario, we have 12 Renovate PRs and 12 release PRs, so 24 PRs in total. And all these PRs are across multiple components owned by multiple teams, meaning the some actions should be taken by people from multiple teams.
+
+The above example might seem like exaggerated. Even if you cut it in half, 12 PRs is still a lot of work.
+
+Even in one of the simplest and common scenarios, where a simple provider-independent app patch is delivered to just the latest major version of 5 providers, we would have:
+- 1 Renovate PR to bump the app version in the cluster chart,
+- 1 release PR to release the change in cluster chart,
+- 5 Renovate PRs to bump the version of the app in all cluster-$provider apps,
+- 5 release PRs to release a new patch version of all cluster-$provider apps.
+
+Here we still have to deal with 12 pull requests. Before we have introduced the cluster chart, it would be 10 PRs in default-apps-$provider repos, so 2 PRs less, but that a minor difference.
+
+Now let’s see how the above scenario would look like in a release process where releases repository is used. When a new app patch version is releases:
+- We open 1 PR in the releases repository and in that PR we add new Releases for every affected major version of every provider.
+
+That’s it - 1 PR. 1 PR for any number of releases across any number of providers.
+
+We can also maintain a draft PR in the releases repository where we automatically create next draft releases for all providers, and then Renovate can bump version numbers in those draft releases, and we just decide when to cut the new release (and name it appropriately).
+
+##### 4.2.2.3. Scenario 2: change in cluster-$provider app
+
+Let’s say we have a change in cluster-aws, and we want to patch the latest 2 major releases with that change. Currently, with cluster-$provider apps, we would have to:
+- do the change in the main branch for the latest major release,
+- cherry-pick the change to the previous major release branch,
+- open 2 release PRs.
+
+4 PRs in total. Not too horrible, if done infrequently.
+
+Just how often we would have to do this? At what point the cherry picking becomes a tedious burden full of git conflicts because the latest major have diverged compared to the previous one?
+
+Now let’s see how the above scenarios would look like with the releases repository. Here a single major cluster-aws version can be used in multiple major release (unless the cluster-aws itself had a breaking change in a new major release, so cluster-aws itself has a new major version in a new major release).
+
+Assuming we’re working with a single major version in the latest 2 major releases, we would have to:
+- do the change in the cluster-aws main branch for the latest major release,
+- 1 release PR in cluster-aws,
+- 1 PR in the release repository to create new releases with the new cluster-aws version.
+
+Compared to the cluster-$provider app releases, here we have 1 PR less, which is not crucial here. What can make a large difference is the possibility to use a single cluster-aws major version across multiple major releases, which drastically reduced the need for cherry picking cluster-aws changes across multiple git branches.
+
+Worst case scenario, if cluster-aws had a breaking change itself, and a new major release also has a new major version of cluster-aws, the process is similar in both cases, with the difference that in the case of releases repository there is 1 PR more (to create Releases in the releases repository).
+
+#### 4.2.3. Development and testing
 
 TBA
 
