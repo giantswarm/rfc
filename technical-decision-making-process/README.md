@@ -69,7 +69,6 @@ Preparation Phase:
 
 Pilot Phase:
  - From 01.07.2024: Pilot the process with one team and gather feedback.
-
 Full Rollout:
  - From 01.07.2024: Implement the process organization-wide.
 
