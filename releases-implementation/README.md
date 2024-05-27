@@ -385,6 +385,13 @@ Now let’s see how the above scenario would look like with the releases reposit
 - The delivery of the new app versions is not entangled with the delivery of cluster-$provider app Helm chart changes.
 - The team that owns the app can create the new release on their own and they do not need to ask other teams for the review/approval, since the unit tests in the releases repository verify that the newly created releases respects the defined release rules, e.g. new app patch delivered to all providers, new app minor must be delivered in a new minor release, etc.
 
+Changes to the current e2e tests would be minimal initially.
+- Testing of cluster-$provider app would require one addition, which would be:
+	- Looking up the latest release and setting the release label on the App CR.
+	- Like today, cluster-test-suites would use custom version of cluster-$provider app from the branch it is testing (in which case the mutating webhook would not set the cluster-$provider app version based on the Release CR).
+- The existing app testing where app versions are overridden via ephemeral Helm values would continue working as is.
+- As a future improvement, cluster-test-suites could run all tests not only for the latest release, but for all releases which use the same major cluster-$provider app version.
+
 #### 4.2.4. Multiple release models and release channels
 
 With cluster-$provider app releases, while we can use git branches to have multiple major versions, all that is only one way to create releases. We can have multiple major versions, but it’s still the same apps being versioned in the same way in every release.
@@ -392,6 +399,16 @@ With cluster-$provider app releases, while we can use git branches to have multi
 Since app and component versions are embedded in the cluster-$provider app, we cannot combine different versions of different apps in different ways (unless we make app and component versions configurable, which then opens the door to a whole new set of issues). We cannot have another release model where e.g. versions of Kubernetes, OS, CNI and CPI are a part of the release, and all other apps are always at their latest versions. Or a release model where we use LTS release of OS, CPI, CNI and other apps that provide a LTS release (or something similar).
 
 OTOH with the releases repository, we can easily create different directories for different release models, where we can combine the versions of apps and components in whatever way and where we can update different release models with different frequency and with different rules. Therefore it would be relatively easy to have one release model where app versions are not even part of the release, or are decoupled and continuously updated. Or another “slower” release model with long-term support where apps and components are on their LTS versions and are updated more slowly.
+
+## 5. Conclusion
+
+They current cluster-$provider releases are attractive thanks to their simplicity and straightforwardness. However they have not been put to a test yet, as our customers are still not using the new product for their production workloads.
+
+As soon as our customers move from our vintage product to Cluster API, we will have a need for multiple major releases. Once the customers are using the new product more, they will put it to test and we’ll have even more work on it, compared to today, so there will be even more need for more patch and minor releases across all providers.
+
+Having to do all changes in a single place, where all Helm templates changes are entangled with app and component version changes is already causing friction during development and testing, and it is happening relatively often. With customers using the new product even more, and us maintaining multiple major versions across multiple providers where we have to do all changes across multiple git branches, the friction that we have seen with escalate even more, leading to poor overall experience for both Giant Swarm staff and our customers.
+
+We need an update to the existing release process in CAPI, a change that will make it much more scalable, so we can work with releases more easily, more quickly and more reliably. Luckily we already have an existing release process for our vintage product, which we have developed over the years and we all know it very well. While we do not have to continue using the same process as is, we can take the best parts of it, like releases repo and Release resources, and build upon it, adapt it for CAPI, so we make it even better for our new product and make our new product better with it.
 
 [RFC2119]: https://datatracker.ietf.org/doc/rfc2119/
 [RFC8174]: https://datatracker.ietf.org/doc/rfc8174/
