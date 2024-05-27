@@ -21,6 +21,8 @@ It also suggested a process for submitting an RFC for a technical decision.
 This RFC extends the latter with a structure and introduces fields necessary for submitting a decision proposal.
 This enables a more structural approach to making decisions and specifies who the decision maker is, for whom it is mandatory to provide feedback, and in which timeframe. Additionally, it includes a communication plan to ensure clarity and alignment.
 
+To help with an example, this RFC is itself in the proposed structure
+
 ### Decision maker
 Team Horizon
 
