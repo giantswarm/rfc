@@ -366,7 +366,7 @@ Assuming we’re working with a single major version in the latest 2 major relea
 
 Compared to the cluster-$provider app releases, here we have 1 PR less, which is not crucial here. What can make a large difference is the possibility to use a single cluster-aws major version across multiple major releases, which drastically reduced the need for cherry picking cluster-aws changes across multiple git branches.
 
-Worst case scenario, if cluster-aws had a breaking change itself, and a new major release also has a new major version of cluster-aws, the process is similar in both cases, with the difference that in the case of releases repository there is 1 PR more (to create Releases in the releases repository).
+Worst case scenario, if cluster-$provider app had a breaking change itself, and a new major release also has a new major version of cluster-$provider app, the process is similar in both cases, with the difference that in the case of releases repository there is 1 PR more (to create Releases in the releases repository). However, with all app and component versions being outside of cluster-$provider app, and with a more careful approach where new features are opt-in and added behind Helm values and more attention is given to backward compatibility, the possibility of having a breaking change in cluster-$provider app is reduced to a minimum.
 
 #### 4.2.3. Development and testing
 
