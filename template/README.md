@@ -5,12 +5,10 @@ issues:
 owners:
 - https://github.com/orgs/giantswarm/teams/team-horizon
 state: review
-summary: This contains the RFC template for submitting a technical decision proposal
+summary: This contains the RFC template that can be copied for submitting a technical decision proposal
 ---
 
-# This is a template that can be copied to create an RFC for submitting a technical decision proposal
-
-### Title
+# Title
 <!-- Provide a concise and descriptive title for the RFC -->
 
 ### Problem statement
