@@ -1,7 +1,7 @@
 ---
 creation_date: 2024-05-26
 issues:
-- TBA
+- https://github.com/giantswarm/roadmap/issues/3466
 owners:
 - https://github.com/orgs/giantswarm/teams/sig-architecture
 - https://github.com/orgs/giantswarm/teams/team-turtles
