@@ -7,6 +7,7 @@ owners:
 state: review
 summary: This contains the RFC template for submitting a technical decision proposal
 ---
+# This is a template that can be copied to create an RFC for submitting a technical decision proposal
 
 ### Title
 <!-- Provide a concise and descriptive title for the RFC -->
