@@ -31,7 +31,7 @@ summary: This contains the RFC template for submitting a technical decision prop
 ### Alternative solutions
 <!-- Outline other potential solutions that were considered. For each alternative, provide a brief description and explain why it was not chosen as the preferred solution. -->
 
-### Implementation Plan
+### Implementation plan
 <!-- Detail the steps required to implement the preferred solution. This should include a timeline, resources needed, and any dependencies or risks associated with the implementation. -->
 
 ### Communication plan
