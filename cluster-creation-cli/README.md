@@ -1,9 +1,9 @@
 ---
 creation_date: 2024-05-28
 issues:
-  - https://github.com/giantswarm/roadmap/issues/2115
+- https://github.com/giantswarm/roadmap/issues/2115
 owners:
-  - https://github.com/orgs/giantswarm/teams/team-honeybadger
+- https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: review
 summary: Specification of a kubectl-gs command for creating a workload cluster in the Cluster API generation of the Giant Swarm platform
 ---
