@@ -38,7 +38,7 @@ The new CLI command drafted here is supposed to make use of the above concepts, 
 
 ## Goals
 
-- The command should provide an easy-to-use method for vcreating clusters, optionally assisted by a web UI to discover and configure options.
+- The command should provide an easy-to-use method for creating clusters, optionally assisted by a web UI to discover and configure options.
 - The command should work the same way across all providers we support with Cluster API.
 - The command code should require little maintenance. It should stay compatible with a large range of cluster app versions.
 
