@@ -75,11 +75,10 @@ The most important flags would be:
   - TODO: How do we restrict and validate the provider list per installation?
 - `--config`: Path to a config file (optional). Can be used multiple times. See "Configuration layering" below. As an alternative, or in addition, configuration can be passed via standard input.
 - `--app-version`: the cluster-PROVIDER app version to use. If not specified, the latest version is used.
-- `--dry-run`: only validate the configuration and print the resulting manifest.
-- `--output`: file path to write the result to. If not specified, resources are written to the management cluster. The option `STDOUT` can be used to print the result to the console.
-- `--format`: This flag can be used to specify the format of the output.
-  - `manifest` (default) for a Kubernetes manifest that includes an App resources and one or several ConfigMap resources.
-  - `config` for merged configuration YAML.
+- `--dry-run`: only validate the configuration and optionally print the resulting manifest.
+- `--output`: This flag can be used to specify the format of the output when `--dry-run` is set.
+  - `yaml` for a Kubernetes manifest that includes an App resource and one or several ConfigMap resources.
+  - `config-yaml` for merged configuration YAML.
   - `command` for a self-contained representation of the command just executed, as a one-liner.
 - `--set`: Override a configuration value. This flag can be used multiple times. The format is `path.to.property=value`.
   - Note: `--set` can only be used with scalar values (string, number, boolean, integer, etc.). It cannot be used to override an array or object.
@@ -117,7 +116,8 @@ Ex. 4: Dry run
 
 Ex. 5: Write the result to a file
 
-    kubectl gs create cluster --provider capa --config myconfig.yaml --output manifest.yaml
+    kubectl gs create cluster --provider capa --config myconfig.yaml --dry-run --output yaml > manifest.yaml
+
 
 ## Configuration layering
 
