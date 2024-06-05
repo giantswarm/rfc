@@ -160,4 +160,3 @@ In input validation, each source is evaluated against the app's values schema in
 If the user chooses to create the cluster immediately (by not specifying an output destination or format), we want to provide detailed progress on the creation. The user should be encouraged to quit watching the progress at any time, without any effect on the provisioning progress.
 
 We may even introduce another subcommand to continue watching the creation progress at any time.
-
