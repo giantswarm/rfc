@@ -133,9 +133,9 @@ The individual ConfigMaps' priority will be configured explicitly in the followi
 
 1. Each file specified via the `--config` flag, in the order they are specified.
 2. Standard input (STDIN).
-3. Each single value specified via the `--set` flag, in the order they are specified.
+3. Each single value specified via the `--set` flag, in the order they are specified (All `--set` options should be merged into one ConfigMap, again where later values overwrite earlier ones).
 
-The ConfigMap representing STDIN always comes last and takes highest priority. This allows to override configuration form one file with a another file specified later in the chain, or with a value passed via STDIN.
+This allows to override configuration from one file with a another file specified later in the chain, or with a value passed via STDIN, or finally with `--set`.
 
 In other words, we leverage the App platform's configuration layering principle to provide a flexible templating mechanism, where the underlying layer is always provided by the app's default values.
 As a usage example, this layering could be used to create a cluster using a template configuration file, and overriding some specific values via STDIN:
