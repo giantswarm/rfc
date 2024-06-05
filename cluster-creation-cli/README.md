@@ -78,7 +78,7 @@ The most important flags would be:
 - `--dry-run`: only validate the configuration and print the resulting manifest.
 - `--output`: file path to write the result to. If not specified, resources are written to the management cluster. The option `STDOUT` can be used to print the result to the console.
 - `--format`: This flag can be used to specify the format of the output.
-  - Default is `manifest` for a Kubernetes manifest that includes an App resources and one or several ConfigMap resources.
+  - `manifest` (default) for a Kubernetes manifest that includes an App resources and one or several ConfigMap resources.
   - `config` for merged configuration YAML.
   - `command` for a self-contained representation of the command just executed, as a one-liner.
 - `--set`: Override a configuration value. This flag can be used multiple times. The format is `path.to.property=value`.
