@@ -76,7 +76,7 @@ The most important flags would be:
 - `--config`: Path to a config file (optional). Can be used multiple times. See "Configuration layering" below. As an alternative, or in addition, configuration can be passed via standard input.
 - `--app-version`: the cluster-PROVIDER app version to use. If not specified, the latest version is used.
 - `--dry-run`: only validate the configuration and optionally print the resulting manifest.
-- `--output`: This flag can be used to specify the format of the output when `--dry-run` is set.
+- `--output`: This flag can be used to specify the format of the output when `--dry-run` is set. See the "Dry run output" section below for details.
   - `yaml` for a Kubernetes manifest that includes an App resource and one or several ConfigMap resources.
   - `config-yaml` for merged configuration YAML.
   - `command` for a self-contained representation of the command just executed, as a one-liner.
@@ -118,6 +118,178 @@ Ex. 5: Write the result to a file
 
     kubectl gs create cluster --provider capa --config myconfig.yaml --dry-run --output yaml > manifest.yaml
 
+## Dry run output
+
+Combining `--dry-run` and `--output`, users can decide to print a representation of the desired cluster instead of creating it immediately.
+
+Validation of the configuration provided should happen in any case, and an output should only be printed if the configuration is valid.
+
+The following output formats are supported:
+
+### `--output=yaml`
+
+As is the case with many `kubectl create` commands, `--output=yaml` will print a full Kubernetes manifest of the resource to be created.
+
+In our case, several resources are created, so the resulting manifest is a multi-document YAML.
+
+This example command
+
+    kubectl gs create cluster \
+      --provider capa \
+      --set global.metadata.name=mycluster \
+      --dry-run \
+      --output yaml
+
+should yield the following output:
+
+<details>
+
+```yaml
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mycluster-userconfig
+  namespace: org-myorg
+  labels:
+    giantswarm.io/cluster: mycluster
+data:
+  values: |
+    global:
+      metadata:
+        name: mycluster
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mycluster-default-apps-userconfig
+  namespace: org-myorg
+  labels:
+    giantswarm.io/cluster: mycluster
+data:
+  values: |
+    clusterName: mycluster
+---
+apiVersion: application.giantswarm.io/v1alpha1
+kind: App
+metadata:
+  name: mycluster
+  namespace: org-myorg
+  labels:
+    app-operator.giantswarm.io/version: 0.0.0
+spec:
+  name: cluster-aws
+  namespace: org-myorg
+  version: 0.76.1 # the latest version currently
+  catalog: cluster
+  config:
+    configMap:
+      name: ""
+      namespace: ""
+    secret:
+      name: ""
+      namespace: ""
+  kubeConfig:
+    context:
+      name: ""
+    inCluster: true
+    secret:
+      name: ""
+      namespace: ""
+  userConfig:
+    configMap:
+      name: mycluster-userconfig
+      namespace: org-myorg
+---
+apiVersion: application.giantswarm.io/v1alpha1
+kind: App
+metadata:
+  name: mycluster-default-apps
+  namespace: org-myorg
+  labels:
+    app-operator.giantswarm.io/version: 0.0.0
+    giantswarm.io/cluster: mycluster
+    giantswarm.io/managed-by: cluster
+spec:
+  name: default-apps-aws
+  namespace: org-myorg
+  version: 0.52.0
+  catalog: cluster
+  config:
+    configMap:
+      name: mycluster-cluster-values
+      namespace: org-myorg
+    secret:
+      name: ""
+      namespace: ""
+  kubeConfig:
+    context:
+      name: ""
+    inCluster: true
+    secret:
+      name: ""
+      namespace: ""
+  userConfig:
+    configMap:
+      name: mycluster-default-apps-userconfig
+      namespace: org-myorg
+```
+
+</details>
+
+### `--output=config-yaml`
+
+This output mode aims to provide a merged configuration YAML, which is the result of the configuration layering process. This is useful for debugging and understanding the final configuration that will be used to create the cluster, and will also help re-use the merged configuration in a future cluster creation.
+
+The example command
+
+    kubectl gs create cluster \
+      --provider capa \
+      --set global.metadata.name=mycluster \
+      --set global.metadata.servicePriority=lowest
+      --dry-run \
+      --output config-yaml
+
+should yield the following output:
+
+<details>
+
+```yaml
+global:
+  metadata:
+    name: mycluster
+    servicePriority: lowest
+```
+
+</details>
+
+Not shown in the above example, the output would also include all merged configuration passed via files (`--config`) and standard input.
+
+### `--output=command`
+
+This output mode aims to provide a self-contained representation of the command just executed, as a one-liner. This is useful for sharing the command with others, or for copying it to a script or a file.
+
+The example command
+
+    kubectl gs create cluster \
+      --provider capa \
+      --set global.metadata.name=mycluster \
+      --set global.metadata.servicePriority=lowest
+      --dry-run \
+      --output command
+
+should yield the following output:
+
+```nohighlight
+kubectl gs create cluster --provider capa <<EOF
+global:
+  metadata:
+    name: mycluster
+    servicePriority: lowest
+EOF
+```
+
+Not shown in the above example, the output would also include all merged configuration passed via files (`--config`) and standard input.
 
 ## Configuration layering
 
