@@ -40,7 +40,7 @@ The new CLI command drafted here is supposed to make use of the above concepts, 
 
 - The command should provide an easy-to-use method for creating clusters, optionally assisted by a web UI to discover and configure options.
 - The command should work the same way across all providers we support with Cluster API.
-- The command code should require little maintenance. It should stay compatible with a large range of cluster app versions.
+- The command code should require little maintenance. It should stay compatible with a large range of releases.
 
 ## Target use case
 
@@ -74,7 +74,7 @@ The most important flags would be:
 - `--provider`: (required) provider name. For example: capa, capvcd, capz, eks.
   - TODO: How do we restrict and validate the provider list per installation?
 - `--config`: Path to a config file (optional). Can be used multiple times. See "Configuration layering" below. As an alternative, or in addition, configuration can be passed via standard input.
-- `--app-version`: the cluster-PROVIDER app version to use. If not specified, the latest version is used.
+- `--release`: the version number of the release to use. The release specifies the version of components to use in the cluster. If not specified, the latest release is used.
 - `--dry-run`: only validate the configuration and optionally print the resulting manifest.
 - `--output`: This flag can be used to specify the format of the output when `--dry-run` is set. See the "Dry run output" section below for details.
   - `yaml` for a Kubernetes manifest that includes an App resource and one or several ConfigMap resources.
