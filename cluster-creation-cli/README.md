@@ -75,6 +75,7 @@ The most important flags would be:
   - TODO: How do we restrict and validate the provider list per installation?
 - `--config`: Path to a config file (optional). Can be used multiple times. See "Configuration layering" below. As an alternative, or in addition, configuration can be passed via standard input.
 - `--release`: the version number of the release to use. The release specifies the version of components to use in the cluster. If not specified, the latest release is used.
+- `--namespace` / `-n`: the namespace in which to create the cluster. This is expected to be an organization namespace, like `org-myorg`.
 - `--dry-run`: only validate the configuration and optionally print the resulting manifest.
 - `--output`: This flag can be used to specify the format of the output when `--dry-run` is set. See the "Dry run output" section below for details.
   - `yaml` for a Kubernetes manifest that includes an App resource and one or several ConfigMap resources.
@@ -83,24 +84,24 @@ The most important flags would be:
 - `--set`: Override a configuration value. This flag can be used multiple times. The format is `path.to.property=value`.
   - Note: `--set` can only be used with scalar values (string, number, boolean, integer, etc.). It cannot be used to override an array or object.
 
-TODO:
-
-- How should the resource **namespace** be specified? It could be derived from the organization name included in the cluster config, however that would require logical understanding of the config, which may differ over time and between providers.
-
 ### Examples
 
 Ex. 1: Simple cluster creation based on a file
 
-    kubectl gs create cluster --provider capa --config myconfig.yaml
+    kubectl gs create cluster \
+      --provider capa \
+      --namespace org-test \
+      --config myconfig.yaml
 
 Ex. 2: Simple cluster creation based on standard input
 
-    kubectl gs create cluster --provider capa <<EOF
+    kubectl gs create cluster \
+      --namespace org-test \
+      --provider capa <<EOF
     global:
       metadata:
         servicePriority: lowest
         name: test01
-        organization: testorg
         description: Just a test cluster
     EOF
 
@@ -108,15 +109,28 @@ While ex. 1 appears simpler and allows for easier re-use of a file-based configu
 
 Ex. 3: Overwrite a configuration value
 
-    kubectl gs create cluster --provider capa --config myconfig.yaml --set global.metadata.name=test02
+    kubectl gs create cluster \
+      --provider capa \
+      --namespace org-test \
+      --config myconfig.yaml \
+      --set global.metadata.name=test02
 
 Ex. 4: Dry run
 
-    kubectl gs create cluster --provider capa --config myconfig.yaml --dry-run
+    kubectl gs create cluster \
+      --provider capa \
+      --namespace org-test \
+      --config myconfig.yaml \
+      --dry-run
 
 Ex. 5: Write the result to a file
 
-    kubectl gs create cluster --provider capa --config myconfig.yaml --dry-run --output yaml > manifest.yaml
+    kubectl gs create cluster \
+      --provider capa \
+      --namespace org-test \
+      --config myconfig.yaml \
+      --dry-run \
+      --output yaml > manifest.yaml
 
 ## Dry run output
 
@@ -136,6 +150,7 @@ This example command
 
     kubectl gs create cluster \
       --provider capa \
+      --namespace org-myorg \
       --set global.metadata.name=mycluster \
       --dry-run \
       --output yaml
@@ -245,6 +260,7 @@ The example command
 
     kubectl gs create cluster \
       --provider capa \
+      --namespace org-test \
       --set global.metadata.name=mycluster \
       --set global.metadata.servicePriority=lowest
       --dry-run \
@@ -273,6 +289,7 @@ The example command
 
     kubectl gs create cluster \
       --provider capa \
+      --namespace org-test \
       --set global.metadata.name=mycluster \
       --set global.metadata.servicePriority=lowest
       --dry-run \
@@ -281,7 +298,7 @@ The example command
 should yield the following output:
 
 ```nohighlight
-kubectl gs create cluster --provider capa <<EOF
+kubectl gs create cluster --provider capa --namespace org-test <<EOF
 global:
   metadata:
     name: mycluster
@@ -320,7 +337,9 @@ As a usage example, this layering could be used to create a cluster using a temp
 
 Alternative syntax for above example, using the `--set` flag:
 
-    kubectl gs create cluster --provider capa --config template.yaml \
+    kubectl gs create cluster \
+      --provider capa \
+      --config template.yaml \
       --set global.metadata.name=test02
 
 This enables the target scenario as described earlier, by re-using most configuration values from one file, and providing the required difference (here: the cluster name) via standard input. The same could of course be achieved by passing a second YAML file via another `--config` flag instead.
