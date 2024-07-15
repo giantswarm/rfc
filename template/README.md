@@ -1,11 +1,11 @@
 ---
-creation_date: 2024-05-29
+creation_date: 20XX-XX-XX
 issues:
-- https://github.com/giantswarm/giantswarm/issues/30631
+- https://github.com/giantswarm/giantswarm/issues/XXXXX
 owners:
-- https://github.com/orgs/giantswarm/teams/team-horizon
+- https://github.com/orgs/giantswarm/teams/team-XXXXX
 state: review
-summary: This contains the RFC template that can be copied for submitting a technical decision proposal
+summary: XXXXX
 ---
 
 # Title
