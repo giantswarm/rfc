@@ -1,19 +1,23 @@
 ---
 creation_date: 2022-02-15
-state: approved
+issues: []
+owners:
+- https://github.com/orgs/giantswarm/teams/team-teddyfriends
+state: obsolete
+summary: Add alias `support+customer@giantswarm.io` to forward e-mail to customer's Slack channel. Also add alias `urgent+area@giantswarm.io` to forward to the area in Opsgenie. This change was introduced, but later reverted, so this RFC is obsolete.
 ---
 
 # A better customer email management solution
 
 This RFC investigates ways for managing (urgent) requests from customers received via email.
 
-## Current setup
+## Setup before this change (2022)
 
-In case of urgency, customers can open urgent tickets by sending an email to our urgent mail address. This will automatically create a ticket in Opsgenie.
+In case of urgency, customers can open urgent tickets by sending an email to our urgent mail address. This will automatically create an alert in Opsgenie.
 
-In case of non-urgent need, customers can open tickets by sending an email to our support mail address. This will automatically be forwarded to the #support channel in Slack.
+In case of non-urgent need, customers can open tickets by sending an email to our support mail address. This will automatically be forwarded to the `#support` channel in Slack.
 
-While this works -also thanks to the fact that the tickets are broadcast- we reckon that, as Giant Swarm grows and gathers customers, having such general entry points can become hard to scale and manage.
+While this works – also thanks to the fact that the alerts go to everyone – we reckon that, as Giant Swarm grows and gathers customers, having such general entry points can become hard to scale and manage.
 
 ## Desired improvements
 
@@ -92,7 +96,8 @@ The following questions arise for both proposals:
   I haven't been able to find a sensible solution so far, but we can dig into this a bit more.
 - can we use wildcards in Gmail filters?
   - no, we can't
-# Final decisions
+
+## Final decisions
 
 Considering the pros and cons of each solution and the number of comments received, I believe we can proceed as follows:
 
