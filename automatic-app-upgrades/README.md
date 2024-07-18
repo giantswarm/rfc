@@ -1,6 +1,10 @@
 ---
 creation_date: 2022-04-15
-state: approved
+issues: []
+owners:
+- https://github.com/orgs/giantswarm/teams/team-honeybadger
+state: obsolete
+summary: Use Flux's watch features such as `ImagePolicy` to automatically upgrade to newer app versions. This change was not performed, but we use `*-collection` repos (on MCs) and cluster default apps (on MCs/WCs) instead, so this RFC is obsolete.
 ---
 
 # Automatic App upgrades
