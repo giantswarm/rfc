@@ -9,7 +9,7 @@ summary: This contains the RFC template that can be copied for submitting a tech
 ---
 
 # Title
-<!-- Provide a concise and descriptive title for the RFC -->
+<!-- Provide a concise and descriptive title for the RFC. -->
 
 ### Problem statement
 <!-- Explain the issue or challenge that needs to be addressed. This should include background information and context to help stakeholders understand why this decision is important. -->
@@ -18,7 +18,7 @@ summary: This contains the RFC template that can be copied for submitting a tech
 <!-- Identify the person (preferred) or a group responsible for making the final decision. -->
 
 ### Deadline
-<!-- Specify the deadline by which the decision needs to be made. If there is no agreement or insufficient feedback before the deadline, the decision owner schedules a formal meeting with relevant stakeholders to discuss the RFC and make a decision -->
+<!-- Specify the deadline by which the decision needs to be made. If there is no agreement or insufficient feedback before the deadline, the decision owner schedules a formal meeting with relevant stakeholders to discuss the RFC and make a decision. -->
 
 ### Who is affected / stakeholders
 <!-- List the individuals, teams, or SIGs that will be impacted by this decision and must provide feedback. -->
