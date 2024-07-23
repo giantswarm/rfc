@@ -66,7 +66,7 @@ Team Horizon
 ### Implementation Plan
 Preparation Phase:
  - By 13.06.2024: Develop the RFC template and guidelines.
- - By 1.07.2024: Onboard main stakeholders on the new process.
+ - By 01.07.2024: Onboard main stakeholders on the new process.
 
 Full Rollout:
  - From 01.07.2024: Implement the process organization-wide.
