@@ -233,6 +233,10 @@ def main():
     rfcs_json = []  # sorted in alphabetical order of directory names
 
     for entry_name in sorted(os.listdir(args.rfc_repo_dir)):
+        # The RFC template has special formatting, so ignore it in the check
+        if entry_name == 'template':
+            continue
+
         # Each RFC is expected in a top-level directory, containing the main file `README.md`
         rfc_dir = os.path.join(args.rfc_repo_dir, entry_name)
         if not os.path.isdir(rfc_dir):
