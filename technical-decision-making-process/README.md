@@ -15,7 +15,7 @@ summary: This contains the process for proposing, discussing, and formalizing te
 The current technical decision-making process within our organization is inconsistent and inefficient, particularly when decisions impact multiple teams. This lack of a well-defined process leads to confusion, delays, and suboptimal decisions.
 We need a structured approach to proposing, discussing, and formalizing decisions to improve collaboration and decision quality.
 
-The first [RFC and decision making process](https://github.com/giantswarm/rfc/pull/78/files/) proposed a file structure and introduced an overview of RFCs in the [Handbook](https://handbook.giantswarm.io/docs/rfcs/).
+The first [RFC and decision making process](https://handbook.giantswarm.io/docs/rfcs/decision-process/) proposed a file structure and introduced an overview of RFCs in the [Handbook](https://handbook.giantswarm.io/docs/rfcs/).
 It also suggested a process for submitting an RFC for a technical decision.
 
 This RFC extends the latter with a structure and introduces fields necessary for submitting a decision proposal.
