@@ -4,7 +4,7 @@ issues:
 - https://github.com/giantswarm/giantswarm/issues/30631
 owners:
 - https://github.com/orgs/giantswarm/teams/team-horizon
-state: review
+state: approved
 summary: This contains the process for proposing, discussing, and formalizing technical decisions. It also introduces the RFC structure.
 ---
 
