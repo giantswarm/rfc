@@ -62,7 +62,7 @@ kustomization when MCB changes.
 
 Related links to reconciliation trigger by different source workaround:
 
-- https://github.com/giantswarm/management-cluster-bases/compare/main...experiment-with-trigger
+- [https://github.com/giantswarm/management-cluster-bases/compare/main...experiment-with-trigger](https://github.com/giantswarm/management-cluster-bases/pull/87)
 - https://github.com/giantswarm/giantswarm/issues/27597#issuecomment-1632630001
 
 #### Pros
