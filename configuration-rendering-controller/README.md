@@ -55,6 +55,10 @@ There are some other problems with the capabilities of the configuration system 
 
 The proposal is to decouple the configuration system from App Platform.
 
+![Flow](flow.png)
+
+Source: https://miro.com/app/board/uXjVKUVwcLg=/
+
 In this proposal we will show how we can solve some of our immediate problems listed above, simplify our setup
 and maintenance costs and open up the system for extension to solve our other problems.
 
