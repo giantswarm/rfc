@@ -5,6 +5,7 @@ issues:
 owners:
 - https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: review
+summary: This RFC describes the vision to evolve our current configuration management system to make it more flexible, reusable, locally reproducible and easier to extend in the future while making other parts of our platform slightly more simple.
 ---
 
 # Configuration rendering controller
@@ -20,7 +21,7 @@ customer specific config repositories (CCRs). It is only taken into account tho,
   - `konfigure` can also be used locally to generate the configuration and the App CR as well without the generator
 
 Although, it would be possible to deploy such generator resources anywhere in out gitops structure to take advantage
-of the configuration system, we only use that in `collections`, the provider specific ones and 
+of the configuration system, we only use that in `collections`, the provider specific ones and
 [rest-api-collection](https://github.com/giantswarm/rest-api-app-collection).
 
 ### Problems with the current practice
