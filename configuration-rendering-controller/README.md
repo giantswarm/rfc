@@ -24,6 +24,15 @@ Although, it would be possible to deploy such generator resources anywhere in ou
 of the configuration system, we only use that in `collections`, the provider specific ones and
 [rest-api-collection](https://github.com/giantswarm/rest-api-app-collection).
 
+The current configuration structure is documented in details [here](https://intranet.giantswarm.io/docs/dev-and-releng/configuration-management/).
+
+Especially check out:
+- structure: https://github.com/giantswarm/giantswarm/blob/main/content/docs/dev-and-releng/configuration-management/app-platform-configuration-management.jpg
+- flow: https://github.com/giantswarm/giantswarm/blob/main/content/docs/dev-and-releng/configuration-management/app-platform-flux-konfigure.jpg
+
+In this proposal we are not going to change that structure, just the flow, so that we make it more widely accessible,
+flexible, easier to extend while also making other parts of our platform more simple.
+
 ### Problems with the current practice
 
 - deployment must be done in a specific way via the Giant Swarm Flux installation and in a custom format
@@ -125,6 +134,9 @@ deployment method. Once the CMs and Secrets are pre-rendered, we can merge the c
 This also opens up more fine-grained access on these app CRs like labels, annotations, extra configs, timeout
 configuration and so on that is currently not possible with `konfigure` generators.
 
+Also, if we apply patches to the generated App CRs in gitops, they would still apply, cos we still have the same
+App CR, just in raw form now, instead of the generated one.
+
 With all generators gone, we could get rid of the KRM function implementation in `konfigure`. For one, this is still
 an alpha feature. It's hard to develop and debug as the `konfigure` binary is invoked by `kustomize`. It is also
 the reason for the infamous error on our `collection` Flux kustomization:
@@ -154,4 +166,9 @@ should be carried before we make that repository public.
 
 ### Extending configuration management in the future
 
-...
+Currently, we mostly utilise Catalog configuration for cluster apps. I think the reason for it is that it is not
+possible at the moment to utilise the configuration system when we deploy such workloads, so the configuration
+drifted into the catalogs, as the `cluster` catalog has well-defined scope for such apps.
+
+With easy access to configuration management, these catalog configs could simply drift into the config structure
+for the apps that need them on the MC specific level, and we could then simply get rid of them.
