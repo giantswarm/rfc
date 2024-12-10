@@ -10,6 +10,12 @@ summary: This RFC describes the vision to evolve our current configuration manag
 
 # Configuration rendering controller
 
+Contents:
+
+1. Current practice
+2. Proposed solution
+3. Implementation approaches
+
 ## Current practice
 
 The current configuration system is built on the [shared-configs](https://github.com/giantswarm/shared-configs) and
@@ -176,3 +182,40 @@ drifted into the catalogs, as the `cluster` catalog has well-defined scope for s
 
 With easy access to configuration management, these catalog configs could simply drift into the config structure
 for the apps that need them on the MC specific level, and we could then simply get rid of them.
+
+## Implementation approaches
+
+### Framework
+
+The new controller should be written using [kubebuilder](https://book.kubebuilder.io/). It is on our roadmap to
+[Remove `operatorkit` as a dependency](https://github.com/giantswarm/roadmap/issues/3722) and this would be a great
+opportunity to get some hands-on experience with `kubebuilder`, as most of those operators that need and upgrade
+is owned by Team HoneyBadger.
+
+### Possibility to utilize Flux source-controller
+
+It is already implemented in `konfigure` to fetch the sources from Flux `source-controller` with `include`
+feature support [here](https://github.com/giantswarm/konfigure/pull/278).
+
+It would potentially be best to not depend on Flux either, but since we already have it implemented, and we would
+need to do something very similar to fetch and assemble the sources, we could cut this corner now and keep
+using Flux.
+
+There is potential to later implement custom DSL to describe how to merge configurations, which could make sense
+if we want to introduce many different layers in the future (catalogs, workload-cluster, app instance, etc. specific
+configs). For now, it makes sense to keep our current logic as is to reduce time to implement and friction.
+
+### Defining scope of configs to render
+
+TBD
+
+### Migrating `collection` repositories
+
+The `collection` repositories can be easily turned into raw App CRs with a script.
+
+The new controller would potentially be easy to roll out as it is generating new resources to given location.
+
+The `rbac-operator` will potentially need a change to support access to the CMs and Secrets.
+
+Once we have that done, we simply merge change to `collection` repositories. Because we have `prune` disabled,
+we will need to clean the old CMs and Secrets manually, unless we turn it back on.
