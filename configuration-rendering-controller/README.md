@@ -100,10 +100,12 @@ not exist yet - unless marked as optional -, and simply a following reconciliati
 
 For App CRs however, we do have a rule in `app-admission-controller` that rejects an App CR if it references a CM or
 Secret under `.spec.config` or `.spec.userConfig` that does not exist. This should be relaxed, made optional or even
-better removed all together. In an ever-changing Kubernetes environment, it is fair to expect the system to become
-eventually consistent and self-healing. This is the practice in other operators as well. The problem should be
-raised when the App CR does not get eventually healthy, for which we already have alerts in place. Also, this does not
-raise a new problem but one we already have and is native to the ecosystem we are working on, just think of Flux and
+better removed all together. We could also turn it into a warning - supported by admission controllers in kubernetes,
+see [here](https://kubernetes.io/docs/reference/access-authn-authz/extensible-admission-controllers/#response).
+In an ever-changing Kubernetes environment, it is fair to expect the system to become eventually consistent
+and self-healing. This is the practice in other operators as well. The problem should be raised when the App CR
+does not get eventually healthy, for which we already have alerts in place. Also, this does not raise a new problem
+but one we already have and is native to the ecosystem we are working on, just think of Flux and
 its CRDs with which it operates but also eventually manages itself with.
 
 Additionally, with the configuration system decoupled, App Platform could also be open for extension of being able to
@@ -116,7 +118,7 @@ In my opinion, it is strongly discouraged to automagically mount generated confi
   I believe explicit is better than implicit.
 - we simply cannot mount it to all App CRs let say, because they do not have them now. Changing their configuration
   is already a good reason, but also we could also randomly roll apps as well
-- `app-admission-controller` is already burned with auto mounting logic. That one, as an admission controller
+- `app-admission-controller` is already burdened with auto mounting logic. That one, as an admission controller
   however would only react when and App CR gets created or updated. Watching all CMs and Secrets could be proven
   too much and making changes to App CRs in reaction to that seems like a bad idea from a webhook with time
   restrictions on them imposed by Kubernetes.
