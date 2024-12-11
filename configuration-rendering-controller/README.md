@@ -78,7 +78,7 @@ Flux HelmReleases or whatever comes next.
 
 App Platform supports cross namespace references to some extent. It is simply RBAC restricted for workload cluster
 operators. The unique `app-operator` can read CM and Secrets from all namespaces. We can implicitly deploy one instance
-of the new CRD with scope all to a Giant Swarm restricted namespace, be it `giantswarm` or a new `giantswarm-configs`
+of the new CRD with a scope covering all configured apps to a Giant Swarm restricted namespace, be it `giantswarm` or a new `giantswarm-configs`
 namespace.
 
 We know a complete list of possible Apps that can be configured, because the current system requires that for all
@@ -92,7 +92,7 @@ The CRD should be open to filter the Apps to generate the configuration for. Thi
 of the whole configuration to different namespaces. This is especially useful for Flux HelmReleases that do not
 support cross namespace references for values from CMs and Secrets.
 
-It is worth noting here, that the decoupling also comes with a generic problem in Kubernetes where there are dependency
+It is worth noting here, that the decoupling also comes with a generic problem in Kubernetes where there are dependencies
 between resources. Since in this new system, we can expect that configs are pre-rendered, the workloads can freely
 mount them. However, especially if the 2 CRs are deployed together, it takes time for the CM and Secret to get
 deployed. For Flux HelmReleases it will simply initially result in a failure as the mounted CM and / or Secret does
@@ -134,7 +134,7 @@ later at implementation details.
 - any form of resource, be it App CRs, Flux HelmReleases or anything that comes in the future can use the generated
   configurations
 - it is no longer required to deploy workloads in a specific way to take advantage of the configuration system if needed
-- we can get rid of our custom for or `kustomize-controller` and `fluxcd/pkg` which makes upgrades and maintenance
+- we can get rid of our custom fork of `kustomize-controller` and `fluxcd/pkg` which makes upgrades and maintenance
   much easier and open us up to use the recently announced
   [flux-operator](https://medium.com/@stefanprodan/introducing-the-flux-operator-gitops-on-autopilot-mode-b8f7b7f149fb)
   in the future
