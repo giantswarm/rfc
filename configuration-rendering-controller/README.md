@@ -317,6 +317,26 @@ Note: I am not super sure about how the certificates are actually handled for Va
 `kustomize-controller` instances they are mounted to the controller pod. Would need further research if this is the
 correct approach.
 
+#### About .spec.target
+
+It is intentionally singular. I would recommend allowing only a single target per resource.
+
+The simplest target now is `namespace` within the same cluster. We could potentially allow workload clusters
+here as well so `kubeconfig` secret references, for example: 
+
+```yaml
+spec:
+  target:
+    namespace: default
+    kubeConfig:
+      context:
+        name: staging-admin@staging
+      inCluster: false
+      secret:
+        name: staging-kubeconfig
+        namespace: staging
+```
+
 #### About .spec.configuration
 
 This is the section that defines scope. By default, I would recommend that the scope is empty. All configuration
