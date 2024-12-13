@@ -209,7 +209,174 @@ configs). For now, it makes sense to keep our current logic as is to reduce time
 
 ### Defining scope of configs to render
 
-TBD
+```yaml
+apiVersion: configuration.giantswarm.io/v1alpha1
+kind: ManagementClusterConfiguration
+metadata:
+  name: gauss-configuration
+  namespace: giantswarm
+spec:
+  sources:
+    flux:
+      service:
+        url: source-controller.flux-giantswarm.svc
+      gitRepository:
+        name: giantswarm-config
+        namespace: flux-giantswarm
+  encryption:
+    sops:
+      keysDirectory: /mnt/sops
+    vault:
+      secretRef:
+        name: gauss-vault-configuration
+        namespace: giantswarm
+  target:
+    namespace: giantswarm-configuration
+  configuration:
+    cluster:
+      name: gauss
+    applications:
+      regexMatchers:
+        - ".+"
+status:
+  inventory:
+    - name: app-operator
+      references:
+        - apiVersion: v1
+          kind: configmap
+          name: app-operator-konfigure
+          namespace: giantswarm-configuration
+          status:
+            ready: true
+            lastReconciledAt: "2024-12-18T12:20:12.358526+01:00"
+            lastAppliedRevision: 1fb7f4a0df83361cd85e7d5b21b7a02f0a825167
+            lastAttemptedRevision: 1fb7f4a0df83361cd85e7d5b21b7a02f0a825167
+    - name: chart-operator
+      references:
+        - apiVersion: v1
+          kind: configmap
+          name: chart-operator-konfigure
+          namespace: giantswarm-configuration
+          status:
+            ready: false
+            message: "Invalid Yaml at installations/gauss/apps/chart-operator/configmap.tmpl:42"
+            lastReconciledAt: "2024-12-18T12:20:13.358526+01:00"
+            lastAppliedRevision: 38be874bfa3d627bf70366bd3ae43ff9dcfb4fcf
+            lastAttemptedRevision: 1fb7f4a0df83361cd85e7d5b21b7a02f0a825167
+        - apiVersion: v1
+          kind: secret
+          name: chart-operator-konfigure
+          namespace: giantswarm-configuration
+          status:
+            ready: true
+            lastReconciledAt: "2024-12-18T12:20:12.358526+01:00"
+            lastAppliedRevision: 1fb7f4a0df83361cd85e7d5b21b7a02f0a825167
+            lastAttemptedRevision: 1fb7f4a0df83361cd85e7d5b21b7a02f0a825167
+```
+
+#### About .spec.sources
+
+Like mentioned above, the sources could be potentially pulled in many different ways.
+
+We are currently utilizing Flux and its `include` feature to merge `shared-configs` and the CMC repository
+configuration. This technically has historic reasons dating back to `config-controller` on Vintage, therefore
+I would leave it open as an object to configure sources. Also keeping Flux for now could simplify implementation
+as we already have it done.
+
+Later we could simply add other ways to support fetching sources.
+
+#### About .spec.encryption.sops
+
+...
+
+#### About .spec.encryption.vault
+
+Although Vault is only used in Vintage, so we do can decide not to support this scenario. If we decide to do so however,
+the Vault configuration secret could look like:
+
+```yaml
+apiVersion: v1
+kind: Secret
+type: Opaque
+metadata:
+  name: gauss-vault-configuration
+  namespace: giantswarm
+stringData:
+  address: "https://vault.example.org:443"
+  certificates: |
+    -----BEGIN CERTIFICATE-----
+    # ...
+    -----END CERTIFICATE-----
+  token: "example"
+```
+
+Note: I am not super sure about how the certificates are actually handled for Vault on vintage. On vintage
+`kustomize-controller` instances they are mounted to the controller pod. Would need further research if this is the
+correct approach.
+
+#### About .spec.configuration
+
+This is the section that defines scope. By default, I would recommend that the scope is empty. All configuration
+here means adding something to the scope. For simplicity, I would recommend only allowing additions to the scope.
+
+The `.cluster` object would point to the Cluster configs to render under `.name`. This technically points to
+CMC repo's `installations/{NAME}` folder.
+
+The `.applications` folder adds items to the scope from `installations/{NAME}/apps` folders if the CMC repos.
+
+I would recommend supporting multiple different kind of "matchers" for flexibility:
+
+- `regexMatchers`
+  - It is a list of regular expressions, potentially conforming: https://github.com/google/re2/wiki/Syntax.
+    This could be used with simply `.+` to match all applications.
+  - Alternatively, this could be used to match a family of apps, for example: `trivy.*`
+- `exactMatches`
+  - This could be a list of string for the folders to include. Could be for a concrete list of apps or potentially
+    just a single app if needed. For example: `["prometheus", "loki", "grafana"]`
+
+### About .status
+
+I would recommend getting quite verbose here in order to make it easier to see the status, debug and alert on failures.
+
+The `.inventory` field should contain the list of object references that are managed by the given scope. This could
+also be used for clean up. For example what to do when the scope changes and something get removed from it. Should
+we delete the referenced resource or orphan it? Do we need the strategy to be configurable? We do not necessarily
+need to decide now, but the inventory makes it possible in the future and is useful anyway.
+
+Each item in the inventory should look like:
+
+- `name`: exact name of the folder that the referenced resources are reconciled for
+  - `references`: list of generated resources
+   - `apiVersion`: `.apiVersion` of the resource
+   - `kind`: `.kind` of the resource
+   - `name`: `.metadata.name` of the resource
+   - `namespace`: `.metadata.namespace` of the resource, can be omitted for cluster scoped resources
+   - `status`: Reconciliation status of the resource. Resembles Flux kustomization status a bit.
+     - `ready`: whether the resource is healthy and up-to-date with the latest source
+     - `message`: Message about the state of the last reconciliation, potentially an error message, can be empty if all
+                  is okay.
+     - `lastReconciledAt`: Last time the resource was successfully(?) attempted to reconcile in the format of:
+                           "YYYY-MM-DD(T)HH:MM:SS.MICROS(+/-)TIMEZONE"
+     - `lastAppliedRevision`: Last applied source revision.
+     - `lastAttemptedRevision`: Last attempted source revision.
+
+#### About metadata on generated resources
+
+Generated resources should contain metadata labels / annotations about the generation process, for example:
+
+```text
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  labels:
+    configuration.giantswarm.io/generated-by: config-generator-controller
+    configuration.giantswarm.io/ownerKind: ManagementClusterConfiguration
+    configuration.giantswarm.io/ownerName: gauss-configuration
+    configuration.giantswarm.io/ownerNamespace: giantswarm
+    configuration.giantswarm.io/revision: 1fb7f4a0df83361cd85e7d5b21b7a02f0a825167
+  name: app-operator-konfigure
+  namespace: giantswarm-configuration
+```
 
 ### Migrating `collection` repositories
 
