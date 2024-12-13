@@ -322,7 +322,7 @@ correct approach.
 It is intentionally singular. I would recommend allowing only a single target per resource.
 
 The simplest target now is `namespace` within the same cluster. We could potentially allow workload clusters
-here as well so `kubeconfig` secret references, for example: 
+here as well so `kubeconfig` secret references, for example:
 
 ```yaml
 spec:
