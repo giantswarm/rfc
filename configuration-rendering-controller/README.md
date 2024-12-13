@@ -287,7 +287,8 @@ Later we could simply add other ways to support fetching sources.
 
 #### About .spec.encryption.sops
 
-...
+Currently, we mount SOPS and point `konfigure` to the directory with the keys. We could keep it this way or have
+a list of Secret references here. Up for discussion, se an alternative approach for Vault in the following section.
 
 #### About .spec.encryption.vault
 
