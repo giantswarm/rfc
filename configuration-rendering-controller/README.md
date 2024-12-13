@@ -238,6 +238,8 @@ spec:
     applications:
       regexMatchers:
         - ".+"
+  reconciliation:
+    interval: 5m
 status:
   inventory:
     - name: app-operator
@@ -346,20 +348,31 @@ need to decide now, but the inventory makes it possible in the future and is use
 
 Each item in the inventory should look like:
 
-- `name`: exact name of the folder that the referenced resources are reconciled for
-  - `references`: list of generated resources
+- `name`: Exact name of the folder that the referenced resources are reconciled for.
+  - `references`: The list of generated resources.
    - `apiVersion`: `.apiVersion` of the resource
    - `kind`: `.kind` of the resource
-   - `name`: `.metadata.name` of the resource
-   - `namespace`: `.metadata.namespace` of the resource, can be omitted for cluster scoped resources
+   - `name`: The `.metadata.name` of the resource.
+   - `namespace`: The `.metadata.namespace` of the resource, can be omitted for cluster scoped resources
    - `status`: Reconciliation status of the resource. Resembles Flux kustomization status a bit.
-     - `ready`: whether the resource is healthy and up-to-date with the latest source
+     - `ready`: Whether the resource is healthy and up-to-date with the latest source
      - `message`: Message about the state of the last reconciliation, potentially an error message, can be empty if all
                   is okay.
      - `lastReconciledAt`: Last time the resource was successfully(?) attempted to reconcile in the format of:
                            "YYYY-MM-DD(T)HH:MM:SS.MICROS(+/-)TIMEZONE"
      - `lastAppliedRevision`: Last applied source revision.
      - `lastAttemptedRevision`: Last attempted source revision.
+
+Optionally we could have:
+
+- `status:` a composite status set to something truthy when all references have a truthy status.
+  - Could be confusing, after all, there is much more details in the inventory, but all items in the inventory
+    is healthy, this could be a convenient summary.
+- `lastReconciledAt`: Last time the resource was successfully(?) attempted to reconcile.
+- `lastAppliedRevision`: Last applied source revision.
+  - Could be confusing, after all, there is much more details in the inventory, but all items in the inventory
+    is healthy, this could be a convenient summary.
+- `lastAttemptedRevision`: Last attempted source revision.
 
 #### About metadata on generated resources
 
@@ -378,6 +391,21 @@ metadata:
   name: app-operator-konfigure
   namespace: giantswarm-configuration
 ```
+
+#### About .reconciliation
+
+This section should contain information on how to reconcile the CR and the generated resources potentially.
+
+For a start we can have `.inteval` here in Go duration format.
+
+We could support deletion policies like delete / orphan here later.
+
+### Reconciliation loop concerns
+
+TBD:
+  - multiple resource are potentially matched within a since CRs scope. Should / can we make it parallel to reconcile
+    these or should we go with go routine and merge the results back?
+  - logic for deleting / orphaning resources in the inventory?
 
 ### Migrating `collection` repositories
 
