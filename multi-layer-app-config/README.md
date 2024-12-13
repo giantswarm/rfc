@@ -8,7 +8,7 @@ state: approved
 ## Intro
 
 Our current app delivery mechanism is by using App CRs. Currently, App CRs allow for
-[two layers](https://docs.giantswarm.io/app-platform/app-configuration/). So far it was good enough to have these 2
+[two layers](https://docs.giantswarm.io/tutorials/fleet-management/app-platform/app-configuration/#levels). So far it was good enough to have these 2
 layers, but with our introduction of GitOps with Flux, this is starting to be a limiting factor.
 
 Basically, the problem starts when we have more than 2 layers (a base and an override) of configuration in a GitOps
