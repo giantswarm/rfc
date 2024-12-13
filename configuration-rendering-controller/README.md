@@ -423,7 +423,7 @@ We could support deletion policies like delete / orphan here later.
 ### Reconciliation loop concerns
 
 TBD:
-  - multiple resource are potentially matched within a since CRs scope. Should / can we make it parallel to reconcile
+  - multiple resource are potentially matched within a single CR's scope. Should / can we make it parallel to reconcile
     these or should we go with go routine and merge the results back?
   - logic for deleting / orphaning resources in the inventory?
 
