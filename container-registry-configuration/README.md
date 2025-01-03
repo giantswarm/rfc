@@ -4,12 +4,12 @@ issues:
 - https://github.com/giantswarm/giantswarm/issues/24237
 last_review_date: 2024-02-26
 owners:
-- https://github.com/orgs/giantswarm/teams/team-turtles
-state: approved
-summary: Since Docker Hub has an image download rate limit which can lead to unhealthy clusters, configure containerd such that it uses other registries as mirrors (fallback).
+- https://github.com/orgs/giantswarm/teams/team-honeybadger
+state: obsolete
+summary: Since Docker Hub has an image download rate limit which can lead to unhealthy clusters, configure containerd to use our Azure Container Registry as mirror and keep Docker Hub as primary. Also make this the default on WCs. Use per-MC authenticated Giant Swarm account for our registries to avoid public pulls using up all our limits. See RFC for details on secret handling and cluster chart values to configure this.
 ---
 
-# Container Registry Configuration
+# Container registry configuration
 
 The purpose of this RFC is to specify how we configure Kubernetes clusters for container registries.
 
@@ -20,12 +20,13 @@ Docker Hub has [download rate limit](https://docs.docker.com/docker-hub/download
 ## Current status
 
 - We use images from different registries. Here is the summary of registry usage of a test MC.
-```
-explicit docker.io  40
-implicit docker.io  2
-explicit quay.io    26
-explicit k8s.gcr.io 12
-```
+
+  ```text
+  explicit docker.io  40
+  implicit docker.io  2
+  explicit quay.io    26
+  explicit k8s.gcr.io 12
+  ```
 
 - We don't configure our Kubernetes clusters for container registries via a central configuration. We mostly rely on public registries and anonymous users. Some applications consume `.dockerConfigJson` from config repo but it is for only `quay.io`.
 
@@ -52,7 +53,7 @@ There is an open-source project to patch pods in `imagePullErrors` error state: 
 
 You are able to define alternative source for an image with a Custom Resource.
 
-```
+```yaml
 apiVersion: saffire.fairwinds.com/v1alpha1
 kind: AlternateImageSource
 metadata:
@@ -67,12 +68,11 @@ spec:
 
 This mechanism doesn't work for static pods and it doesn't prevent the issue in advance. Also, it has no built-in mechanism for authentication. We can extend it or combine with the image pull secret solution but it sounds too complicated and dirty.
 
-
-#### 1.c Containerd Configuration
+#### 1.c containerd configuration
 
 As we do in vintage clusters, we can configure containerd configuration as below. This seems the best approach.
 
-```
+```toml
 [plugins."io.containerd.grpc.v1.cri".registry]
 
 [plugins."io.containerd.grpc.v1.cri".registry.mirrors]
@@ -105,12 +105,12 @@ We can pass credentials to `containerd` configuration to be not limited by regis
 `2.b` is selected.
 We will use authenticated accounts.
 
-
 ### 3. Registries
 
 The intranet page (See `Registry Mirrors`) states this as a desired configuration:
-  - `docker.io` as primary public registry since it has a privilege in docker daemon.
-  - Our own Azure Container Registry as secondary registry because of the security concerns
+
+- `docker.io` as primary public registry since it has a privilege in docker daemon.
+- Our own Azure Container Registry as secondary registry because of the security concerns
 
 Since we use `containerd`, docker has not a privilege anymore but there is no need to change this order at the moment. We will follow this configuration for CAPI clusters too.
 
@@ -118,14 +118,14 @@ Also, users must be able to customize the configuration for their workload clust
 
 ### 4. Accounts
 
-- 4.a Giantswarm Account + Single account
-- 4.b Giantswarm Account + Per MC including its WCs
-- 4.c Giantswarm Account + Per WC
+- 4.a Giant Swarm Account + Single account
+- 4.b Giant Swarm Account + Per MC including its WCs
+- 4.c Giant Swarm Account + Per WC
 - 4.d Customer Accounts
 
 #### Decision
 
-`4.b` is selected.
+`4.b` is selected: Giant Swarm Account + Per MC including its WCs.
 
 Since it is a part of the platform itself, we are going to use Giant Swarm accounts in containerd configuration.
 As we do for other operators, we will follow "per MC" approach here to.
@@ -137,7 +137,7 @@ As we do for other operators, we will follow "per MC" approach here to.
 
 #### Decision
 
-`5.a` is selected.
+`5.a` is selected: configuring WCs by default.
 
 ### 6. How to propogate credentials and where to put them
 
@@ -155,11 +155,11 @@ We can put the secret into our `management-clusters-fleet` repo and refer that s
 
 #### 6.d Catalog configuration
 
-We can use catalog configurations (See <mc-name>/appcatalog folder in `installations` repo) to provide a MC specific configuration to all charts in the cluster.
+We can use catalog configurations (See `<mc-name>/appcatalog` folder in `installations` repo) to provide a MC specific configuration to all charts in the cluster.
 
 #### Decision
 
-`6.c` is selected.
+`6.c` is selected: secrets in `management-clusters-fleet` repo.
 
 - Regarding 6.a, we don't want to add another responsility to `cluster-apps-operator`.
 - Regarding 6.b, we want to manage the credentials in our side and to have a full control over them.
@@ -173,11 +173,11 @@ How will be the configuration interface in `cluster-$provider` apps?
 
 We can implement a full transitive configuration interface so that users can provide a full containerd configuration, including registy credentials.
 
-#### 7.b Only registry configuration in a structred way
+#### 7.b Only registry configuration in a structured way
 
 We can define a configuration interface like below and render containerd configuration in `cluster-$provider` app chart.
 
-```
+```yaml
 connectivity:
  containerRegistries:
    docker.io:
@@ -190,6 +190,6 @@ connectivity:
 
 #### Decision
 
-`7.b` is selected.
+`7.b` is selected: only certain fields are made configurable.
 
 7.a seems risky. Also, there can be other configurations (e.g. proxy) that touch containerd configuration too. 7.a can be error prone.
