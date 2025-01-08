@@ -380,7 +380,7 @@ where:
 
 - `lastAppliedRevision` is the last revision where the all resources where successfully generated.
 - `lastAttemptedRevision` is the last attempted revision. In case of success, this matches `lastAppliedRevision`.
-- `lastHandledReconcileAt` is the last time a `lastAttemptedRevision` was attempted to reconcile. 
+- `lastHandledReconcileAt` is the last time a `lastAttemptedRevision` was attempted to reconcile.
 
 Based on the above if nothing else is present, we can assume that everything is reconciled fine at `lastAppliedRevision`.
 In case of failures, when `lastAttemptedRevision` does not match `lastAppliedRevision` we have a convenient field to
