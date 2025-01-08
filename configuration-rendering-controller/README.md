@@ -71,7 +71,7 @@ and maintenance costs and open up the system for extension to solve our other pr
 ### The configuration rendering operator
 
 We can reuse `konfigure` as a library in a Kubernetes operator that reconciles a custom CR to pre-render all or a
-given subset of configuration to a target namespace.
+given subset of configuration to a destination namespace.
 
 This way, anything is open to mount the configuration config maps and secrets whether they are Giant Swarm App CRs,
 Flux HelmReleases or whatever comes next.
@@ -83,7 +83,7 @@ namespace.
 
 We know a complete list of possible Apps that can be configured, because the current system requires that for all
 possible deployed App there are default in the `shared-configs` repository. We would generate the CM and the Secret
-for each possible App for the given MC and the given `shared-configs` + CCR repo reference in the target namespace.
+for each possible App for the given MC and the given `shared-configs` + CCR repo reference in the destination namespace.
 
 The name of the CMs and Secrets should be generated in a deterministic way. We already sort of do that. For example
 for the App `kyverno` the `kyverno-konfigure` CM and Secret is getting rendered by `konfigure`.
@@ -230,7 +230,7 @@ spec:
       secretRef:
         name: gauss-vault-configuration
         namespace: giantswarm
-  target:
+  destination:
     namespace: giantswarm-configuration
   configuration:
     cluster:
@@ -317,16 +317,16 @@ Note: I am not super sure about how the certificates are actually handled for Va
 `kustomize-controller` instances they are mounted to the controller pod. Would need further research if this is the
 correct approach.
 
-#### About .spec.target
+#### About .spec.destination
 
-It is intentionally singular. I would recommend allowing only a single target per resource.
+It is intentionally singular. I would recommend allowing only a single destination per resource.
 
-The simplest target now is `namespace` within the same cluster. We could potentially allow workload clusters
+The simplest destination now is `namespace` within the same cluster. We could potentially allow workload clusters
 here as well so `kubeconfig` secret references, for example:
 
 ```yaml
 spec:
-  target:
+  destination:
     namespace: default
     kubeConfig:
       context:
