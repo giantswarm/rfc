@@ -241,39 +241,22 @@ spec:
   reconciliation:
     interval: 5m
 status:
+  failures:
+    - apiVersion: v1
+      kind: configmap
+      name: chart-operator-konfigure
+      namespace: giantswarm-configuration
+      message: "Invalid Yaml at installations/gauss/apps/chart-operator/configmap.tmpl:42"
   inventory:
-    - name: app-operator
-      references:
-        - apiVersion: v1
-          kind: configmap
-          name: app-operator-konfigure
-          namespace: giantswarm-configuration
-          status:
-            ready: true
-            lastReconciledAt: "2024-12-18T12:20:12.358526+01:00"
-            lastAppliedRevision: 1fb7f4a0df83361cd85e7d5b21b7a02f0a825167
-            lastAttemptedRevision: 1fb7f4a0df83361cd85e7d5b21b7a02f0a825167
-    - name: chart-operator
-      references:
-        - apiVersion: v1
-          kind: configmap
-          name: chart-operator-konfigure
-          namespace: giantswarm-configuration
-          status:
-            ready: false
-            message: "Invalid Yaml at installations/gauss/apps/chart-operator/configmap.tmpl:42"
-            lastReconciledAt: "2024-12-18T12:20:13.358526+01:00"
-            lastAppliedRevision: 38be874bfa3d627bf70366bd3ae43ff9dcfb4fcf
-            lastAttemptedRevision: 1fb7f4a0df83361cd85e7d5b21b7a02f0a825167
-        - apiVersion: v1
-          kind: secret
-          name: chart-operator-konfigure
-          namespace: giantswarm-configuration
-          status:
-            ready: true
-            lastReconciledAt: "2024-12-18T12:20:12.358526+01:00"
-            lastAppliedRevision: 1fb7f4a0df83361cd85e7d5b21b7a02f0a825167
-            lastAttemptedRevision: 1fb7f4a0df83361cd85e7d5b21b7a02f0a825167
+    entries:
+      - id: giantswarm-configuration_app-operator-konfigure__ConfigMap
+        v: v1
+      - id: giantswarm-configuration_app-operator-konfigure__Secret
+        v: v1
+      # ...
+  lastAppliedRevision: 38be874bfa3d627bf70366bd3ae43ff9dcfb4fcf
+  lastAttemptedRevision: 1fb7f4a0df83361cd85e7d5b21b7a02f0a825167
+  lastHandledReconcileAt: "2024-12-18T12:20:12.358526+01:00"
 ```
 
 #### About .spec.sources
@@ -345,6 +328,11 @@ here means adding something to the scope. For simplicity, I would recommend only
 The `.cluster` object would point to the Cluster configs to render under `.name`. This technically points to
 CMC repo's `installations/{NAME}` folder.
 
+The `.spec.configuration.cluster.name` is intentionally part of the CRD configuration. It is more practical to have
+it here then let's say as an operator configuration. If a user can present the SOPS keys for a given cluster, why not
+allow rendering configs for another cluster as well. This could be very practical for testing and debugging purposes
+as well. And since we already did the config split migration, a given CCR repository only contains customer configs.
+
 The `.applications` folder adds items to the scope from `installations/{NAME}/apps` folders if the CMC repos.
 
 I would recommend supporting multiple different kind of "matchers" for flexibility:
@@ -366,33 +354,76 @@ also be used for clean up. For example what to do when the scope changes and som
 we delete the referenced resource or orphan it? Do we need the strategy to be configurable? We do not necessarily
 need to decide now, but the inventory makes it possible in the future and is useful anyway.
 
-Each item in the inventory should look like:
+This field is very similar to the Flux Kustomization inventory:
 
-- `name`: Exact name of the folder that the referenced resources are reconciled for.
-  - `references`: The list of generated resources.
-   - `apiVersion`: `.apiVersion` of the resource
-   - `kind`: `.kind` of the resource
-   - `name`: The `.metadata.name` of the resource.
-   - `namespace`: The `.metadata.namespace` of the resource, can be omitted for cluster scoped resources
-   - `status`: Reconciliation status of the resource. Resembles Flux kustomization status a bit.
-     - `ready`: Whether the resource is healthy and up-to-date with the latest source
-     - `message`: Message about the state of the last reconciliation, potentially an error message, can be empty if all
-                  is okay.
-     - `lastReconciledAt`: Last time the resource was successfully(?) attempted to reconcile in the format of:
-                           "YYYY-MM-DD(T)HH:MM:SS.MICROS(+/-)TIMEZONE"
-     - `lastAppliedRevision`: Last applied source revision.
-     - `lastAttemptedRevision`: Last attempted source revision.
+```yaml
+status:
+  inventory:
+    entries:
+      - id: giantswarm-configuration_app-operator-konfigure__ConfigMap
+        v: v1
+      - id: giantswarm-configuration_app-operator-konfigure__Secret
+        v: v1
+      # ...
+```
 
-Optionally we could have:
+For an overview of when and what version was last reconciled we have:
 
-- `status:` a composite status set to something truthy when all references have a truthy status.
-  - Could be confusing, after all, there is much more details in the inventory, but all items in the inventory
-    is healthy, this could be a convenient summary.
-- `lastReconciledAt`: Last time the resource was successfully(?) attempted to reconcile.
-- `lastAppliedRevision`: Last applied source revision.
-  - Could be confusing, after all, there is much more details in the inventory, but all items in the inventory
-    is healthy, this could be a convenient summary.
-- `lastAttemptedRevision`: Last attempted source revision.
+```yaml
+status:
+  lastAppliedRevision: 38be874bfa3d627bf70366bd3ae43ff9dcfb4fcf
+  lastAttemptedRevision: 1fb7f4a0df83361cd85e7d5b21b7a02f0a825167
+  lastHandledReconcileAt: "2024-12-18T12:20:12.358526+01:00"
+```
+
+where:
+
+- `lastAppliedRevision` is the last revision where the all resources where successfully generated.
+- `lastAttemptedRevision` is the last attempted revision. In case of success, this matches `lastAppliedRevision`.
+- `lastHandledReconcileAt` is the last time a `lastAttemptedRevision` was attempted to reconcile. 
+
+Based on the above if nothing else is present, we can assume that everything is reconciled fine at `lastAppliedRevision`.
+In case of failures, when `lastAttemptedRevision` does not match `lastAppliedRevision` we have a convenient field to
+list each individual failures and the reason for the failure: `.status.failures`. It is a list of objects
+with the following fields:
+
+- `apiVersion`: GVK of the resource.
+- `kind`: Kind of the resource.
+- `name`: Name of the resource.
+- `namespace`: Namespace of the resource.
+- `message`: Detailed error message about the failure.
+
+We should be able to assume the failure took place at `.status.lastHandledReconcileAt` and at revision `.status.lastAttemptedRevision`.
+
+Optionally we could have `conditions` as the generic kubernetes object status list, for example:
+
+```yaml
+status:
+  conditions:
+  - lastTransitionTime: "2024-12-18T12:16:42.358526+01:00"
+    message: 'Applied revision: 38be874bfa3d627bf70366bd3ae43ff9dcfb4fcf'
+    observedGeneration: 442
+    reason: ReconciliationSucceeded
+    status: "True"
+    type: Ready
+```
+
+or in case of failure:
+
+```yaml
+status:
+  conditions:
+  - lastTransitionTime: "2024-12-18T12:20:12.358526+01:00"
+    message: 'Attempted revision: 1fb7f4a0df83361cd85e7d5b21b7a02f0a825167'
+    observedGeneration: 443
+    reason: ReconciliationFailed
+    status: "False"
+    type: Ready
+```
+
+This could be a simple and convenient place to check and setup alerts based on when the overall status is
+not healthy for the CR, e.g. not all items for successfully generated. Tho checking for failures list might
+work as well, tho that is rather for details for easier debugging within the cluster.
 
 #### About metadata on generated resources
 
