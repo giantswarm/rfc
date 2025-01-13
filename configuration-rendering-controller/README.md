@@ -1,9 +1,9 @@
 ---
 creation_date: 2024-12-06
 issues:
-- https://github.com/giantswarm/roadmap/issues/3773
+  - https://github.com/giantswarm/roadmap/issues/3773
 owners:
-- https://github.com/orgs/giantswarm/teams/team-honeybadger
+  - https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: review
 summary: This RFC describes the vision to evolve our current configuration management system to make it more flexible, reusable, locally reproducible and easier to extend in the future while making other parts of our platform slightly more simple.
 ---
@@ -12,9 +12,15 @@ summary: This RFC describes the vision to evolve our current configuration manag
 
 Contents:
 
-1. Current practice
-2. Proposed solution
-3. Implementation approaches
+1. Introduction
+2. Current practice
+3. Proposed solution
+4. Implementation approaches
+
+## Introduction
+
+We have a way to configure our applications by means of [shared-configs](https://github.com/giantswarm/shared-configs) and customer specific config repos (CCRs). Still, this applies only to Apps that are deployed as a part
+of collections (like [aws-app-collection](https://github.com/giantswarm/aws-app-collection)). The idea discussed in this RFC is to decouple the configuration system from App Platform and make it possible to use with any App (both in and out of collections).
 
 ## Current practice
 
@@ -26,22 +32,23 @@ customer specific config repositories (CCRs). It is only taken into account tho,
   KRM function defined in [konfigure](https://github.com/giantswarm/konfigure/)
   - `konfigure` can also be used locally to generate the configuration and the App CR as well without the generator
 
-Although, it would be possible to deploy such generator resources anywhere in out gitops structure to take advantage
+Although, it would be possible to deploy such generator resources anywhere in our GitOps structure to take advantage
 of the configuration system, we only use that in `collections`, the provider specific ones and
 [rest-api-collection](https://github.com/giantswarm/rest-api-app-collection).
 
 The current configuration structure is documented in details [here](https://intranet.giantswarm.io/docs/dev-and-releng/configuration-management/).
 
 Especially check out:
-- structure: https://github.com/giantswarm/giantswarm/blob/main/content/docs/dev-and-releng/configuration-management/app-platform-configuration-management.jpg
-- flow: https://github.com/giantswarm/giantswarm/blob/main/content/docs/dev-and-releng/configuration-management/app-platform-flux-konfigure.jpg
+
+- structure: <https://github.com/giantswarm/giantswarm/blob/main/content/docs/dev-and-releng/configuration-management/app-platform-configuration-management.jpg>
+- flow: <https://github.com/giantswarm/giantswarm/blob/main/content/docs/dev-and-releng/configuration-management/app-platform-flux-konfigure.jpg>
 
 In this proposal we are not going to change that structure, just the flow, so that we make it more widely accessible,
 flexible, easier to extend while also making other parts of our platform more simple.
 
 ### Problems with the current practice
 
-- deployment must be done in a specific way via the Giant Swarm Flux installation and in a custom format
+- deployment must be done in a specific way via the Giant Swarm Flux installation and in a custom format (in practice: collections)
 - the generated resource is always an App CR and no other formats are supported
 - to make it work, the Giant Swarm Flux installation on the MCs use a forked version the
   [kustomize-controller](https://github.com/giantswarm/kustomize-controller) and the
@@ -51,7 +58,7 @@ flexible, easier to extend while also making other parts of our platform more si
 
 There are some other problems with the capabilities of the configuration system as well:
 
-- we are currently storing configuration in Giant Swarm Catalog bound configmaps as well. These will be only
+- we are currently storing configuration in Giant Swarm Catalog bound Config Maps as well. These will be only
   resolved by `app-operator` as they are implicitly taken as the base layer that upon all other configuration
   layers are merged
 - there is no support for providing different configurations for multiple instances of a given app
@@ -59,11 +66,14 @@ There are some other problems with the capabilities of the configuration system 
 
 ## Proposed solution
 
-The proposal is to decouple the configuration system from App Platform.
+The proposal is to decouple the configuration system from App Platform. We want to implement a controller that
+renders all the configs present in the `shared-configs` and CCR repositories to a given namespace, without any
+dependency on how this configuration is used. Once the configuration is rendered, it is up to the user to use it
+wherever they want (i.e. reference it in an App CR, but potentially also elsewhere, like in a HelmRelease).
 
 ![Flow](flow.png)
 
-Source: https://miro.com/app/board/uXjVKUVwcLg=/
+Source: <https://miro.com/app/board/uXjVKUVwcLg=/>
 
 In this proposal we will show how we can solve some of our immediate problems listed above, simplify our setup
 and maintenance costs and open up the system for extension to solve our other problems.
@@ -338,7 +348,7 @@ The `.applications` folder adds items to the scope from `installations/{NAME}/ap
 I would recommend supporting multiple different kind of "matchers" for flexibility:
 
 - `regexMatchers`
-  - It is a list of regular expressions, potentially conforming: https://github.com/google/re2/wiki/Syntax.
+  - It is a list of regular expressions, potentially conforming: <https://github.com/google/re2/wiki/Syntax>.
     This could be used with simply `.+` to match all applications.
   - Alternatively, this could be used to match a family of apps, for example: `trivy.*`
 - `exactMatches`
@@ -400,12 +410,12 @@ Optionally we could have `conditions` as the generic kubernetes object status li
 ```yaml
 status:
   conditions:
-  - lastTransitionTime: "2024-12-18T12:16:42.358526+01:00"
-    message: 'Applied revision: 38be874bfa3d627bf70366bd3ae43ff9dcfb4fcf'
-    observedGeneration: 442
-    reason: ReconciliationSucceeded
-    status: "True"
-    type: Ready
+    - lastTransitionTime: "2024-12-18T12:16:42.358526+01:00"
+      message: "Applied revision: 38be874bfa3d627bf70366bd3ae43ff9dcfb4fcf"
+      observedGeneration: 442
+      reason: ReconciliationSucceeded
+      status: "True"
+      type: Ready
 ```
 
 or in case of failure:
@@ -413,12 +423,12 @@ or in case of failure:
 ```yaml
 status:
   conditions:
-  - lastTransitionTime: "2024-12-18T12:20:12.358526+01:00"
-    message: 'Attempted revision: 1fb7f4a0df83361cd85e7d5b21b7a02f0a825167'
-    observedGeneration: 443
-    reason: ReconciliationFailed
-    status: "False"
-    type: Ready
+    - lastTransitionTime: "2024-12-18T12:20:12.358526+01:00"
+      message: "Attempted revision: 1fb7f4a0df83361cd85e7d5b21b7a02f0a825167"
+      observedGeneration: 443
+      reason: ReconciliationFailed
+      status: "False"
+      type: Ready
 ```
 
 This could be a simple and convenient place to check and setup alerts based on when the overall status is
@@ -454,9 +464,10 @@ We could support deletion policies like delete / orphan here later.
 ### Reconciliation loop concerns
 
 TBD:
-  - multiple resource are potentially matched within a single CR's scope. Should / can we make it parallel to reconcile
-    these or should we go with go routine and merge the results back?
-  - logic for deleting / orphaning resources in the inventory?
+
+- multiple resource are potentially matched within a single CR's scope. Should / can we make it parallel to reconcile
+  these or should we go with go routine and merge the results back?
+- logic for deleting / orphaning resources in the inventory?
 
 ### Migrating `collection` repositories
 
