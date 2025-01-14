@@ -13,7 +13,7 @@ summary: Decide whether the apps in CAPI cluster should have or not a prefix, an
 
 ## Intro
 
-When we moved to Cluster API, we decided that all resources would live the organization namespace. That decision means apps, including the cluster app, from different clusters coexist in the same namespace. It also means, it forces us to name the apps differently to avoid conflicts.
+When we moved to Cluster API, we decided that all resources would live the organization namespace. That decision means apps, including the cluster app, from different clusters coexist in the same namespace. It also means, it forces us to name the apps differently to avoid conflicts. [More information in the following discussion](https://github.com/giantswarm/workload-clusters-fleet/pull/802#issuecomment-1946218047)
 
 ## Scope
 
