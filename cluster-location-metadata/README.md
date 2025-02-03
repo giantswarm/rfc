@@ -24,7 +24,9 @@ Relevant user stories in this context could be, to name two examples:
 - As a platform admin, I want to check the Kubernetes version of all clusters in a certain location.
 - As a service owner, I want to check the deployment status of certain apps in a certain location.
 
-With Cluster API on cloud providers we usually have location indicators in cluster resources, in various places. The proposed solution would help simplify and unify location lookup for clusters by clients throughout cloud providers.
+With Cluster API on cloud providers we usually have location indicators in cluster resources, in various places. The proposed solution in this RFC would help simplify and unify location lookup for clusters by clients throughout cloud providers.
+
+In on-premises installations, no location information is currently available in Kubernetes resources. This RFC attempts to change that.
 
 The assumption here is that entire clusters are not distributed geographically, so that the entire cluster can be assigned to one geographical location.
 
