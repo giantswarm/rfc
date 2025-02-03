@@ -32,7 +32,8 @@ The assumption here is that entire clusters are not distributed geographically, 
 
 ### Decision maker
 
-Team Honeybadger with Team Rocket, plus other KaaS teams.
+- Team Honeybadger together with Team Rocket
+- Other KaaS teams should consent
 
 ### Deadline
 
@@ -44,9 +45,16 @@ TBD
 
 ### Preferred solution
 
-We should set the [`topology.kubernetes.io/region`](https://kubernetes.io/docs/reference/labels-annotations-taints/#topologykubernetesioregion) label on the main cluster (currently kind=`Cluster`, group=`cluster.x-k8s.io/v1beta1`) resource of all clusters.
+The solution proposed here consists of two parts:
 
-(The label is currently set by Kubernetes on `Node` and `PersistentVolume` resources.)
+- Setting consistent metadata on clusters
+- Providing a default location ID system for on-prem customers
+
+#### Consistent metadata on clusters
+
+We should set the [`topology.kubernetes.io/region`](https://kubernetes.io/docs/reference/labels-annotations-taints/#topologykubernetesioregion) label on the main cluster resource of all clusters. Currently (as of February 2025) this resource is of kind `Cluster`, group=`cluster.x-k8s.io/v1beta1`.
+
+The `topology.kubernetes.io/region` label is documented as w well-known label, set by Kubernetes on `Node` and `PersistentVolume` resources.
 
 For clusters running in cloud providers, the value of the label should be the region identifier. E. g. `eu-west-1` for the AWS datacenter in EU/Dublin.
 
@@ -54,7 +62,7 @@ For clusters on premises, the value should follow a system that we establish for
 
 Regardless of the environment (cloud/on-prem), the value of the `topology.kubernetes.io/region` label should not include any whitespace and consist of the lowercase letters, numbers, and dash only (`[a-z0-9-]`).
 
-#### On-prem default location ID system
+#### Default location ID system for on-prem
 
 Our default location identification system should be
 
@@ -88,19 +96,19 @@ Here are some examples how this system could be applied to identify three differ
 
 ##### Example 1: Frankfurt am Main, Germany, Europe
 
-- `eu-de-frankfurtmain`
-- `eu-de-he-frankfurt` - `he` as the state code for Hessia. In this case, the name "frankfurt" is non-ambigious.
+- `eu-de-frankfurtmain` - Since Frankfurt is an ambiguous city name, the suffix "main" is added to it to disambiguate.
+- `eu-de-he-frankfurt` - `he` as the state code for Hessia. In this regional context, the name "frankfurt" is non-ambigious.
 
 Germany has several cities named "Frankfurt", so without a state code, "frankfurt" alone would be ambigious. Either adding "main" to the city name or adding the state code (`he` for Hessia) solves this.
 
 ##### Example 2: Aix-en-Provence, France, Europe
 
-- `eu-fr-aixenprovence`
-- `eu-fr-pac-aix` - `pac` as a region code for "Provence-Alpes-Côte d'Azur", which has ISO 3166-2 code `FR-PAC`.
+- `eu-fr-aixenprovence` - Here, "aixenprovence" names the city "Aix en Provence" in France in a non-ambiguous way.
+- `eu-fr-pac-aix` - `pac` as a region code for "Provence-Alpes-Côte d'Azur", which has ISO 3166-2 code `FR-PAC`. As the region is narrowed down, the much shorter "aix" can idetify the city clearly.
 
 ##### Example 3: Dallas, Texas, United States of America
 
-- `na-us-tx-dallas`
+- `na-us-tx-dallas` - The U.S. have [many citites](https://en.wikipedia.org/wiki/Dallas_(disambiguation)) by the name of Dallas. So the state code should be used to disambiguate.
 
 ##### Optional state and city part
 
@@ -112,7 +120,9 @@ The state code and city name parts are optional and should only be applied if re
 
 ### Alternative solutions
 
-Have not been explored so far.
+- Instead of `topology.kubernetes.io/region`, we could specify our own label in the `giantswarm.io` namespace.
+
+- Instead of strings, we could introduce a system that provides geo coordinates. (Since the cloud providers already work with string identifiers, this draft oped for a solution that extends this paradigm to on-prem.)
 
 ### Implementation plan
 
