@@ -1,5 +1,6 @@
 ---
 creation_date: 2025-02-04
+issues: null
 owners:
 - https://github.com/orgs/giantswarm/teams/team-atlas
 state: review
