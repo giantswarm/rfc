@@ -109,5 +109,5 @@ spec:
 
 ## Links
 
-- [1][https://github.com/giantswarm/silences]
-- [2][https://github.com/giantswarm/management-cluster-bases]
+- [1]: https://github.com/giantswarm/silences
+- [2]: https://github.com/giantswarm/management-cluster-bases
