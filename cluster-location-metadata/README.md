@@ -126,3 +126,207 @@ We shoulds also inform on-prem customers proactively about the significance of t
 ### Terminology
 
 - KaaS: Kubernetes as a service
+
+## Appendix
+
+### Default location ID codes for on-prem
+
+Below is a preview of the default ID code system for on-prem, to the country level. This is for preview purposes only and won't be maintained here in this RFC.
+
+| Code | Country |
+| --- | --- |
+| `af-ao` | Angola |
+| `af-bf` | Burkina Faso |
+| `af-bi` | Burundi |
+| `af-bj` | Benin |
+| `af-bw` | Botswana |
+| `af-cd` | Democratic Republic of the Congo |
+| `af-cf` | Central African Republic |
+| `af-cg` | Congo |
+| `af-ci` | Ivory Coast |
+| `af-cm` | Cameroon |
+| `af-cv` | Cape Verde |
+| `af-dj` | Djibouti |
+| `af-dz` | Algeria |
+| `af-eg` | Egypt |
+| `af-er` | Eritrea |
+| `af-et` | Ethiopia |
+| `af-ga` | Gabon |
+| `af-gh` | Ghana |
+| `af-gm` | Gambia |
+| `af-gn` | Guinea |
+| `af-gq` | Equatorial Guinea |
+| `af-gw` | Guinea-Bissau |
+| `af-ke` | Kenya |
+| `af-km` | Comoros |
+| `af-lr` | Liberia |
+| `af-ls` | Lesotho |
+| `af-ly` | Libya |
+| `af-ma` | Morocco |
+| `af-mg` | Madagascar |
+| `af-ml` | Mali |
+| `af-mr` | Mauritania |
+| `af-mu` | Mauritius |
+| `af-mw` | Malawi |
+| `af-mz` | Mozambique |
+| `af-na` | Namibia |
+| `af-sz` | Eswatini |
+| `af-td` | Chad |
+| `an-aq` | Antarctica |
+| `an-bv` | Bouvet Island |
+| `an-gs` | South Georgia and the South Sandwich Islands |
+| `an-hm` | Heard Island and McDonald Islands |
+| `an-tf` | French Southern Territories |
+| `as-ae` | United Arab Emirates |
+| `as-af` | Afghanistan |
+| `as-am` | Armenia |
+| `as-az` | Azerbaijan |
+| `as-bd` | Bangladesh |
+| `as-bh` | Bahrain |
+| `as-bn` | Brunei |
+| `as-bt` | Bhutan |
+| `as-cn` | China |
+| `as-cy` | Cyprus |
+| `as-ge` | Georgia |
+| `as-id` | Indonesia |
+| `as-il` | Israel |
+| `as-in` | India |
+| `as-iq` | Iraq |
+| `as-ir` | Iran |
+| `as-jo` | Jordan |
+| `as-jp` | Japan |
+| `as-kg` | Kyrgyzstan |
+| `as-kh` | Cambodia |
+| `as-kp` | North Korea |
+| `as-kr` | South Korea |
+| `as-kw` | Kuwait |
+| `as-kz` | Kazakhstan |
+| `as-la` | Laos |
+| `as-lb` | Lebanon |
+| `as-lk` | Sri Lanka |
+| `as-mm` | Myanmar |
+| `as-mn` | Mongolia |
+| `as-mv` | Maldives |
+| `as-my` | Malaysia |
+| `as-np` | Nepal |
+| `as-om` | Oman |
+| `as-ph` | Philippines |
+| `as-pk` | Pakistan |
+| `as-ps` | Palestine |
+| `as-qa` | Qatar |
+| `as-sa` | Saudi Arabia |
+| `as-sg` | Singapore |
+| `as-sy` | Syria |
+| `as-th` | Thailand |
+| `as-tj` | Tajikistan |
+| `as-tl` | Timor-Leste |
+| `as-tm` | Turkmenistan |
+| `as-tr` | Turkey |
+| `as-tw` | Taiwan |
+| `as-uz` | Uzbekistan |
+| `as-vn` | Vietnam |
+| `as-ye` | Yemen |
+| `eu-ad` | Andorra |
+| `eu-al` | Albania |
+| `eu-at` | Austria |
+| `eu-ba` | Bosnia and Herzegovina |
+| `eu-be` | Belgium |
+| `eu-bg` | Bulgaria |
+| `eu-by` | Belarus |
+| `eu-ch` | Switzerland |
+| `eu-cy` | Cyprus |
+| `eu-cz` | Czech Republic |
+| `eu-de` | Germany |
+| `eu-dk` | Denmark |
+| `eu-ee` | Estonia |
+| `eu-es` | Spain |
+| `eu-fi` | Finland |
+| `eu-fr` | France |
+| `eu-gb` | United Kingdom |
+| `eu-gr` | Greece |
+| `eu-hr` | Croatia |
+| `eu-hu` | Hungary |
+| `eu-ie` | Ireland |
+| `eu-is` | Iceland |
+| `eu-it` | Italy |
+| `eu-li` | Liechtenstein |
+| `eu-lt` | Lithuania |
+| `eu-lu` | Luxembourg |
+| `eu-lv` | Latvia |
+| `eu-mc` | Monaco |
+| `eu-md` | Moldova |
+| `eu-me` | Montenegro |
+| `eu-mk` | North Macedonia |
+| `eu-mt` | Malta |
+| `eu-nl` | Netherlands |
+| `eu-no` | Norway |
+| `eu-pl` | Poland |
+| `eu-pt` | Portugal |
+| `eu-ro` | Romania |
+| `eu-rs` | Serbia |
+| `eu-ru` | Russia |
+| `eu-se` | Sweden |
+| `eu-si` | Slovenia |
+| `eu-sk` | Slovakia |
+| `eu-sm` | San Marino |
+| `eu-ua` | Ukraine |
+| `eu-va` | Vatican City |
+| `na-ag` | Antigua and Barbuda |
+| `na-bb` | Barbados |
+| `na-bs` | Bahamas |
+| `na-bz` | Belize |
+| `na-ca` | Canada |
+| `na-cr` | Costa Rica |
+| `na-cu` | Cuba |
+| `na-dm` | Dominica |
+| `na-do` | Dominican Republic |
+| `na-gd` | Grenada |
+| `na-gt` | Guatemala |
+| `na-hn` | Honduras |
+| `na-ht` | Haiti |
+| `na-jm` | Jamaica |
+| `na-kn` | Saint Kitts and Nevis |
+| `na-lc` | Saint Lucia |
+| `na-mx` | Mexico |
+| `na-ni` | Nicaragua |
+| `na-pa` | Panama |
+| `na-sv` | El Salvador |
+| `na-tt` | Trinidad and Tobago |
+| `na-us` | United States |
+| `na-vc` | Saint Vincent and the Grenadines |
+| `oc-as` | American Samoa |
+| `oc-au` | Australia |
+| `oc-ck` | Cook Islands |
+| `oc-fj` | Fiji |
+| `oc-fm` | Micronesia |
+| `oc-gu` | Guam |
+| `oc-ki` | Kiribati |
+| `oc-mh` | Marshall Islands |
+| `oc-mp` | Northern Mariana Islands |
+| `oc-nc` | New Caledonia |
+| `oc-nf` | Norfolk Island |
+| `oc-nr` | Nauru |
+| `oc-nu` | Niue |
+| `oc-nz` | New Zealand |
+| `oc-pf` | French Polynesia |
+| `oc-pg` | Papua New Guinea |
+| `oc-pw` | Palau |
+| `oc-sb` | Solomon Islands |
+| `oc-tk` | Tokelau |
+| `oc-to` | Tonga |
+| `oc-tv` | Tuvalu |
+| `oc-vu` | Vanuatu |
+| `oc-wf` | Wallis and Futuna |
+| `oc-ws` | Samoa |
+| `sa-ar` | Argentina |
+| `sa-bo` | Bolivia |
+| `sa-br` | Brazil |
+| `sa-cl` | Chile |
+| `sa-co` | Colombia |
+| `sa-ec` | Ecuador |
+| `sa-gy` | Guyana |
+| `sa-pe` | Peru |
+| `sa-py` | Paraguay |
+| `sa-sr` | Suriname |
+| `sa-uy` | Uruguay |
+| `sa-ve` | Venezuela |
