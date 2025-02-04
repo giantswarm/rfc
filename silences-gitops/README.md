@@ -1,9 +1,9 @@
 ---
 creation_date: 2025-02-04
 owners:
-  - https://github.com/orgs/giantswarm/teams/team-atlas
-summary: Deploy observability silences using GitOps
+- https://github.com/orgs/giantswarm/teams/team-atlas
 state: review
+summary: Deploy observability silences using GitOps
 ---
 
 # Deploy observability silences using GitOps
