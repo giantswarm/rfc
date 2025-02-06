@@ -4,7 +4,7 @@ issues: []
 owners:
 - https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: review
-summary: To indicate where in a world a cluster is location
+summary: The document discusses the need for consistent location metadata for clusters, addressing customer communication and management needs. It proposes a unified location identifier metadata system on the cluster level, for cloud and on-premises clusters.
 ---
 
 # Location metadata for clusters
@@ -26,7 +26,7 @@ Relevant user stories in this context could be, to name two examples:
 
 With Cluster API on cloud providers we usually have location indicators in cluster resources, in various places. Each cloud provider uses their own identifier system, however they all make use of a string identifier. The proposed solution in this RFC would help simplify and unify location lookup for clusters by clients throughout cloud providers.
 
-In on-premises installations, no location information is currently available in Kubernetes resources. In metrics (Prometheis, Mimir) we annotate many series with a `region` label. However, in on-prem installations, the value for this label is always `onprem`. This RFC attempts to change that.
+In on-premises installations, no location information is currently available in Kubernetes resources. In metrics (PrometheusMimir) we annotate many series with a `region` label. However, in on-prem installations, the value for this label is always `onprem`. This RFC attempts to change that.
 
 ### Key assumptions
 
