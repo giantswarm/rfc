@@ -26,7 +26,7 @@ Relevant user stories in this context could be, to name two examples:
 
 With Cluster API on cloud providers we usually have location indicators in cluster resources, in various places. Each cloud provider uses their own identifier system, however they all make use of a string identifier. The proposed solution in this RFC would help simplify and unify location lookup for clusters by clients throughout cloud providers.
 
-In on-premises installations, no location information is currently available in Kubernetes resources. This RFC attempts to change that.
+In on-premises installations, no location information is currently available in Kubernetes resources. In metrics (Prometheis, Mimir) we annotate many series with a `region` label. However, in on-prem installations, the value for this label is always `onprem`. This RFC attempts to change that.
 
 ### Key assumptions
 
@@ -52,6 +52,7 @@ The solution proposed here consists of two parts:
 
 - Setting consistent metadata on clusters
 - Providing a default location ID system for on-prem customers
+- Setting the `region` label in metrics accordingly
 
 #### Consistent metadata on clusters
 
@@ -105,6 +106,14 @@ Component details:
 - `SUBDIVISION_CODE` is the code for a subdivision of the country, like it might makes sense for larger countries like the U. S. If CITY_NAME is specified, the SUBDIVISION_CODE must be given.
 - `CITY_NAME` is a concise form of the city name the cluster is hosted in, also optional.
 
+#### Setting the region label in metrics
+
+Currently the `region` label for on-premises installations always has the value `onprem`. In cloud installations, the label is set to the cloud region identifier.
+
+For both cloud and on-premises installations/clusters, we want the `region` label of metrics to be set according to the `topology.kubernetes.io/region` label of the cluster. For metrics regarding an application, the region label should represent the cluster the application is deployed to.
+
+For example, given a management cluster named `example-mc` in region `eu-de-hamburg` has an App resource to deploy an app in workload cluster `example-wc` that is located in region `eu-fr-pac-aix`, the application's metrics (if having a region label at all) should be labelled with `region="eu-fr-pac-aix"`.
+
 ### Alternative solutions
 
 - Instead of `topology.kubernetes.io/region`, we could specify our own label in the `giantswarm.io` namespace. The latter would make sense in case we wanted to mark that there would be some logical difference between these labels.
@@ -114,6 +123,8 @@ Component details:
 ### Implementation plan
 
 Team Honeybadger would assemble the default hierarchy, at least up to the second level (country), and partly up to the third level (subdivision code). We don't need global coverage with level three initially, as we can still extend our code table once new customers are onboarded or more locations are needed. The maintained code table should be applied as part of the cluster creation form(s), for quick location selection/entry.
+
+The observability side (metrics labelling) would have to be implemented separately by Team Atlas.
 
 The cluster-app may be extended, so that the values schema provides a dedicated field for the location label, similar to the service priority label.
 
