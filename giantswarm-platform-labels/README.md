@@ -1,9 +1,8 @@
 ---
-creation_date: 20XX-XX-XX
-issues:
-- https://github.com/giantswarm/giantswarm/issues/XXXXX
+creation_date: 2025-02-25
+issues: []
 owners:
-- https://github.com/orgs/giantswarm/teams/team-XXXXX
+- https://github.com/orgs/giantswarm/teams/sig-architecture
 state: review
 summary: XXXXX
 ---
