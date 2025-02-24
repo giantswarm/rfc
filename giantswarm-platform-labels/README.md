@@ -1,0 +1,55 @@
+---
+creation_date: 20XX-XX-XX
+issues:
+- https://github.com/giantswarm/giantswarm/issues/XXXXX
+owners:
+- https://github.com/orgs/giantswarm/teams/team-XXXXX
+state: review
+summary: XXXXX
+---
+
+# Title
+Standardizing Platform Component Labeling
+
+### Problem statement
+<!-- Explain the issue or challenge that needs to be addressed. This should include background information and context to help stakeholders understand why this decision is important. -->
+Currently, platform components are not labeled to indicate their belonging to specific subsystems. This lack of a standardized subsystem label creates some operational challenges.
+
+Firstly, subsystems composed of multiple applications lack a unified identifier. While individual applications are labeled, targeting an entire subsystem requires listing each application's specific label, leading to cumbersome and error-prone configurations. For example, network policies for DNS traffic must explicitly target both coredns and k8s-dns-node-cache, exposing the implementation details to customers.
+
+Secondly, changes in the underlying implementation of subsystems requires widespread label updates. When the prometheus-agent was migrated to alloy, the labels used for metric and log scraping had to be updated across various tools and documentation, requiring a transitional period where both old and new labels were maintained. This introduces unnecessary complexity and maintenance overhead.
+
+The absence of a generic subsystem label hinders our ability to target pods in a flexible and maintainable manner in NetworkPolicies or other operational tooling. This lack of abstraction exposes implementation details, increases maintenance burden, and complicates operational tasks. We have identified at least two key use cases where this issue is prominent: DNS traffic management and metric/log scraping during implementation changes. This issue impacts multiple applications and subsystems, highlighting the need for a standardized approach to subsystem labeling.
+
+### Decision maker
+<!-- Identify the person (preferred) or a group responsible for making the final decision. -->
+SIG-Architecture
+
+### Who is affected / stakeholders
+<!-- List the individuals, teams, or SIGs that will be impacted by this decision and must provide feedback. -->
+
+### Preferred solution
+<!-- Describe the solution that is currently favored based on the analysis of the problem. -->
+
+This RFC proposes introducing a label, `giantswarm.io/subsystem`, to identify pods belonging to specific platform subsystems. This label will enable us to target groups of pods based on their subsystem affiliation, simplifying operations and improving maintainability.
+
+Example Usage:
+
+To label pods belonging to the "dns" subsystem, the label would be applied as follows: `giantswarm.io/subsystem: dns`.
+
+Label Values:
+
+The `giantswarm.io/subsystem` label will utilize free-form text values. However, a documented list of currently used subsystem values will be maintained to ensure consistency and provide guidance. This list will be updated as new subsystems are introduced or existing ones evolve.
+
+Documentation:
+
+Comprehensive documentation will be created and maintained, outlining the purpose of the giantswarm.io/subsystem label, its usage, and the current list of recognized subsystem values. This documentation will be readily accessible to all relevant teams and will serve as the single source of truth for this labeling standard."
+
+### Alternative solutions
+<!-- Outline other potential solutions that were considered. For each alternative, provide a brief description and explain why it was not chosen as the preferred solution. -->
+
+### Implementation plan
+<!-- Detail the steps required to implement the preferred solution. This should include a timeline, resources needed, and any dependencies or risks associated with the implementation. -->
+
+### Communication plan
+<!-- Describe how the decision and its implementation will be communicated to stakeholders. -->
