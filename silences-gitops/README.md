@@ -26,7 +26,7 @@ This solution is laid out as follows:
 - Silence CRs common to all clusters are stored in the MCB repository, under the `bases/silences/` directory
 - Silence CRs added in MCB also need to be referenced in the `bases/silences/kustomization.yaml` file
 - Silence CRs specific to a cluster are stored in the corresponding CMC repository, under the `management-clusters/<management-cluster-name>/silences/` directory
-- Name collision between MCB and CMC Silences CRs is prevented by adding the special `global-` name prefix when deploying Silences CRs from the MCB repository
+- Name collision between MCB and CMC Silences CRs is prevented by adding the special `common-` name prefix when deploying Silences CRs from the MCB repository
 
 ![Silences GitOps Architecture](silences-gitops.png)
 
