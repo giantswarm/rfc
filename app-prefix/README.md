@@ -1,8 +1,8 @@
 ---
 creation_date: 2024-09-26
 issues:
-- https://github.com/giantswarm/workload-clusters-fleet/pull/802
-last_review_date: 2024-09-26
+- https://github.com/giantswarm/giantswarm/issues/31646
+last_review_date: 2025-03-10
 owners:
 - https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: review
@@ -27,11 +27,15 @@ We don't validate or mutate the app name via the management cluster API.
 
 ## Solution
 
+We decided to not enforce the cluster prefix but encourage customers to use it as good practice.
+
 ### API enforcement
 
-We could validate and enforce the name of the apps when deploying to the organization to avoid collisions and conflicts that can unexpectedly affect customers. That way, we could notify customers when they submit an app with no prefix or a prefix that does not match any existing cluster.
+- The app admission controller will validate the name of the apps when deploying to the organization namespace to avoid collisions and conflicts that can unexpectedly affect customers. 
 
-At the same time, we should unify the behavior across all the tools and commands (GitOps templates, kubectl and portal).
+- The app admission controller will warn the user when creating an application with no prefix or a prefix that does not match any existing cluster.
+
+- We unify the behavior across all the tools and commands. The kubectl gitops commands will no auto prefix the apps in a newer version.
 
 ## Alternatives
 
