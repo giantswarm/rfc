@@ -31,11 +31,11 @@ We decided to not enforce the cluster prefix but encourage customers to use it a
 
 ### API enforcement
 
-- The app admission controller will validate the name of the apps when deploying to the organization namespace to avoid collisions and conflicts that can unexpectedly affect customers. 
+- The app admission controller will validate the name of the apps when deploying to the organization namespace to avoid collisions and conflicts that can unexpectedly affect customers.
 
 - The app admission controller will warn the user when creating an application with no prefix or a prefix that does not match any existing cluster.
 
-- We unify the behavior across all the tools and commands. The kubectl gitops commands will no auto prefix the apps in a newer version.
+We unify the behavior across all the tools and commands. The kubectl's `gitops` commands will no longer auto prefix the apps in a newer version.
 
 ## Alternatives
 
