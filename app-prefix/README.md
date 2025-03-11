@@ -5,7 +5,7 @@ issues:
 last_review_date: 2025-03-10
 owners:
 - https://github.com/orgs/giantswarm/teams/team-honeybadger
-state: review
+state: approved
 summary: Decide whether the apps in CAPI cluster should have or not a prefix, and if we need to enforce it.
 ---
 
