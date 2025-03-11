@@ -4,7 +4,7 @@ issues:
 - https://github.com/giantswarm/roadmap/issues/3773
 owners:
 - https://github.com/orgs/giantswarm/teams/team-honeybadger
-state: review
+state: approved
 summary: This RFC describes the vision to evolve our current configuration management system to make it more flexible, reusable, locally reproducible and easier to extend in the future while making other parts of our platform slightly more simple.
 ---
 
