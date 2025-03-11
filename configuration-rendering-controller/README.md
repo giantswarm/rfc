@@ -300,7 +300,7 @@ we already have the keys deployed with this label to also be used by Flux `kusto
 
 If need be, we can support mounting the secrets manually and pointing the operator to the folder.
 
-Thus, since we start with a default logic, we do not have a `.spec.encryption` object in the CR for now. 
+Thus, since we start with a default logic, we do not have a `.spec.encryption` object in the CR for now.
 
 #### About .spec.destination
 
