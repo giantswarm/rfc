@@ -40,8 +40,8 @@ The current configuration structure is documented in details [here](https://intr
 
 Especially check out:
 
-- structure: <https://github.com/giantswarm/giantswarm/blob/main/content/docs/dev-and-releng/configuration-management/app-platform-configuration-management.jpg>
-- flow: <https://github.com/giantswarm/giantswarm/blob/main/content/docs/dev-and-releng/configuration-management/app-platform-flux-konfigure.jpg>
+- structure: <https://github.com/giantswarm/giantswarm/blob/2d47774e81ef14b060a8c2e10b07fa365fab4320/content/docs/dev-and-releng/configuration-management/app-platform-configuration-management.jpg>
+- flow: <https://github.com/giantswarm/giantswarm/blob/2d47774e81ef14b060a8c2e10b07fa365fab4320/content/docs/dev-and-releng/configuration-management/app-platform-flux-konfigure.jpg>
 
 In this proposal we are not going to change that structure, just the flow, so that we make it more widely accessible,
 flexible, easier to extend while also making other parts of our platform more simple.
@@ -213,6 +213,8 @@ It would potentially be best to not depend on Flux either, but since we already 
 need to do something very similar to fetch and assemble the sources, we could cut this corner now and keep
 using Flux.
 
+ℹ️ DECISION: We decided to use Flux for now as it is already implemented and a convenient way to pull the assembled CCR repo.
+
 There is potential to later implement custom DSL to describe how to merge configurations, which could make sense
 if we want to introduce many different layers in the future (catalogs, workload-cluster, app instance, etc. specific
 configs). For now, it makes sense to keep our current logic as is to reduce time to implement and friction.
@@ -233,40 +235,50 @@ spec:
       gitRepository:
         name: giantswarm-config
         namespace: flux-giantswarm
-  encryption:
-    sops:
-      keysDirectory: /mnt/sops
-    vault:
-      secretRef:
-        name: gauss-vault-configuration
-        namespace: giantswarm
   destination:
     namespace: giantswarm-configuration
+    naming:
+      suffix: ex1
+      prefix: test
+      useSeparator: true
   configuration:
     cluster:
       name: gauss
     applications:
-      regexMatchers:
-        - ".+"
+      includes:
+        exactMatchers:
+          - app-operator
+          - chart-operator
+          - no-such-operator
+        regexMatchers:
+          - ".+"
+      excludes:
+        exactMatchers:
+          - kvm-operator
+        regexMatchers:
+          - trivy.*
   reconciliation:
     interval: 5m
+    retryInterval: 1m
 status:
+  conditions:
+    - lastTransitionTime: "2024-12-18T12:20:12Z"
+      message: 'Attempted revision: 1fb7f4a0df83361cd85e7d5b21b7a02f0a825167'
+      observedGeneration: 42
+      reason: ReconciliationFailed
+      status: "False"
+      type: Ready
   failures:
-    - apiVersion: v1
-      kind: configmap
-      name: chart-operator-konfigure
-      namespace: giantswarm-configuration
+    - appName: app-operator
+      message: "secrets "test-app-operator-ex1" already exists"
+    - appName: chart-operator
       message: "Invalid Yaml at installations/gauss/apps/chart-operator/configmap.tmpl:42"
-  inventory:
-    entries:
-      - id: giantswarm-configuration_app-operator-konfigure__ConfigMap
-        v: v1
-      - id: giantswarm-configuration_app-operator-konfigure__Secret
-        v: v1
-      # ...
+  misses:
+    - no-such-operator
   lastAppliedRevision: 38be874bfa3d627bf70366bd3ae43ff9dcfb4fcf
   lastAttemptedRevision: 1fb7f4a0df83361cd85e7d5b21b7a02f0a825167
-  lastHandledReconcileAt: "2024-12-18T12:20:12.358526+01:00"
+  lastReconciledAt: "2024-12-18T12:20:12.358526+01:00"
+  observedGeneration: 42
 ```
 
 #### About .spec.sources
@@ -276,39 +288,19 @@ Like mentioned above, the sources could be potentially pulled in many different 
 We are currently utilizing Flux and its `include` feature to merge `shared-configs` and the CMC repository
 configuration. This technically has historic reasons dating back to `config-controller` on Vintage, therefore
 I would leave it open as an object to configure sources. Also keeping Flux for now could simplify implementation
-as we already have it done.
+as we already have it done. We will go with that and utilize Flux.
 
 Later we could simply add other ways to support fetching sources.
 
-#### About .spec.encryption.sops
+#### On encryption and SOPS keys
 
-Currently, we mount SOPS and point `konfigure` to the directory with the keys. We could keep it this way or have
-a list of Secret references here. Up for discussion, se an alternative approach for Vault in the following section.
+In `konfigure` there is logic to fetch keys from a local directory of from Kubernetes from secrets with the label
+`konfigure.giantswarm.io/data: sops-keys`. As a start we will go with the auto fetching from Kubernetes logic as
+we already have the keys deployed with this label to also be used by Flux `kustomize-controller`.
 
-#### About .spec.encryption.vault
+If need be, we can support mounting the secrets manually and pointing the operator to the folder.
 
-Although Vault is only used in Vintage, so we do can decide not to support this scenario. If we decide to do so however,
-the Vault configuration secret could look like:
-
-```yaml
-apiVersion: v1
-kind: Secret
-type: Opaque
-metadata:
-  name: gauss-vault-configuration
-  namespace: giantswarm
-stringData:
-  address: "https://vault.example.org:443"
-  certificates: |
-    -----BEGIN CERTIFICATE-----
-    # ...
-    -----END CERTIFICATE-----
-  token: "example"
-```
-
-Note: I am not super sure about how the certificates are actually handled for Vault on vintage. On vintage
-`kustomize-controller` instances they are mounted to the controller pod. Would need further research if this is the
-correct approach.
+Thus, since we start with a default logic, we do not have a `.spec.encryption` object in the CR for now. 
 
 #### About .spec.destination
 
@@ -330,6 +322,19 @@ spec:
         namespace: staging
 ```
 
+The `.spec.destination.naming` object contains information on the `.metadata.name` of the generated resources. We
+should impose limitation on the length of the prefix and the suffix, cos the generated name should look like this
+in the end: `<PREFIX>-<APP_NAME>-<SUFFIX>`. Both config maps and secrets must follow the DNS subdomain name restriction:
+https://kubernetes.io/docs/concepts/overview/working-with-objects/names/#dns-subdomain-names
+
+See:
+- https://kubernetes.io/docs/concepts/configuration/configmap/#configmap-object
+- https://kubernetes.io/docs/concepts/configuration/secret/#restriction-names-data
+
+The `.spec.destination.naming.useSeparator` is turned on by default and means adding the `-` character between the parts.
+It cannot be controller separately for prefix and suffix. You could still disable it and add the `-` to only one of them
+if really need be.
+
 #### About .spec.configuration
 
 This is the section that defines scope. By default, I would recommend that the scope is empty. All configuration
@@ -343,9 +348,11 @@ it here then let's say as an operator configuration. If a user can present the S
 allow rendering configs for another cluster as well. This could be very practical for testing and debugging purposes
 as well. And since we already did the config split migration, a given CCR repository only contains customer configs.
 
-The `.applications` folder adds items to the scope from `installations/{NAME}/apps` folders if the CMC repos.
+The `.applications` node adds items to the scope from `installations/{NAME}/apps` folders if the CMC repos.
 
-I would recommend supporting multiple different kind of "matchers" for flexibility:
+We should support both `includes` and `excludes`.
+
+For both objects, I would recommend supporting multiple different kind of "matchers" for flexibility:
 
 - `regexMatchers`
   - It is a list of regular expressions, potentially conforming: <https://github.com/google/re2/wiki/Syntax>.
@@ -354,6 +361,37 @@ I would recommend supporting multiple different kind of "matchers" for flexibili
 - `exactMatches`
   - This could be a list of string for the folders to include. Could be for a concrete list of apps or potentially
     just a single app if needed. For example: `["prometheus", "loki", "grafana"]`
+
+The logic would be:
+
+- list all possible apps in the fetched source
+- add all apps from the full set that matches any `.spec.configuration.applications.includes.exactMatchers` to the result set
+- add all apps from the full set that matches any of the `.spec.configuration.applications.includes.regexMatchers`
+- remove all apps from the result set that matches any `.spec.configuration.applications.exlcudes.exactMatchers`
+- remove all apps from the result set that matches any `.spec.configuration.applications.exlcudes.regexMatchers`
+- the result set is finished
+- also return a list of misses later recoded in `.status.misses`, that is a list of `.spec.configuration.applications.includes.exactMatchers`,
+  that did not result in a hit on the list of all possible apps
+
+##### Labelling the generated resources
+
+We should add the following labels to all generated resources to identify their owner (owner reference are bound to the
+same namespace for owner and owned resource). These can also be used within the controller for conflict detection, when
+for example multiple config resources would try to manage the same generated resource.
+
+```yaml
+labels:
+  configuration.giantswarm.io/generated-by: konfigure-operator
+  configuration.giantswarm.io/ownerApiGroup: konfigure.giantswarm.io
+  configuration.giantswarm.io/ownerApiVersion: v1alpha1
+  configuration.giantswarm.io/ownerKind: ManagementClusterConfiguration
+  configuration.giantswarm.io/ownerName: gauss-configuration
+  configuration.giantswarm.io/ownerNamespace: giantswarm
+  configuration.giantswarm.io/revision: 38be874bfa3d627bf70366bd3ae43ff9dcfb4fcf
+```
+
+Note that `configuration.giantswarm.io/ownerApiVersion` should not be part of the collision detection to allow
+upgrades on the CRD.
 
 ### About .status
 
@@ -377,6 +415,9 @@ status:
       # ...
 ```
 
+ℹ️ DECISION: We decided to discard the inventory and only record `failures` and `misses`. We should be able to easily
+query the generated resources via the added labels.
+
 For an overview of when and what version was last reconciled we have:
 
 ```yaml
@@ -397,15 +438,12 @@ In case of failures, when `lastAttemptedRevision` does not match `lastAppliedRev
 list each individual failures and the reason for the failure: `.status.failures`. It is a list of objects
 with the following fields:
 
-- `apiVersion`: GVK of the resource.
-- `kind`: Kind of the resource.
-- `name`: Name of the resource.
-- `namespace`: Namespace of the resource.
+- `name`: Name of the app.
 - `message`: Detailed error message about the failure.
 
 We should be able to assume the failure took place at `.status.lastHandledReconcileAt` and at revision `.status.lastAttemptedRevision`.
 
-Optionally we could have `conditions` as the generic kubernetes object status list, for example:
+We should have `conditions` as the generic kubernetes object status list, for example:
 
 ```yaml
 status:
@@ -431,33 +469,21 @@ status:
       type: Ready
 ```
 
+In case not the generation failed but setting up `konfigure` for generation, e.g. the referenced `source-controller`,
+or the source not found, or the SOPS environment failed to set up, we should have another `reason` here, for example
+called `SetupFailed` and then `message` contains information on how did it fail.
+
 This could be a simple and convenient place to check and setup alerts based on when the overall status is
 not healthy for the CR, e.g. not all items for successfully generated. Tho checking for failures list might
 work as well, tho that is rather for details for easier debugging within the cluster.
-
-#### About metadata on generated resources
-
-Generated resources should contain metadata labels / annotations about the generation process, for example:
-
-```text
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  labels:
-    configuration.giantswarm.io/generated-by: config-generator-controller
-    configuration.giantswarm.io/ownerKind: ManagementClusterConfiguration
-    configuration.giantswarm.io/ownerName: gauss-configuration
-    configuration.giantswarm.io/ownerNamespace: giantswarm
-    configuration.giantswarm.io/revision: 1fb7f4a0df83361cd85e7d5b21b7a02f0a825167
-  name: app-operator-konfigure
-  namespace: giantswarm-configuration
-```
 
 #### About .reconciliation
 
 This section should contain information on how to reconcile the CR and the generated resources potentially.
 
 For a start we can have `.inteval` here in Go duration format.
+
+For retry on failure, we support `.retryInterval`, also in Go duration format.
 
 We could support deletion policies like delete / orphan here later.
 
@@ -468,6 +494,10 @@ TBD:
 - multiple resource are potentially matched within a single CR's scope. Should / can we make it parallel to reconcile
   these or should we go with go routine and merge the results back?
 - logic for deleting / orphaning resources in the inventory?
+- Kubernetes is not designed for "transactions", e.g. what if the generation is ok, the config map applies, but the
+  secret apply times out? Is it okay to live wit this slim chance and on the next reconciliation the secret will apply
+  as well if it was an intermittent issue? Should we support complex roll back logic? What if the rollback times out
+  and so on?
 
 ### Migrating `collection` repositories
 
