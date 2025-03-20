@@ -4,7 +4,7 @@ issues: []
 owners:
 - https://github.com/orgs/giantswarm/teams/sig-architecture
 state: review
-summary: XXXXX
+summary: This RFC proposes a new label to identify pods by their platform subsystem, aiming to simplify operations and maintenance. The label will use free-form text values, with a documented list of common values. Implementation includes adding the label to a repository and documentation.
 ---
 
 # Title
