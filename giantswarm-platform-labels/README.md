@@ -30,15 +30,15 @@ SIG-Architecture
 ### Preferred solution
 <!-- Describe the solution that is currently favored based on the analysis of the problem. -->
 
-This RFC proposes introducing a label, `giantswarm.io/subsystem`, to identify pods belonging to specific platform subsystems. This label will enable us to target groups of pods based on their subsystem affiliation, simplifying operations and improving maintainability.
+This RFC proposes introducing a label, `platform.giantswarm.io/subsystem`, to identify pods belonging to specific platform subsystems. This label will enable us to target groups of pods based on their subsystem affiliation, simplifying operations and improving maintainability.
 
 Example Usage:
 
-To label pods belonging to the "dns" subsystem, the label would be applied as follows: `giantswarm.io/subsystem: dns`.
+To label pods belonging to the "dns" subsystem, the label would be applied as follows: `platform.giantswarm.io/subsystem: dns`.
 
 Label Values:
 
-The `giantswarm.io/subsystem` label will utilize free-form text values. However, a documented list of currently used subsystem values will be maintained to ensure consistency and provide guidance. This list will be updated as new subsystems are introduced or existing ones evolve.
+The `platform.giantswarm.io/subsystem` label will utilize free-form text values. However, a documented list of currently used subsystem values will be maintained to ensure consistency and provide guidance. This list will be updated as new subsystems are introduced or existing ones evolve.
 
 Documentation:
 
