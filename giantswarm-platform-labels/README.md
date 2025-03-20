@@ -48,7 +48,7 @@ Documentation on the purpose, usage, and values of the subsystem label will be a
 <!-- Outline other potential solutions that were considered. For each alternative, provide a brief description and explain why it was not chosen as the preferred solution. -->
 Some alternative label names are available that, to some extent, represent the goal of this document.
 
-- giantswram.io/component
+- giantswarm.io/component
 - giantswarm.io/feature
 - giantswarm.io/characteristic
 
