@@ -42,13 +42,24 @@ The `platform.giantswarm.io/subsystem` label will utilize free-form text values.
 
 Documentation:
 
-Comprehensive documentation will be created and maintained, outlining the purpose of the giantswarm.io/subsystem label, its usage, and the current list of recognized subsystem values. This documentation will be readily accessible to all relevant teams and will serve as the single source of truth for this labeling standard."
+Documentation on the purpose, usage, and values of the subsystem label will be added to the **Kubernetes resource annotation reference** documentation page and to the [k8smetadata package](https://github.com/giantswarm/k8smetadata/).
 
 ### Alternative solutions
 <!-- Outline other potential solutions that were considered. For each alternative, provide a brief description and explain why it was not chosen as the preferred solution. -->
+Some alternative label names are available that, to some extent, represent the goal of this document.
+
+- giantswram.io/component
+- giantswarm.io/feature
+- giantswarm.io/characteristic
+
+Upstream labels have also been suggested, in particular [app.kubernetes.io/part-of](https://kubernetes.io/docs/reference/labels-annotations-taints/#app-kubernetes-io-part-of).
 
 ### Implementation plan
 <!-- Detail the steps required to implement the preferred solution. This should include a timeline, resources needed, and any dependencies or risks associated with the implementation. -->
+
+1. Add label to github.com/giantswarm/k8smetadata
+2. Document label in docs.giantswarm.io
+3. Implement label where desired
 
 ### Communication plan
 <!-- Describe how the decision and its implementation will be communicated to stakeholders. -->
