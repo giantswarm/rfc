@@ -13,7 +13,7 @@ For Giant Swarm staff this is currently done via Dex using GitHub as the _only_ 
 Our vintage product also offers the possibility to create a client certificate to access the management cluster.
 This means that in the event of GitHub or Dex being unavailable, we have a fall-back method for management cluster access.
 
-For pure CAPI installations on the other hand, the only fallback authentication method is a single static kubeconfig that is stored in LastPass.
+For pure CAPI installations on the other hand, the only fallback authentication method is a single static kubeconfig that is stored in 1Password.
 Since this method is currently not integrated with our tooling, accessing the management cluster using `opsctl` is not possible when there are problems with OIDC or GitHub.
 
 Furthermore, loss of access to the management clusters implies loss of access to all workload clusters that do not have OIDC access for Giant Swarm staff set up.
@@ -22,7 +22,7 @@ At this moment this likely applies to all workload clusters on pure CAPI install
 
 However, even if OIDC access to workload clusters was set up, with GitHub as the identity provider, we would still have the IdP as the single point of failure.
 
-Hence the goal of this RFC is to ensure that management cluster access is highly available for operations through Giant Swarm staff in the future.
+Hence, the goal of this RFC is to ensure that management cluster access is highly available for operations through Giant Swarm staff in the future.
 
 ## References
 
@@ -39,9 +39,9 @@ Hence the goal of this RFC is to ensure that management cluster access is highly
 - Azure AD as the primary identity provider
 - Secondary identity provider
 
-### Enable opsctl to retrieve kubeconfig from LastPass
+### Enable opsctl to retrieve kubeconfig from 1Password
 
-For Giant Swarm staff, the `opsctl login` command is the preferred way to access the management cluster. In the future we aim to improve the command by letting it read the kubeconfig stored in a LastPass secret.
+For Giant Swarm staff, the `opsctl login` command is the preferred way to access the management cluster. In the future we aim to improve the command by letting it read the kubeconfig stored in a 1Password secret.
 
 ## Future outlook
 
@@ -54,7 +54,7 @@ At the moment this is not the case for the CAPI product.
 
 - This method of authentication is completely separate from SSO and does not have shared dependencies.
 - As of now, client certificate creation is harder to monitor and control than SSO.
-- Client certificates should be short lived and therefore would need to be recreated by users frequently.
+- Client certificates should be short-lived and therefore would need to be recreated by users frequently.
 - A long living client-certificate granting admin access is a security risk since permissions can not be revoked.
 - We do not want this to be the primary authentication method for human users. (That should remain SSO)
 - If we want to support this, we need to decide whether we want to use vault or something else.
@@ -65,41 +65,41 @@ Possible story for workload cluster access here:
 - This would make MC and WC more independent
 - Requirement to have clean separation of customer accounts
 
-### Storing kubeconfig in LastPass
+### Storing kubeconfig in 1Password
 
-In the CAPI product, a kubeconfig is stored in LastPass as an emergency fallback, during the bootstrap process.
+In the CAPI product, a kubeconfig is stored in 1Password as an emergency fallback, during the bootstrap process.
 
 - This method of authentication is completely separate from SSO and does not have shared dependencies.
-- It is not integrated in our tooling and we need to pull the kubeconfig using lastpass cli.
-- As it is right now, access is neither easily revokable nor is there a rotation.
+- It is not integrated in our tooling, and we need to pull the kubeconfig using 1Password cli.
+- As it is right now, access is neither easily revocable nor is there a rotation.
 - In case of a security threat this implies rotating the api server CA and all certificates.
 - Since it is already integrated, it makes sense to keep it for emergencies while there is no alternative.
 - If we want to support this for a longer time we need to improve security.
-- We could support this as fallback method in `opsctl login` by managing access to lastpass.com or calling the `lastpass` CLI to ease operations.
+- We could support this as fallback method in `opsctl login` by managing access to 1password.com or calling the 1Password `op` CLI to ease operations.
 
 Possible story for workload cluster access here:
-- Use a controller on the MC to push WC client certificiates to lastpass
+- Use a controller on the MC to push WC client certificiates to 1Password
 - This would make MC and WC more independent
-- Would enable rotation of short lived certificates
-- Alternatively we could write the secret to a gitrepo via `sops` instead of using `lastpass`
+- Would enable rotation of short-lived certificates
+- Alternatively we could write the secret to a gitrepo via `sops` instead of using `op` (1Password CLI)
 
 ### Introduce a second identity provider for SSO
 
-Dex supports a wide array of identity providers. Customers are already using many of them. At the present moment, giant swarm staff can only login using github.
+Dex supports a wide array of identity providers. Customers are already using many of them. At the present moment, Giant Swarm staff can only login using GitHub.
 However, we could add more providers.
 
 - We favor SSO when it comes to identity management for human engineers.
 - Could be introduced for workload cluster access as well.
 - Using e.g. azure AD would make sense since customers are using it.
-- We might be able to simplify account automation when using another identity provider than github.
+- We might be able to simplify account automation when using another identity provider than GitHub.
 - We would still have a dependency on dex and this method will not completely remove the single point of failure.
-- Adding another provider might mean individual setup for each existing configuration. (e.g. in github individual apps are needed) We should avoid this if possible since it already does not scale.
+- Adding another provider might mean individual setup for each existing configuration. (e.g. in GitHub individual apps are needed) We should avoid this if possible since it already does not scale.
 - While dex allows an array of connectors, we currently use a fixed naming for our single `giantswarm` connector. We need to revisit what relies on this convention to ensure the second connector is equal.
 - Regardless of other means auf authentication being implemented, adding another dex idp would be beneficial.
 
 ### Other methods
 
-For the time being we focus on above mentioned means of authentication.
+For the time being we focus on above-mentioned means of authentication.
 Service account tokens are another one which we could revisit in the future. However, to authenticate human users, SSO is preferred.
 
 ### Related stories
@@ -138,11 +138,11 @@ This can be done in rainbow independently of new developments in terms of pki fo
 - Proposed connector name: `giantswarm-ad`. We want to use the same pattern for other connectors. Adding or removing another connector should be repeatable and fairly simple
 - Configuration on the azure side (application, groups, users)
 - This provider will be the first one supported by above automation.
-- Later: Add another connector and deprecating github
+- Later: Add another connector and deprecating GitHub
 
-### Revisiting lastpass as a fallback
+### Revisiting 1Password as a fallback
 
-We already use lastpass as a fallback and we should keep it if possible. However, we should integrate it better.
+We already use 1Password as a fallback, and we should keep it if possible. However, we should integrate it better.
 
 - Think about how to limit duration and renew it more often.
 - Include this fallback option in `opsctl login`
@@ -155,5 +155,5 @@ We want to unify the way we authenticate to services. This also means deprecatin
 
 ### PKI story and future of client certificates
 
-This is largely reliant on the development of the CAPI product. Therefore we want to focus on SSO first and revisit client certificates at a later point in time.
-Since we still have vault in the vintage product and use other fallback methods (lastpass) in CAPI, we can afford to wait.
+This is largely reliant on the development of the CAPI product. Therefore, we want to focus on SSO first and revisit client certificates at a later point in time.
+Since we still have vault in the vintage product and use other fallback methods (1Password) in CAPI, we can afford to wait.
