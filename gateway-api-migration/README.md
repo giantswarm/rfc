@@ -6,7 +6,7 @@ owners:
 - https://github.com/orgs/giantswarm/teams/team-cabbage
 state: review
 summary: |
-    TBD
+    The RFC addresses the challenges of migrating from the current Ingress-based traffic management to the more modern Gateway API.
 ---
 
 # Title
@@ -15,16 +15,18 @@ Resource migration from Ingress to Gateway API
 
 ### Problem statement
 <!-- Explain the issue or challenge that needs to be addressed. This should include background information and context to help stakeholders understand why this decision is important. -->
-Migrating from Ingress to Gateway API is a significant change that requires careful consideration of the features and compatibility between implementations.
+Our customers rely on Ingress for managing external access to their Kubernetes clusters. While Ingress has served well, the Gateway API offers a more expressive, extensible, and role-oriented approach to traffic management. However, migrating from Ingress to Gateway API presents several key challenges that require careful consideration.
+This document is focused on three elements related to the actual translation between Ingress resources and Gateway API resources.
 
 #### Feature parity
-Not all features covered by Ingress implementations are available in the Gateway API specification. This means that those missing features must be translated to Gateway API implementation-specific custom resources.
+The Gateway API, while promising, does not yet cover the entire feature set available in various Ingress controller implementations. Addressing this gap involves translating these missing features (annotations) into implementation-specific Custom Resource (CRs) for our chosen Gateway API controller.
 
-#### Ecosystem
-Adoption of the Gateway API has not been consistent across the traffic management ecosystem, and there is a significant disparity in the maturity level of supporting tooling.
+#### Ecosystem maturity
+The ecosystem surrounding the Gateway API is still evolving. Tools like cert-manager or external-dns are still in the early stages of adoption of the new API and support is not mature.
 
-#### Mantenance and change management
-As the features and tools mature, the need for specific CRs that cover certain features can change.
+#### Maintenance and change management
+As the Gateway API specification matures and the capabilities evolve, the specific CRDs and configurations required to achieve feature parity with our current Ingress setup are also likely to change.
+
 
 ### Decision maker
 <!-- Identify the person (preferred) or a group responsible for making the final decision. -->
@@ -33,21 +35,21 @@ SIG Architecture
 
 ### Preferred solution
 <!-- Describe the solution that is currently favored based on the analysis of the problem. -->
-As a first option, we propose developing a kubectl-gs template subcommand that receives an Ingress as input and outputs an HTTPRoute plus all the other CRs needed to cover the Ingress features.
+Our initial approach to address the challenges of migrating from Ingress to Gateway API is to develop a kubectl-gs template subcommand. This tool would take an existing Ingress resource as input and generate a set of Gateway API resources, primarily an HTTPRoute, along with any necessary supplementary Custom Resource (CRs) required to replicate the functionality defined in the original Ingress.
 
-This option has the advantage that we can include all the CRs we consider necessary, e.g., Envoy Gateway CRs, Certificates, DNSEndpoints, all based on the annotations the original Ingress had, solving both feature parity problems and the ecosystem maturity issue.
+The key advantage of this strategy is that it provides us with a high degree of control over how Ingress features are translated into the Gateway API ecosystem. By directly generating the required CRs, including those specific to our chosen Gateway API implementation (e.g., Envoy Gateway CRs), as well as related resources like Certificates and DNSEndpoints, based on the annotations present in the original Ingress, we can effectively bridge the feature parity gap and address the current variability in ecosystem maturity. 
 
-The main disadvantage is that this solution moves the maintenance burden to the customers, as they will need to keep the CRs up to date with the latest features and changes in the Gateway API specification.
+However, a consideration is that this approach places the maintenance of these generated resources with our customers. They will be responsible for updating the generated manifests to incorporate new Gateway API features, adapt to specification changes, and potentially manage the lifecycle of the supplementary CRs.
 
 ### Alternative solutions
 <!-- Outline other potential solutions that were considered. For each alternative, provide a brief description and explain why it was not chosen as the preferred solution. -->
 
-The main alternative we considered was creating an operator that handles all the extra resources around the Gateway API CRs. This operator would be responsible for creating and maintaining the extra resources needed to cover the Ingress features.
+The main alternative we considered was to create an operator that manages the additional resources required by our implementation. This operator would be responsible for the creation and maintenance of the supplementary resources necessary to achieve feature parity with Ingress.
 
-There are two options for implementing this operator:
+There are two potential implementation options for this operator:
 
-1. Keeping the original annotations of the Ingress in the HTTPRoute and creating the extra CRs based on those annotations.
-2. Creating a companion CRD that users would use to specify the features and create the extra CRs based on that.
+1. An operator that observes HTTPRoute resources and creates the necessary extra CRs based on annotations present in the HTTPRoute.
+2. An operator that watches a new, companion CR defined by us, which users would use to specify the desired features, and then creates the corresponding extra CRs based on the specifications in this custom resource.
 
 ### Implementation plan
 <!-- Detail the steps required to implement the preferred solution. This should include a timeline, resources needed, and any dependencies or risks associated with the implementation. -->
