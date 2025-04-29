@@ -5,8 +5,7 @@ issues:
 owners:
 - https://github.com/orgs/giantswarm/teams/team-cabbage
 state: review
-summary: |
-    The RFC addresses the challenges of migrating from the current Ingress-based traffic management to the more modern Gateway API.
+summary: The RFC addresses the challenges of migrating from the current Ingress-based traffic management to the more modern Gateway API.
 ---
 
 # Title
@@ -37,7 +36,7 @@ SIG Architecture
 <!-- Describe the solution that is currently favored based on the analysis of the problem. -->
 Our initial approach to address the challenges of migrating from Ingress to Gateway API is to develop a kubectl-gs template subcommand. This tool would take an existing Ingress resource as input and generate a set of Gateway API resources, primarily an HTTPRoute, along with any necessary supplementary Custom Resource (CRs) required to replicate the functionality defined in the original Ingress.
 
-The key advantage of this strategy is that it provides us with a high degree of control over how Ingress features are translated into the Gateway API ecosystem. By directly generating the required CRs, including those specific to our chosen Gateway API implementation (e.g., Envoy Gateway CRs), as well as related resources like Certificates and DNSEndpoints, based on the annotations present in the original Ingress, we can effectively bridge the feature parity gap and address the current variability in ecosystem maturity. 
+The key advantage of this strategy is that it provides us with a high degree of control over how Ingress features are translated into the Gateway API ecosystem. By directly generating the required CRs, including those specific to our chosen Gateway API implementation (e.g., Envoy Gateway CRs), as well as related resources like Certificates and DNSEndpoints, based on the annotations present in the original Ingress, we can effectively bridge the feature parity gap and address the current variability in ecosystem maturity.
 
 However, a consideration is that this approach places the maintenance of these generated resources with our customers. They will be responsible for updating the generated manifests to incorporate new Gateway API features, adapt to specification changes, and potentially manage the lifecycle of the supplementary CRs.
 
