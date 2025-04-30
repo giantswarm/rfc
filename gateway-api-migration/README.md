@@ -43,12 +43,20 @@ However, a consideration is that this approach places the maintenance of these g
 ### Alternative solutions
 <!-- Outline other potential solutions that were considered. For each alternative, provide a brief description and explain why it was not chosen as the preferred solution. -->
 
+#### Operator-based approach
+
 The main alternative we considered was to create an operator that manages the additional resources required by our implementation. This operator would be responsible for the creation and maintenance of the supplementary resources necessary to achieve feature parity with Ingress.
 
 There are two potential implementation options for this operator:
 
 1. An operator that observes HTTPRoute resources and creates the necessary extra CRs based on annotations present in the HTTPRoute.
 2. An operator that watches a new, companion CR defined by us, which users would use to specify the desired features, and then creates the corresponding extra CRs based on the specifications in this custom resource.
+
+#### Upstream solutions
+
+The official migration tool is [ingress2gateway](https://github.com/kubernetes-sigs/ingress2gateway) but it doesn't cover exactly our use case:
+- It doesn't support the Envoy Gateway CRs.
+- It outputs generic Gateways and HTTPRoutes that don't conform with our implementation.
 
 ### Implementation plan
 <!-- Detail the steps required to implement the preferred solution. This should include a timeline, resources needed, and any dependencies or risks associated with the implementation. -->
