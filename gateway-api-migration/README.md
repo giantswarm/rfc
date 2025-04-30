@@ -56,6 +56,7 @@ There are two potential implementation options for this operator:
 
 The official migration tool is [ingress2gateway](https://github.com/kubernetes-sigs/ingress2gateway) but it doesn't cover exactly our use case:
 - It doesn't support the Envoy Gateway CRs.
+- It doesn't support the ecosystem CRs (cert-manager, external-dns).
 - It outputs generic Gateways and HTTPRoutes that don't conform with our implementation.
 
 ### Implementation plan
