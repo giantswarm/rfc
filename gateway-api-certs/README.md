@@ -47,9 +47,3 @@ TBD
 ### Communication plan
 TBD
 
-
-
-
-### Problem statement
-<!-- Explain the issue or challenge that needs to be addressed. This should include background information and context to help stakeholders understand why this decision is important. -->
-Adoption of a Gateway API implementation and replacing Ingress requires of architactural decisions and stablishing different ways of handling the different componets.
