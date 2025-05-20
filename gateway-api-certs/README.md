@@ -46,4 +46,3 @@ TBD
 
 ### Communication plan
 TBD
-
