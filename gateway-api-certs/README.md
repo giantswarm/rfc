@@ -5,8 +5,7 @@ issues:
 owners:
 - https://github.com/orgs/giantswarm/teams/team-cabbage
 state: review
-summary: |
-    This RFC describes the Gateway API certificates issues.
+summary: This RFC describes the Gateway API certificates issues.
 ---
 
 # Title
