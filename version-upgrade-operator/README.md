@@ -135,8 +135,15 @@ The relevant Flux objects used for version discovery (once again, might be chang
 # potentially ImageRepository CR can be auto-generated
 ---
 
-apiVersion: image.toolkit.fluxcd.io/v1beta2 kind: ImageRepository metadata: name: trivy spec: image:
-myregistry/trivy interval: 1h provider: generic status:
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: trivy
+spec: 
+  image: myregistry/trivy 
+  interval: 1h 
+  provider: generic 
+status: {}
 
 # ...
 
