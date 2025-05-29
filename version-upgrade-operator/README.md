@@ -6,8 +6,7 @@ last_review_date: 2025-05-29
 owners:
 - https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: review
-summary:
-  We need to propose a solution that will allow our customers and us to configure automated app upgrades, including cluster apps, according to a pre-defined policy, that must include time (schedule) and version restrictions.
+summary: We need to propose a solution that will allow our customers and us to configure automated app upgrades, including cluster apps, according to a pre-defined policy, that must include time (schedule) and version restrictions.
 ---
 
 # Automatic app upgrades
