@@ -1,12 +1,15 @@
 ---
 creation_date: 2025-05-29
 issues:
-- https://github.com/giantswarm/roadmap/issues/4001
+  - https://github.com/giantswarm/roadmap/issues/4001
 last_review_date: 2025-05-29
 owners:
-- https://github.com/orgs/giantswarm/teams/team-honeybadger
+  - https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: review
-summary: We need to propose a solution that will allow our customers and us to configure automated app upgrades, including cluster apps, according to a pre-defined policy, that must include time (schedule) and version restrictions.
+summary:
+  This RFC presents a solution that will allow our customers and us to configure automated app upgrades,
+  including cluster apps, according to a pre-defined policy, that includes time schedule and version
+  restrictions.
 ---
 
 # Automatic app upgrades
@@ -107,15 +110,19 @@ In case of GitOps deployments of App CRs, we have to change all the CRs so that 
 version field of the App CR and doesn't fight with `version-upgrade-operator` to set it. This might also need
 some changes in `app-operator` and/or `app-admission-controller`.
 
-With `HelmReleases`, the problem is that when no version is provided, it will default to `latest`. To solve
-this issue, `VUO` will by default inject a version in any newly discovered target object, even if it's outside
-of an upgrade window, assuming the following conditions are met:
+With `HelmReleases`, the problem is that when no version is provided, it will default to `latest`. It means,
+that when you add a new `HelmRelease` to your GitOps repo, without setting the version, the version will be
+set to `latest` and then the app will be installed (if only the `latest` tag exists). To solve this issue,
+`VUO` will by default inject a pre-configured application version in any newly discovered target object, even
+if it's outside of an upgrade window, assuming the following conditions are met:
 
 - there's no value in the target's version property or it is `latest`
 - the upgrade CR has an optional `defaultVersion` field configured.
 
-If you need to avoid installing (or attempting installation) of the `latest` version (might happen between
-deploying an object and our new operator setting the new version), you might need to first commit the target
+Still, the feature above might result in an app being first installed with the `latest` tag and only later
+downgraded to the correct version resulting from its automated version upgrade policy. This might be a
+problem, as not all apps correctly handle downgrades and may break in the process. If you need to avoid
+installing (or attempting installation) of the `latest` version, you might need to first commit the target
 object into repository with a flag like `suspend: True` and flip this flag only after the initial version is
 set.
 
@@ -139,10 +146,10 @@ apiVersion: image.toolkit.fluxcd.io/v1beta2
 kind: ImageRepository
 metadata:
   name: trivy
-spec: 
-  image: myregistry/trivy 
-  interval: 1h 
-  provider: generic 
+spec:
+  image: myregistry/trivy
+  interval: 1h
+  provider: generic
 status: {}
 
 # ...
@@ -204,15 +211,15 @@ spec:
     #
     # timeStart: time the window starts, in the format "HH:MMZ" (24-hour clock) (UTC).
     #
-    # length: how long is the upgrade window opening.
+    # duration: how long is the upgrade window opening.
     #
     # timezone: (Optional) according to which TZ. It's UTC by default.
     - dayOfWeek: Mon
       timeStart: "02:34Z"
-      length: 10m
+      duration: 10m
     - dayOfMonth: "1,11,21"
       timeStart: "02:34Z"
-      length: 60m
+      duration: 60m
       timezone: "Europe/Berlin"
 
   # Here are possible combinations of values.
@@ -230,7 +237,7 @@ spec:
   #   upgradeWindows:
   #     - dayOfWeek: '*'  # on all days
   #       timeStart: "04:00Z" # at 4:00 UTC
-  #       length: 10m0s
+  #       duration: 10m0s
   #
   # 3. Reconcile CR target only within the [04:00, 04:20)
   #    time window *and* after 2025.05.05 05:05.
@@ -240,7 +247,7 @@ spec:
   #   upgradeWindows:
   #     - dayOfWeek: '*'  # on all days
   #       timeStart: "04:00Z" # at 4:00 UTC
-  #       length: 20m # for 20 minutes
+  #       duration: 20m # for 20 minutes
   #
   # 4. Reconcile CR target only within the "[04:00, 04:20) on the first Monday of a month"
   #    time window *and* after 2025.05.05 05:05.
@@ -251,7 +258,7 @@ spec:
   #     - dayOfWeek: Mon
   #       dayOfMonth: 1-7  # there can be only 1 Monday between 1st and 7th of a month
   #       timeStart: "04:00Z" # at 4:00 UTC
-  #       length: 20m # for 20 minutes
+  #       duration: 20m # for 20 minutes
 ```
 
 #### Version upgrade configuration
@@ -394,8 +401,8 @@ status: # (still being discussed)
     # window during which upgrades are permitted according to the spec.
     nextUpgradeWindowStartTime: "2025-04-16T04:00:00Z" # Calculated from schedule
     # nextUpgradeWindowEnd provides the calculated end time of that next window.
-    # (Typically start time + length)
-    nextUpgradeWindowEndTime: "2025-04-16T04:05:00Z" # Calculated from startTime + length
+    # (Typically start time + duration)
+    nextUpgradeWindowEndTime: "2025-04-16T04:05:00Z" # Calculated from startTime + duration
     # lastCheckTime records when the schedule source was last checked.
     lastCheckTime: "2025-04-15T09:10:10Z"
 
