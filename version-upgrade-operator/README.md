@@ -467,7 +467,7 @@ status: # (still being discussed)
         status: WriteError # Unknown, ObjectNotFound, FieldNotFound, WriteError (when read only)
 ```
 
-### How to know my resources is under auto-upgrade management?
+#### How to know my resources is under auto-upgrade management?
 
 Target objects must be able to easily identify that they are under management by a VUC. This is gonna be done
 using labels and annotations. This will be also used to detect and resolve conflicting VUC ownership.
@@ -480,6 +480,137 @@ metadata:
   annotations:
     vuc.giantswarm.io/last-update-time: "2025-04-14T04:03:00Z" # allows to check when a version was last applied and detect stale management of a VUC
     vuc.giantswarm.io/last-update-version: "v1.2.3" # allows to check what was the last automatically set version, which might be already different than a version currently set
+```
+
+#### Full usage example
+
+Objects provided by a user to deploy an app, a regular scenario:
+
+```yaml
+apiVersion: source.toolkit.fluxcd.io/v1beta2
+kind: HelmRepository
+metadata:
+  name: trivy
+  namespace: org-testorg
+spec:
+  url: https://charts.aquasec.com
+  interval: 1h
+---
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: cluster1-trivy
+  namespace: org-testorg
+  labels:
+    app: trivy
+    stage: production
+spec:
+  chart:
+    spec:
+      chart: trivy
+      version: "latest"
+      sourceRef:
+        kind: HelmRepository
+        name: trivy
+  # ... other fields ...
+```
+
+Now, a user wants to add automatic scheduled upgrades for the application.
+
+Firs step, we define how to find the most recent relevant tag we need (for the app's helm chart). The `ImageRepository` can be skipped and reused if it already exists:
+
+```yaml
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImageRepository
+metadata:
+  name: trivy-chart
+  namespace: org-testorg
+spec:
+  image: https://charts.aquasec.com/trivy
+  interval: 1h
+  provider: generic
+---
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: trivy-rc
+  namespace: org-testorg
+spec:
+  imageRepositoryRef:
+    name: trivy-chart
+  policy:
+    semver:
+      range: ">=1.0.0"
+    filterTags:
+      pattern: ".*-rc.*"
+```
+
+Now, we either create or reuse a schedule we want:
+
+```yaml
+apiVersion: upgrade.giantswarm.io/v1alpha1
+kind: VersionUpgradeSchedule
+metadata:
+  name: upgrade-monday-morning
+  namespace: org-testorg
+spec:
+  validFrom: "2025-06-01T00:00Z"
+  upgradeWindows:
+    - dayOfWeek: Mon
+      timeStart: "02:00Z"
+      duration: 60m
+```
+
+Finally, we create a `VersionUpgradeConfig` that targets our `HelmRelease` and uses provided version and schedule information:
+
+```yaml
+apiVersion: upgrade.giantswarm.io/v1alpha1
+kind: VersionUpgradeConfig
+metadata:
+  name: trivy-helm-auto-upgrade
+  namespace: org-testorg
+spec:
+  suspend: false
+  serviceAccountName: automation
+  interval: 5m
+  targets:
+    - kind: HelmRelease
+      field: spec.chart.spec.version
+      labelSelector:
+        app: trivy
+        stage: production
+  versionSourceRef:
+    kind: ImagePolicy
+    name: trivy-rc
+    namespace: org-testorg
+  defaultVersion: "1.0.0-rc1"
+  versionUpgradeScheduleRef:
+    name: upgrade-monday-morning
+  versionLock: "None"
+```
+
+The above configuration will:
+
+- set the trivy Helm Chart version to `1.0.0-rc1` on the first reconciliation of the `VUC` resource, even if outside the upgrade window, because `defaultVersion` attribute is set
+- keep checking for new chart releases matching the `.*-rc.*` pattern
+- apply the newest version found to the target `HelmRelese`'s `spec.chart.spec.version` attribute only on Mondays between 2:00 and 3:00 UTC.
+
+As a result, the target `HelmRelease` will be labeled and annotated to indicate it's under `VUC` management:
+
+```yaml
+apiVersion: helm.toolkit.fluxcd.io/v2beta1
+kind: HelmRelease
+metadata:
+  name: cluster1-trivy
+  namespace: org-testorg
+  labels:
+    app: trivy
+    stage: production
+    vuc.giantswarm.io/manager: trivy-helm-auto-upgrade  # VUC object name
+  annotations:
+    vuc.giantswarm.io/last-update-time: "2025-06-02T02:05:00Z"
+    vuc.giantswarm.io/last-update-version: "1.2.3-rc1"
 ```
 
 ## Notes
