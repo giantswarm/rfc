@@ -183,18 +183,20 @@ metadata:
   name: upgrade-stable-at-night
   namespace: org-testorg
 spec:
-  # validFrom
+  # valid (optional)
   #
   # Decides the time window when the reconciliation is in power.
   #
-  # The CR gets reconciled at `.spec.interval` intervals, but upgrading is skipped in
-  # the [-∞, .spec.policy.validFrom) time window. Works like suspending until a given time.
+  # The CR gets reconciled at `.spec.interval` intervals, but upgrading is performed only in
+  # the [spec.valid.from, spec.valid.to] time window. Setting version changes on targets
+  # outside of this window is suspended.
   #
-  # To suspend indefinitely use
-  # validFrom: "Inf"
-  # TODO: does it run discovery even before "ValidFrom"? I think it should, so we can report that in status
+  # To suspend indefinitely use 'valid.from: "Inf"'
+  # TODO: does it run discovery even outside of "valid"? I think it should, so we can report that in status
   # end emit an event.
-  validFrom: "2025-05-05T05:05Z" # time window when reconciliation is in power: [2025.05.05 05:05, ∞)
+  valid:
+    from: "2025-05-05T05:05Z" # (optional, defaults to "now") start of the time frame when version changes to targets are allowed
+    to: "2026-05-05T05:05Z" # (optional, defaults to +inf) end of the time frame when version changes to targets are allowed
 
   ## SCHEDULING options - exclusive, choose just one
 
@@ -203,6 +205,7 @@ spec:
   # Defines all the possible upgrade windows. The windows are ORed together, so upgrade will be triggered for any
   # reconciliation that falls within any of the windows. Within a single window, the conditions are ANDed together,
   # so `dayOfWeek: Wed ` and timeStart: 7:00` means "only on Wednesdays at 7:00".
+  # THere has to be at least 1 window on the list.
   upgradeWindows:
     # dayOfWeek: expressed as common short names. Can be a single day ('Mon'), a single range of days ('Mon-Fri'),
     # or a comma-separated list of days ('Mon,Wed,Fri'). "*" is an alias for "every day".
@@ -228,7 +231,8 @@ spec:
   #    Then upgrade as normal at each reconciliation if necessary.
   #
   # spec:
-  #   validFrom: "2025.05.05T05:05Z"
+  #   valid:
+  #     from: "2025.05.05T05:05Z"
   #
   # 2. Reconcile CR target only within the [04:00, 04:10)
   #    time window.
@@ -243,17 +247,20 @@ spec:
   #    time window *and* after 2025.05.05 05:05.
   #
   # spec:
-  #   validFrom: "2025.05.05 05:05"
+  #   valid:
+  #     from: "2025.05.05 05:05"
   #   upgradeWindows:
   #     - dayOfWeek: '*'  # on all days
   #       timeStart: "04:00Z" # at 4:00 UTC
   #       duration: 20m # for 20 minutes
   #
   # 4. Reconcile CR target only within the "[04:00, 04:20) on the first Monday of a month"
-  #    time window *and* after 2025.05.05 05:05.
+  #    time window *and* after 2025.05.05 05:05 *and* before 2026.05.05 05:05.
   #
   # spec:
-  #   validFrom: "2025.05.05 05:05"
+  #   valid:
+  #     from: "2025.05.05 05:05"
+  #     to: "2026.05.05 05:05"
   #   upgradeWindows:
   #     - dayOfWeek: Mon
   #       dayOfMonth: 1-7  # there can be only 1 Monday between 1st and 7th of a month
@@ -408,7 +415,7 @@ status: # (still being discussed)
 
   # TODO: think if the status is not too verbose, some info is redundant
 
-  # upgradeAllowed indicates if, based on the suspend, current time and validFrom the controller
+  # upgradeAllowed indicates if, based on the suspend, current time and valid the controller
   # is currently permitted to perform an upgrade if one is needed.
   upgradeAllowed: false
 
@@ -517,7 +524,8 @@ spec:
 
 Now, a user wants to add automatic scheduled upgrades for the application.
 
-Firs step, we define how to find the most recent relevant tag we need (for the app's helm chart). The `ImageRepository` can be skipped and reused if it already exists:
+Firs step, we define how to find the most recent relevant tag we need (for the app's helm chart). The
+`ImageRepository` can be skipped and reused if it already exists:
 
 ```yaml
 ---
@@ -555,14 +563,16 @@ metadata:
   name: upgrade-monday-morning
   namespace: org-testorg
 spec:
-  validFrom: "2025-06-01T00:00Z"
+  valid:
+    from: "2025-06-01T00:00Z"
   upgradeWindows:
     - dayOfWeek: Mon
       timeStart: "02:00Z"
       duration: 60m
 ```
 
-Finally, we create a `VersionUpgradeConfig` that targets our `HelmRelease` and uses provided version and schedule information:
+Finally, we create a `VersionUpgradeConfig` that targets our `HelmRelease` and uses provided version and
+schedule information:
 
 ```yaml
 apiVersion: upgrade.giantswarm.io/v1alpha1
@@ -592,9 +602,11 @@ spec:
 
 The above configuration will:
 
-- set the trivy Helm Chart version to `1.0.0-rc1` on the first reconciliation of the `VUC` resource, even if outside the upgrade window, because `defaultVersion` attribute is set
+- set the trivy Helm Chart version to `1.0.0-rc1` on the first reconciliation of the `VUC` resource, even if
+  outside the upgrade window, because `defaultVersion` attribute is set
 - keep checking for new chart releases matching the `.*-rc.*` pattern
-- apply the newest version found to the target `HelmRelese`'s `spec.chart.spec.version` attribute only on Mondays between 2:00 and 3:00 UTC.
+- apply the newest version found to the target `HelmRelese`'s `spec.chart.spec.version` attribute only on
+  Mondays between 2:00 and 3:00 UTC.
 
 As a result, the target `HelmRelease` will be labeled and annotated to indicate it's under `VUC` management:
 
@@ -607,7 +619,7 @@ metadata:
   labels:
     app: trivy
     stage: production
-    vuc.giantswarm.io/manager: trivy-helm-auto-upgrade  # VUC object name
+    vuc.giantswarm.io/manager: trivy-helm-auto-upgrade # VUC object name
   annotations:
     vuc.giantswarm.io/last-update-time: "2025-06-02T02:05:00Z"
     vuc.giantswarm.io/last-update-version: "1.2.3-rc1"
