@@ -190,38 +190,36 @@ spec:
   # The CR gets reconciled at `.spec.interval` intervals, but upgrading is performed only in
   # the [spec.valid.from, spec.valid.to] time window. Setting version changes on targets
   # outside of this window is suspended.
+  # Does still run discovery even outside of "valid" window.
   #
   # To suspend indefinitely use 'valid.from: "Inf"'
-  # TODO: does it run discovery even outside of "valid"? I think it should, so we can report that in status
-  # end emit an event.
   valid:
-    from: "2025-05-05T05:05Z" # (optional, defaults to "now") start of the time frame when version changes to targets are allowed
-    to: "2026-05-05T05:05Z" # (optional, defaults to +inf) end of the time frame when version changes to targets are allowed
-
-  ## SCHEDULING options - exclusive, choose just one
+    from: "2025-05-05 05:05" # (optional, defaults to "now") start of the time frame when version changes to targets are allowed
+    to: "2026-05-05 15:05" # (optional, defaults to +inf) end of the time frame when version changes to targets are allowed
+    timezone: "Europe/Berlin" # (optional, defaults to UTC) timezone in which the time is expressed
 
   # upgradeWindows
   #
   # Defines all the possible upgrade windows. The windows are ORed together, so upgrade will be triggered for any
   # reconciliation that falls within any of the windows. Within a single window, the conditions are ANDed together,
-  # so `dayOfWeek: Wed ` and timeStart: 7:00` means "only on Wednesdays at 7:00".
-  # THere has to be at least 1 window on the list.
+  # so `dayOfWeek: Wed ` and time: 7:00` means "only on Wednesdays at 7:00".
+  # There has to be at least 1 window on the list.
   upgradeWindows:
     # dayOfWeek: expressed as common short names. Can be a single day ('Mon'), a single range of days ('Mon-Fri'),
     # or a comma-separated list of days ('Mon,Wed,Fri'). "*" is an alias for "every day".
     #
     # dayOfMonth: number of a day within a month. Can be a single day ('1'), a range of days ('1-5'), or a comma-separated list of days ('1,3,5').
     #
-    # timeStart: time the window starts, in the format "HH:MMZ" (24-hour clock) (UTC).
+    # time: time the window starts, in the format "HH:MM" (24-hour clock) (UTC if `timezone` not given).
     #
     # duration: how long is the upgrade window opening.
     #
     # timezone: (Optional) according to which TZ. It's UTC by default.
     - dayOfWeek: Mon
-      timeStart: "02:34Z"
+      time: "02:34"
       duration: 10m
     - dayOfMonth: "1,11,21"
-      timeStart: "02:34Z"
+      time: "02:34"
       duration: 60m
       timezone: "Europe/Berlin"
 
@@ -240,7 +238,7 @@ spec:
   # spec:
   #   upgradeWindows:
   #     - dayOfWeek: '*'  # on all days
-  #       timeStart: "04:00Z" # at 4:00 UTC
+  #       time: "04:00" # at 4:00 UTC
   #       duration: 10m0s
   #
   # 3. Reconcile CR target only within the [04:00, 04:20)
@@ -251,7 +249,7 @@ spec:
   #     from: "2025.05.05 05:05"
   #   upgradeWindows:
   #     - dayOfWeek: '*'  # on all days
-  #       timeStart: "04:00Z" # at 4:00 UTC
+  #       time: "04:00Z" # at 4:00 UTC
   #       duration: 20m # for 20 minutes
   #
   # 4. Reconcile CR target only within the "[04:00, 04:20) on the first Monday of a month"
@@ -264,7 +262,7 @@ spec:
   #   upgradeWindows:
   #     - dayOfWeek: Mon
   #       dayOfMonth: 1-7  # there can be only 1 Monday between 1st and 7th of a month
-  #       timeStart: "04:00Z" # at 4:00 UTC
+  #       time: "04:00Z" # at 4:00 UTC
   #       duration: 20m # for 20 minutes
 ```
 
@@ -567,7 +565,7 @@ spec:
     from: "2025-06-01T00:00Z"
   upgradeWindows:
     - dayOfWeek: Mon
-      timeStart: "02:00Z"
+      time: "02:00Z"
       duration: 60m
 ```
 
