@@ -141,7 +141,6 @@ The relevant Flux objects used for version discovery (once again, might be chang
 ```yaml
 # potentially ImageRepository CR can be auto-generated
 ---
-
 apiVersion: image.toolkit.fluxcd.io/v1beta2
 kind: ImageRepository
 metadata:
@@ -150,26 +149,48 @@ spec:
   image: myregistry/trivy
   interval: 1h
   provider: generic
-status: {}
-
+status:
 # ...
-
-lastScanResult: latestTags: - v1.4.2 - v1.4.1 - v1.4.0 - v1.3.1 - multiarch - master-t0dgwgrs -
-master-a9a1252 - latest - ff1fb39 - fed964e scanTime: "2025-04-28T13:01:59Z" tagCount: 227
-
+  lastScanResult:
+    latestTags:
+    - v1.4.2
+    - v1.4.1
+    - v1.4.0
+    - v1.3.1
+    - multiarch
+    - master-t0dgwgrs
+    - master-a9a1252
+    - latest
+    - ff1fb39
+    - fed964e
+    scanTime: "2025-04-28T13:01:59Z"
+    tagCount: 227
 ---
-
-apiVersion: image.toolkit.fluxcd.io/v1beta2 kind: ImagePolicy metadata: name: trivy-rc spec:
-imageRepositoryRef: name: trivy policy: semver: range: ">= 1.0.0" filterTags: pattern: "._-rc._" status:
-
+apiVersion: image.toolkit.fluxcd.io/v1beta2
+kind: ImagePolicy
+metadata:
+  name: trivy-rc
+spec:
+  imageRepositoryRef:
+    name: trivy
+  policy:
+    semver:
+      range: ">= 1.0.0"
+    filterTags:
+      pattern: ".*-rc.*"
+status:
 # ...
-
-status: conditions:
-
-- lastTransitionTime: "2025-04-24T12:16:37Z" message: Latest image tag for 'registry/repo' updated from 0.4.11
-  to 1.1.1 observedGeneration: 2 reason: Succeeded status: "True" type: Ready latestImage: registry/repo:1.1.1
-  observedGeneration: 2 observedPreviousImage: registry/repo:0.4.11
-
+status:
+  conditions:
+  - lastTransitionTime: "2025-04-24T12:16:37Z"
+    message: Latest image tag for 'registry/repo' updated from 0.4.11-rc.1 to 1.1.1-rc.1
+    observedGeneration: 2
+    reason: Succeeded
+    status: "True"
+    type: Ready
+  latestImage: registry/repo:1.1.1-rc.1
+  observedGeneration: 2
+  observedPreviousImage: registry/repo:0.4.11-rc.1
 ```
 
 #### Upgrade schedule definition
@@ -188,8 +209,8 @@ spec:
   # Decides the time window when the reconciliation is in power.
   #
   # The CR gets reconciled at `.spec.interval` intervals, but upgrading is performed only in
-  # the [spec.valid.from, spec.valid.to] time window. Setting version changes on targets
-  # outside of this window is suspended.
+  # any of the [spec.valid.from, spec.valid.to] time windows. Setting version changes on targets
+  # outside of any these windows is suspended.
   # Does still run discovery even outside of "valid" window.
   #
   # To suspend indefinitely use 'valid.from: "Inf"'
