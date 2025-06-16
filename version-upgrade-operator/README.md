@@ -211,13 +211,13 @@ spec:
   # The CR gets reconciled at `.spec.interval` intervals, but upgrading is performed only in
   # any of the [spec.valid.from, spec.valid.to] time windows. Setting version changes on targets
   # outside of any these windows is suspended.
-  # Does still run discovery even outside of "valid" window.
+  # If multiple windows are used, they have to be disjoint. Does still run discovery even outside of "valid" windows.
   #
   # To suspend indefinitely use 'valid.from: "Inf"'
   valid:
-    from: "2025-05-05 05:05" # (optional, defaults to "now") start of the time frame when version changes to targets are allowed
-    to: "2026-05-05 15:05" # (optional, defaults to +inf) end of the time frame when version changes to targets are allowed
-    timezone: "Europe/Berlin" # (optional, defaults to UTC) timezone in which the time is expressed
+    - from: "2025-05-05 05:05" # (optional, defaults to "now") start of the time frame when version changes to targets are allowed
+      to: "2026-05-05 15:05" # (optional, defaults to +inf) end of the time frame when version changes to targets are allowed
+      timezone: "Europe/Berlin" # (optional, defaults to UTC) timezone in which the time is expressed
 
   # upgradeWindows
   #
@@ -251,7 +251,7 @@ spec:
   #
   # spec:
   #   valid:
-  #     from: "2025.05.05T05:05Z"
+  #     - from: "2025.05.05T05:05Z"
   #
   # 2. Reconcile CR target only within the [04:00, 04:10)
   #    time window.
@@ -267,7 +267,7 @@ spec:
   #
   # spec:
   #   valid:
-  #     from: "2025.05.05 05:05"
+  #     - from: "2025.05.05 05:05"
   #   upgradeWindows:
   #     - dayOfWeek: '*'  # on all days
   #       time: "04:00Z" # at 4:00 UTC
@@ -278,8 +278,21 @@ spec:
   #
   # spec:
   #   valid:
-  #     from: "2025.05.05 05:05"
-  #     to: "2026.05.05 05:05"
+  #     - from: "2025.05.05 05:05"
+  #       to: "2026.05.05 05:05"
+  #   upgradeWindows:
+  #     - dayOfWeek: Mon
+  #       dayOfMonth: 1-7  # there can be only 1 Monday between 1st and 7th of a month
+  #       time: "04:00Z" # at 4:00 UTC
+  #       duration: 20m # for 20 minutes
+  #
+  # 5. Reconcile CR target only within the "[04:00, 04:20)" window on each Monday
+  #    but not during Christmas holidays, so between [2025.12.01 00:00, 2026.01.01 00:00].
+  #
+  # spec:
+  #   valid:
+  #     - to: "2025.12.01 00:00"
+  #     - from: "2026.01.01 00:00"
   #   upgradeWindows:
   #     - dayOfWeek: Mon
   #       dayOfMonth: 1-7  # there can be only 1 Monday between 1st and 7th of a month
@@ -583,7 +596,7 @@ metadata:
   namespace: org-testorg
 spec:
   valid:
-    from: "2025-06-01T00:00Z"
+    - from: "2025-06-01T00:00Z"
   upgradeWindows:
     - dayOfWeek: Mon
       time: "02:00Z"
