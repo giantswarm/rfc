@@ -5,7 +5,7 @@ issues:
 owners:
 - https://github.com/orgs/giantswarm/teams/team-planeteers
 state: review
-summary: This RFC addresses the strategic placement of operational runbooks (currently called "Ops recipes") to improve accessibility, maintainability, and security while ensuring consistent structure and content sanitization.
+summary: This RFC addresses the strategic placement of operational runbooks to improve accessibility, maintainability, and security while ensuring consistent structure and content sanitization. Part of the work is to rename the "Ops recipes" to "Runbooks" for clarity and alignment with industry standards.
 ---
 
 # Strategic placement and standardization of operational runbooks
@@ -34,7 +34,7 @@ We need a unified decision for runbook placement that ensures:
 
 ### Preferred solution
 
-**Consolidate all runbooks in the public handbook with a (dedicated) runbooks section, following a standardized structure.**
+Consolidate all runbooks in the public handbook with a (dedicated) section, following a standardized structure. Part of the work is to rename "Ops recipes" to "Runbooks" to align with industry terminology and improve clarity.
 
 #### Key components:
 
