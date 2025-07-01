@@ -27,14 +27,6 @@ We need a unified decision for runbook placement that ensures:
 - Optimal accessibility for both internal teams and the community
 - Clear governance and maintenance processes
 
-### Decision maker
-
-Planeteers team.
-
-### Deadline
-
-30.07.2025
-
 ### Who is affected / stakeholders
 
 - Platform Engineers (primary users of runbooks)
