@@ -43,13 +43,10 @@ Consolidate all runbooks in the public handbook with a (dedicated) section, foll
    - In order to move the runbooks we need to audit the documents for sensitive information (credentials, internal URLs, customer-specific data)
    - Create sanitized versions removing or abstracting sensitive content, moving the sensitive information to the customers' repositories.
    - Establish guidelines for what constitutes sensitive information (this is already done)
-3. **Standardized structure**: Implement a consistent format for all runbooks including:
+3. **Standardized metadata structure**: the runbooks should follow a structured format frontmatter, including:
    - **Title and description**
-   - **Prerequisites and required access**
-   - **Step-by-step procedures** with clear numbering
-   - **Expected outcomes and verification steps**
-   - **Troubleshooting section** (optional)
-   - **Related runbooks and references** (optional)
+   - **Owner**
+   - **Last review date**
 4. **Migration strategy**:
    - Phase 1: Decide the placement of the runbooks
    - Phase 2: Migrate all runbooks to the handbook adding ownership and last review date. Phase out the vintage runbooks.
