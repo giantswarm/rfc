@@ -1,12 +1,15 @@
 ---
 creation_date: 2025-05-29
 issues:
-- https://github.com/giantswarm/roadmap/issues/4001
-last_review_date: 2025-05-29
+  - https://github.com/giantswarm/roadmap/issues/4001
+last_review_date: 2025-07-02
 owners:
-- https://github.com/orgs/giantswarm/teams/team-honeybadger
+  - https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: review
-summary: This RFC presents a solution that will allow our customers and us to configure automated app upgrades, including cluster apps, according to a pre-defined policy, that includes time schedule and version restrictions.
+summary:
+  This RFC presents a solution that will allow our customers and us to configure automated app upgrades,
+  including cluster apps, according to a pre-defined policy, that includes time schedule and version
+  restrictions.
 ---
 
 # Automatic app upgrades
@@ -19,6 +22,14 @@ present on Management Clusters. The proposed solution has to support cluster dep
 - has to work without GitOps, but must be able to integrate with it
 - has to support schedules
 - works on MC, but targets any resources (so including App CRs and HelmReleases targeting remote WCs)
+
+## New solution
+
+As the recent (end of 2025.06) release of `flux-operator`
+[introduced scheduled changes](https://fluxcd.control-plane.io/operator/resourcesets/time-based-delivery/),
+we're leaning towards using that implementation and rejecting the idea discussed in this RFC. The final
+decision has not been made yet. You can watch an intro to `flux-operator` and its scheduled changes
+[here](https://drive.google.com/file/d/1GBKZdE8Nm4Gu6wzNpQTTmh2izfulA1f8/view).
 
 ## Problems
 
