@@ -1,6 +1,10 @@
 ---
 creation_date: 2021-11-10
-state: approved
+last_review_date: 2025-07-02
+owners:
+- https://github.com/orgs/giantswarm/teams/team-turtles
+state: obsolete
+summary: Config maps to represent YAML templates in CAPI cluster releases. Share a Git repo for configuration with the customer. Later add cluster definitions to GitOps as well.
 ---
 
 # Configuration management with Cluster API
