@@ -11,7 +11,7 @@ summary: The document discusses the need for consistent location metadata for cl
 
 ### Problem statement
 
-We have anecdotal evidence that customers think about our installations in terms of their physical location. They communicate in terms like these (paraphrased):
+For some of our customers, the physical location of an installation and its clusters is an important differentiator. They communicate in terms like these (paraphrased):
 
 - the Dublin management cluster
 - the dev cluster in Singapore
@@ -24,9 +24,11 @@ Relevant user stories in this context could be, to name two examples:
 - As a platform admin, I want to check the Kubernetes version of all clusters in a certain location.
 - As a service owner, I want to check the deployment status of certain apps in a certain location.
 
+So location information is relevant for customers and Giant Swarm engineers alike. However, currently the location information is not consistently available in Kubernetes resources nor user interfaces.
+
 With Cluster API on cloud providers we usually have location indicators in cluster resources, in various places. Each cloud provider uses their own identifier system, however they all make use of a string identifier. The proposed solution in this RFC would help simplify and unify location lookup for clusters by clients throughout cloud providers.
 
-In on-premises installations, no location information is currently available in Kubernetes resources. In metrics (PrometheusMimir) we annotate many series with a `region` label. However, in on-prem installations, the value for this label is always `onprem`. This RFC attempts to change that.
+In on-premises installations, no location information is currently available in Kubernetes resources. In metrics (Prometheus/Mimir) and logs (Loki) we annotate many series with a `region` label. However, in on-prem installations, the value for this label is always `onprem`. This RFC attempts to change that.
 
 ### Key assumptions
 
@@ -50,25 +52,27 @@ None
 
 The solution proposed here consists of two parts:
 
-- Setting consistent metadata on clusters
-- Providing a default location ID system for on-prem customers
+- Setting consistent metadata on Cluster API cluster resources
+- Providing a customizable location ID system for on-prem customers
 - Setting the `region` label in metrics accordingly
 
-#### Consistent metadata on clusters
+#### The location label
 
-We should set the [`topology.kubernetes.io/region`](https://kubernetes.io/docs/reference/labels-annotations-taints/#topologykubernetesioregion) label on the main cluster resource of all clusters. Currently (as of February 2025) this resource is of kind `Cluster`, group=`cluster.x-k8s.io/v1beta1`.
+We introduce a label `TOPIC.giantswarm.io/location`, to be set on any cluster. The label's value is a string that identifies the location of the cluster. We consider it optional, but recommended.
 
-The `topology.kubernetes.io/region` label is documented as w well-known label, set by Kubernetes on `Node` and `PersistentVolume` resources.
+TODO: Specify the `TOPIC` for the label group.
 
-For clusters running in cloud providers, the value of the label should be the region identifier. E. g. `eu-west-1` for the AWS region in EU/Dublin.
+In the Kubernetes project, the well-known label [`topology.kubernetes.io/region`](https://kubernetes.io/docs/reference/labels-annotations-taints/#topologykubernetesioregion) is documented and (as of February 2025) is used on `Node` and `PersistentVolume` resources, but not expected on Cluster resources. Its values is usually the region identifier of the cloud provider the node/volume is running in (example: `eu-west-1` for the AWS region in EU/Dublin). For clusters, there is no such label yet.
 
-For clusters on premises, the value should follow a system that we establish for this purpose. The system may differ between customers, to allow fulfilling of customer-specific requirements.
+For on-premises clusters, the value should follow a system that we establish for this purpose. The system may differ between customers, to allow fulfilling of customer-specific requirements.
 
-Regardless of the environment (cloud/on-prem), the value of the `topology.kubernetes.io/region` label should not include any whitespace and consist of the lowercase letters, numbers, and dash only (`[a-z0-9-]`).
+Note: The purpose of the location label value is _not_ to provide universally understandable location information. Instead, the purpose is simply to tag clusters with specific locations. For better human understanding, a lookup table may be maintained per customer, which also should affect the display of location information in user interfaces like Backstage.
+
+Regardless of the environment (cloud/on-prem), the value of the location label should not include any whitespace and consist of the lowercase letters, numbers, and dash only (`[a-z0-9-]`).
 
 #### Default location ID system for on-prem
 
-The metadata system described above allows to specify the location of a cluster as a single string.
+The label described above requires to specify the location of a cluster as a single string.
 
 For our on-premises customers, we want to provide a default system to inidicate their cluster's locations. This default system should be
 
@@ -81,10 +85,10 @@ It should be up to the customer to decide if they want to deviate from the syste
 For our default system, here is a synopsis of the format:
 
 ```
-<CONTINENT_CODE>-<COUNTRY_CODE>[-<SUBDIVISION_CODE>[-<CITY_NAME>]]
+<CONTINENT_CODE>-<COUNTRY_CODE>[-<SUBDIVISION_CODE>[-<CITY_NAME>]][-<NUMBER>]
 ```
 
-This means that the location ID string is composed of two to four components, separated by a dash. The first two parts, the continent code and the country code, are mandatory. If a location has to be specified more precisely, a state code can be added, and lastly a city could can be added for hightest precision.
+This means that the location ID string is composed of two to five components, separated by a dash. The first two parts, the continent code and the country code, are mandatory. If a location has to be specified more precisely, a state code can be added. Furthermore a city name may be added for hightest precision. Lastly, a number may be used to indicate a specific facility at a location with several facilities.
 
 Depending on the customer's needs, a cluster in Frankfurt am Main, Germany, could bear either of the following three location identifiers:
 
@@ -116,7 +120,8 @@ For example, given a management cluster named `example-mc` in region `eu-de-hamb
 
 ### Alternative solutions
 
-- Instead of `topology.kubernetes.io/region`, we could specify our own label in the `giantswarm.io` namespace. The latter would make sense in case we wanted to mark that there would be some logical difference between these labels.
+- We consdidered applying the well-known label `topology.kubernetes.io/region` to cluster resources.
+  However, since the system behind the labelling is Giant Swarm specific to a certain degree, we decided to highlight that fact by introducing a new label with our own namespace.
 
 - Instead of strings, we could introduce a system that provides geo coordinates. (Since the cloud providers already work with string identifiers, this draft opts for a solution that extends this paradigm to on-prem.)
 
@@ -126,7 +131,7 @@ Team Honeybadger would assemble the default hierarchy, at least up to the second
 
 The observability side (metrics labelling) would have to be implemented separately by Team Atlas.
 
-The cluster-app may be extended, so that the values schema provides a dedicated field for the location label, similar to the service priority label.
+The cluster-app may be extended, so that the values schema provides a dedicated field for the location label, similar to the service priority label. Defaulting based on the management cluster location might worth considering, to keep the cluster creation user experience simple.
 
 ### Communication plan
 
