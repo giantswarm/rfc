@@ -68,8 +68,6 @@ For on-premises clusters, the value should follow a system that we establish for
 
 Note: The purpose of the location label value is _not_ to provide universally understandable location information. Instead, the purpose is simply to tag clusters with specific locations. For better human understanding, a lookup table may be maintained per customer, which also should affect the display of location information in user interfaces like Backstage.
 
-Regardless of the environment (cloud/on-prem), the value of the location label should not include any whitespace and consist of the lowercase letters, numbers, and dash only (`[a-z0-9-]`).
-
 #### Default location ID system for on-prem
 
 The label described above requires to specify the location of a cluster as a single string.
@@ -87,6 +85,8 @@ For our default system, here is a synopsis of the format:
 ```
 <CONTINENT_CODE>-<COUNTRY_CODE>[-<SUBDIVISION_CODE>[-<CITY_NAME>]][-<NUMBER>]
 ```
+
+Each code should avoid any whitespace and consist of the lowercase letters, numbers, and dash only (`[a-z0-9-]`).
 
 This means that the location ID string is composed of two to five components, separated by a dash. The first two parts, the continent code and the country code, are mandatory. If a location has to be specified more precisely, a state code can be added. Furthermore a city name may be added for hightest precision. Lastly, a number may be used to indicate a specific facility at a location with several facilities.
 
