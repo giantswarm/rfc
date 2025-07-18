@@ -1,8 +1,8 @@
 ---
 creation_date: 2023-08-07
-state: approved
 owners:
-  - https://github.com/orgs/giantswarm/teams/team-honeybadger
+- https://github.com/orgs/giantswarm/teams/team-honeybadger
+state: approved
 ---
 
 # Manage essential CRDs via MCB

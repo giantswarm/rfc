@@ -1,8 +1,8 @@
 ---
 creation_date: 2022-06-20
-state: approved
 owners:
 - https://github.com/orgs/giantswarm/teams/team-honeybadger
+state: approved
 ---
 
 # Multi layer app configs
