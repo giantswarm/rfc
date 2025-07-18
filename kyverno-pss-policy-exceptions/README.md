@@ -2,7 +2,7 @@
 creation_date: 2023-05-08
 issues:
 - https://github.com/giantswarm/roadmap/issues/256
-last_review_date: 2024-02-20
+last_review_date: 2025-07-18
 owners:
 - https://github.com/orgs/giantswarm/teams/team-shield
 state: approved
@@ -134,7 +134,7 @@ This would be very error-prone and simply would not scale.
 
 - [Intranet page](https://intranet.giantswarm.io/docs/dev-and-releng/psp-deprecation/) about PSP to Kyverno migration and [corresponding public blog post](https://www.giantswarm.io/blog/giant-swarms-farewell-to-psp)
 - [Sample `PolicyException` resource for falco-app](https://github.com/giantswarm/falco-app/blob/main/helm/falco/templates/falco-policy-exception.yaml)
-- [Kyverno PolicyException documentation](https://kyverno.io/docs/writing-policies/exceptions/)
+- [Kyverno PolicyException documentation](https://kyverno.io/docs/exceptions/)
 
 ## Appendix
 
