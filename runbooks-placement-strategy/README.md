@@ -4,7 +4,8 @@ issues:
 - https://github.com/giantswarm/roadmap/issues/2838
 owners:
 - https://github.com/orgs/giantswarm/teams/team-planeteers
-state: review
+state: approved
+last_review_date: 2025-09-05
 summary: This RFC addresses the strategic placement of operational runbooks to improve accessibility, maintainability, and security while ensuring consistent structure and content sanitization. Part of the work is to rename the "Ops recipes" to "Runbooks" for clarity and alignment with industry standards.
 ---
 
