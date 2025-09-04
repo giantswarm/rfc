@@ -4,7 +4,7 @@ issues:
 - https://github.com/giantswarm/giantswarm/issues/24661
 owners:
 - https://github.com/orgs/giantswarm/teams/sig-architecture
-- https://github.com/orgs/giantswarm/teams/team-horizon
+- https://github.com/orgs/giantswarm/teams/team-planeteers
 - https://github.com/orgs/giantswarm/teams/team-team
 state: approved
 summary: This contains the explicit procedure to follow for creating an RFC and having it reviewed. Introduce a structured YAML header for the Markdown file. List of RFCs gets rendered in the handbook.
@@ -14,7 +14,7 @@ summary: This contains the explicit procedure to follow for creating an RFC and 
 
 This RFC-of-RFCs aims to expand on the current RFC process by introducing an explicit, lightweight decision making process.
 
-We use the terms "RFC" and "decision" quite interchangeably. Think of a _decision_ as exactly what the word means, and an _RFC_ as its written-down version as Markdown file.
+We use the terms "RFC" and "decision" quite interchangeably. Think of a _decision_ as precisely what the word means, and an _RFC_ as its written-down version as Markdown file.
 
 At the moment, the concept of [ADRs](https://intranet.giantswarm.io/docs/product/architecture-specs-adrs/adr/) and [PDRs](https://intranet.giantswarm.io/docs/product/pdr/) are not covered here and their processes do not change yet. We may want to amend this later.
 
@@ -59,7 +59,7 @@ creation_date: 2023-07-13
 issues:
 - https://github.com/giantswarm/giantswarm/issues/24661
 owners:
-- https://github.com/orgs/giantswarm/teams/team-horizon
+- https://github.com/orgs/giantswarm/teams/team-planeteers
 state: review
 ---
 
@@ -103,7 +103,7 @@ Therefore, we will automatically render the merged RFCs into our [handbook](http
 
   - For example, the SIG's regular sync meetings can be used to discuss open RFCs, but discussions should end up in GitHub PR comments.
   - For engineering RFCs, typically the members of SIG Architecture would take responsibility.
-  - If discussions do not progress and the PR is open for quite a while, the author should escalate to the SIG, or if the RFC still cannot be concluded, address Team Horizon.
+  - If discussions do not progress and the PR is open for quite a while, the author should escalate to the SIG, or if the RFC still cannot be concluded, address Team Planeteers.
 - **Before merging the PR, these conditions must hold**
 
   - If we're done discussing and it's clear what we want, fill in `state: approved` or `state: declined`, depending on the outcome. We could come to a conclusion by meetings, giving PR approvals, etc. _This process_ does not dictate _how_ you come to approving or declining a decision!
