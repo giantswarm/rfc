@@ -1,5 +1,5 @@
 ---
-creation_date: 2025-06-12
+creation_date: 2025-09-05
 issues:
 - https://github.com/giantswarm/roadmap/issues/2838
 owners:
@@ -30,15 +30,14 @@ We need a unified decision for runbook placement that ensures:
 ### Who is affected / stakeholders
 
 - Platform Engineers (primary users of runbooks)
-- External community members (for public runbooks)
 
 ### Preferred solution
 
-Consolidate all runbooks in the public handbook with a (dedicated) section, following a standardized structure. Part of the work is to rename "Ops recipes" to "Runbooks" to align with industry terminology and improve clarity.
+Consolidate all runbooks in the intranet site with a (dedicated) section, following a standardized structure. Part of the work is to rename "Ops recipes" to "Runbooks" to align with industry terminology and improve clarity.
 
 #### Key components:
 
-1. **Primary location**: Move all runbooks to a dedicated section in the public handbook (`docs/runbooks/`)
+1. **Primary location**: Move all runbooks to a dedicated section in the intranet site (`docs/runbooks/`)
 2. **Content sanitization process**:
    - In order to move the runbooks we need to audit the documents for sensitive information (credentials, internal URLs, customer-specific data)
    - Create sanitized versions removing or abstracting sensitive content, moving the sensitive information to the customers' repositories.
@@ -49,7 +48,7 @@ Consolidate all runbooks in the public handbook with a (dedicated) section, foll
    - **Last review date**
 4. **Migration strategy**:
    - Phase 1: Decide the placement of the runbooks
-   - Phase 2: Migrate all runbooks to the handbook adding ownership and last review date. Phase out the vintage runbooks.
+   - Phase 2: Migrate all runbooks to the intranet adding ownership and last review date. Phase out the vintage runbooks.
    - Phase 3: Ensure all alerts and notifications are updated to point to the new runbook locations
 5. **Governance model**:
    - Designate runbook owners for each recipe to ensure accountability
@@ -58,9 +57,8 @@ Consolidate all runbooks in the public handbook with a (dedicated) section, foll
 **Benefits:**
 
 - **Improved discoverability**: Single source of truth for all operational procedures
-- **Enhanced collaboration**: Public access enables community contributions and feedback
+- **Enhanced collaboration**: Easier for teams to contribute and update runbooks
 - **Better maintenance**: Centralized location simplifies updates and version control
-- **Knowledge sharing**: Public runbooks benefit the broader Giant Swarm community
 - **Consistency**: Standardized format improves usability and will make AI agents more effective in assisting with runbook-related queries
 
 ### Alternative solutions
@@ -75,10 +73,10 @@ Consolidate all runbooks in the public handbook with a (dedicated) section, foll
 - **Pros**: Purpose-built for runbooks; could offer advanced features like search, tagging, analytics
 - **Cons**: Additional infrastructure to maintain; splits documentation ecosystem; higher development and maintenance costs; potential for creating yet another silo
 
-#### Option 3: Move everything to private intranet
+#### Option 3: Move everything to public handbook
 
-- **Pros**: No security concerns about sensitive data; easier content management initially
-- **Cons**: Reduces community contribution opportunities; limits knowledge sharing; doesn't align with open-source principles; external users can't benefit from runbooks
+- **Pros**: Security concerns about sensitive data; engineers reluctant to write in a public space; external users can benefit from runbooks
+- **Cons**: Foster community contribution opportunities; it aligns with open-source principles;
 
 ## References
 
