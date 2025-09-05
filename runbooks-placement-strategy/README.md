@@ -76,8 +76,8 @@ Consolidate all runbooks in the intranet site with a (dedicated) section, follow
 
 #### Option 3: Move everything to the public handbook
 
-- **Pros**: Security concerns about sensitive data; engineers reluctant to write in a public space; external users can benefit from runbooks
-- **Cons**: Foster community contribution opportunities; it aligns with open-source principles;
+- **Pros**: Foster community contribution opportunities; it aligns with open-source principles;
+- **Cons**: Security concerns about sensitive data; engineers reluctant to write in a public space; external users can benefit from runbooks
 
 ## References
 
