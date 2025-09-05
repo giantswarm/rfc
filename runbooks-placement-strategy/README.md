@@ -1,12 +1,12 @@
 ---
-creation_date: 2025-09-05
+creation_date: 2025-07-15
 issues:
 - https://github.com/giantswarm/roadmap/issues/2838
+last_review_date: 2025-09-05
 owners:
 - https://github.com/orgs/giantswarm/teams/team-planeteers
 state: approved
-last_review_date: 2025-09-05
-summary: This RFC addresses the strategic placement of operational runbooks to improve accessibility, maintainability, and security while ensuring consistent structure and content sanitization. Part of the work is to rename the "Ops recipes" to "Runbooks" for clarity and alignment with industry standards.
+summary: This RFC addresses the strategic placement of operational runbooks to improve accessibility, maintainability, and security while ensuring consistent structure and content sanitization. Part of the work involves renaming the "Ops recipes" to "Runbooks" for clarity and alignment with industry standards.
 ---
 
 # Strategic placement and standardization of operational runbooks
@@ -19,7 +19,7 @@ Our operational runbooks (currently referred to as "Ops recipes") are currently 
 2. **Lack of standardization**: Runbooks follow different formats and structures across locations
 3. **Security concerns**: Some runbooks may contain sensitive information that needs to be identified and sanitized
 4. **Discovery issues**: Engineers struggle to find the right runbook when they're distributed across different platforms
-5. **Maintenance overhead**: Managing runbooks in multiple locations increases maintenance burden
+5. **Maintenance overhead**: Managing runbooks in multiple locations increases the maintenance burden
 
 We need a unified decision for runbook placement that ensures:
 
@@ -34,14 +34,14 @@ We need a unified decision for runbook placement that ensures:
 
 ### Preferred solution
 
-Consolidate all runbooks in the intranet site with a (dedicated) section, following a standardized structure. Part of the work is to rename "Ops recipes" to "Runbooks" to align with industry terminology and improve clarity.
+Consolidate all runbooks in the intranet site with a (dedicated) section, following a standardized structure. Part of the work involves renaming "Ops recipes" to "Runbooks" to align with industry terminology and improve clarity.
 
 #### Key components:
 
 1. **Primary location**: Move all runbooks to a dedicated section in the intranet site (`docs/runbooks/`)
 2. **Content sanitization process**:
-   - In order to move the runbooks we need to audit the documents for sensitive information (credentials, internal URLs, customer-specific data)
-   - Create sanitized versions removing or abstracting sensitive content, moving the sensitive information to the customers' repositories.
+   - In order to move the runbooks, we need to audit the documents for sensitive information (credentials, internal URLs, customer-specific data)
+   - Create sanitized versions, removing or abstracting sensitive content, moving the sensitive information to the customers' repositories.
    - Establish guidelines for what constitutes sensitive information (this is already done)
 3. **Standardized metadata structure**: the runbooks should follow a structured format frontmatter, including:
    - **Title and description**
@@ -49,7 +49,7 @@ Consolidate all runbooks in the intranet site with a (dedicated) section, follow
    - **Last review date**
 4. **Migration strategy**:
    - Phase 1: Decide the placement of the runbooks
-   - Phase 2: Migrate all runbooks to the intranet adding ownership and last review date. Phase out the vintage runbooks.
+   - Phase 2: Migrate all runbooks to the intranet, adding ownership and last review date—phase out the vintage runbooks.
    - Phase 3: Ensure all alerts and notifications are updated to point to the new runbook locations
 5. **Governance model**:
    - Designate runbook owners for each recipe to ensure accountability
@@ -69,12 +69,12 @@ Consolidate all runbooks in the intranet site with a (dedicated) section, follow
 - **Pros**: No migration effort required; maintains current access patterns
 - **Cons**: Continues fragmentation issues; doesn't solve discoverability or consistency problems; perpetuates maintenance overhead
 
-#### Option 2: Create dedicated runbooks site/platform
+#### Option 2: Create a dedicated runbooks site/platform
 
 - **Pros**: Purpose-built for runbooks; could offer advanced features like search, tagging, analytics
 - **Cons**: Additional infrastructure to maintain; splits documentation ecosystem; higher development and maintenance costs; potential for creating yet another silo
 
-#### Option 3: Move everything to public handbook
+#### Option 3: Move everything to the public handbook
 
 - **Pros**: Security concerns about sensitive data; engineers reluctant to write in a public space; external users can benefit from runbooks
 - **Cons**: Foster community contribution opportunities; it aligns with open-source principles;
