@@ -1,6 +1,11 @@
 ---
 creation_date: 2022-05-11
+issues:
+- https://github.com/giantswarm/giantswarm/issues/13342
+owners:
+- https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: approved
+summary: Use label `giantswarm.io/service-priority={highest,medium,lowest}` on `Cluster` objects to specify the importance of a customer cluster.
 ---
 
 # Classifying clusters based on priority
@@ -23,9 +28,9 @@ Contents:
 - One customer uses the first character of the cluster name to distinguish between production (`p`), development (`d`), and staging (`s`). This customer also has clusters which don't fall into either of these categories and their names start with arbitrary letters.
 - Many customers use specific terms and phrases in the cluster description, e. g. "Production", "test", "testing", "ignore alerts", "prd", "prod", "nonprod".
 - Some customers use labels on the `clusters.cluster.x-k8s.io` resource (the cluster's main resource) indicating the importance, e.g:
-    - `odp/environment: development`
-    - `odp/environment: staging`
-    - `odp/environment: production`.
+  - `odp/environment: development`
+  - `odp/environment: staging`
+  - `odp/environment: production`.
 
 ## Proposal
 
@@ -77,14 +82,12 @@ To help interpreting the proposal and judge its significance, here we suggest so
 
 - In the web UI there are several places where the proposed label can be displayed as useful information for users:
 
-    - In the cluster list, as an indicator especially for clusters classified as `highest` and `medium`.
-
-    - On the cluster details page.
-
-    - When deleting a cluster, especially in case the cluster is classified as `highest` and `medium`, to highlight the purpose of the cluster.
+  - In the cluster list, as an indicator especially for clusters classified as `highest` and `medium`.
+  - On the cluster details page.
+  - When deleting a cluster, especially in case the cluster is classified as `highest` and `medium`, to highlight the purpose of the cluster.
 
 - In kubectl-gs, when listing clusters using the `get clusters` command, an additional column `SERVICE PRIORITY` can be added to display the value based on the label (or the default value `highest`, in case of absence).
 
-- We could add the label to our monitoring, to include the priority information as a criterium in visualization or alerting.
+- We could add the label to our monitoring, to include the priority information as a criterion in visualization or alerting.
 
 - We may provide or suggest automation to customers to silence alerts based on the labelling scheme.
