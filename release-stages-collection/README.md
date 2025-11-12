@@ -371,6 +371,100 @@ This provides:
     - this does not allow setting secret values files cos it would mean we need to share a common AGE key across all of those customer's MCs (possibly though, just we don't want to)
 - the MC specific secret values files must set stage secret template values (error on rendering with that stage otherwise)
 
+#### Changes to the management-cluster-configuration schema
+
+It can be found at: https://github.com/giantswarm/konfiguration-schemas/pull/1.
+
+First, we add a new optional `stage` variable. By making it optional, we can omit it and thus end up with the good old
+management-cluster-configuration rendering, as the stages templates will be considered empty, thus doing nothing.
+
+```yaml
+variables:
+  # ...
+  - name: stage
+    required: false
+    default: none
+  # ...
+```
+
+The first new layer is the `default-stages` layer, which is added before the `default` layer so it can override defaults
+for given stages for all customers.
+
+```yaml
+layers:
+  # ...
+  # After the `default` layer, we add the shared, `default-stages` layer.
+  - id: default-stages
+    path:
+      directory: default/stages
+      required: false
+    # Notice we do not allow secret value files here because we do not want to share a common AGE key across all customers.
+    # Secret values referenced in the secret templates MUST be set in the MC specific secret values file or the templates:
+    # written in a way that the value is optional.
+    values:
+      path:
+        directory: << stage >>
+        required: false
+      configMap:
+        name: config.yaml
+        required: false
+    templates:
+      path:
+        directory: << stage >>/apps/<< app >>
+        required: false
+      configMap:
+        name: configmap-values.yaml.template
+        required: false
+        values:
+          merge:
+            strategy: ConfigMapsInLayerOrder
+      secret:
+        name: secret-values.yaml.template
+        required: false
+        values:
+          merge:
+            strategy: SecretsInLayerOrder
+  # ...
+```
+
+The next, CMC level stages layer is after `default-stages` and before `management-cluster` layer, so CMCs can override
+the shared default and stages layers, but they can still be overridden for given installations in the `management-cluster` layer.
+
+```yaml
+layers:
+  # After the `default-stages` layer, we add the CMC specific `stages` layer.
+  - id: stages
+    path:
+      directory: stages
+      required: false
+    # Notice we do not allow secret value files here because we do not want to share a common AGE key across all MCs of the customer.
+    # Secret values referenced in the secret templates MUST be set in the MC specific secret values file or the templates:
+    # written in a way that the value is optional.
+    values:
+      path:
+        directory: << stage >>
+        required: false
+      configMap:
+        name: config.yaml
+        required: false
+    templates:
+      path:
+        directory: << stage >>/apps/<< app >>
+        required: false
+      configMap:
+        name: configmap-values.yaml.template
+        required: false
+        values:
+          merge:
+            strategy: ConfigMapsInLayerOrder
+      secret:
+        name: secret-values.yaml.template
+        required: false
+        values:
+          merge:
+            strategy: SecretsInLayerOrder
+```
+
 #### Setup
 
 `shared-configs`: https://github.com/giantswarm/shared-configs/pull/378
