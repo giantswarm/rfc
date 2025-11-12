@@ -267,6 +267,50 @@ then iterate on this through the chain up to the top collection.
 
 *Answer*: Sure, why not? Add the manifests to the `capa/stages/testing` folder and reference them in the`kustomization.yaml` there.
 
+#### Examples
+
+##### Setup
+
+Clone / checkout `management-cluster-bases` at branch: `stages-experiment`.
+
+##### The sloth-rules example overrides walkthrough
+
+Let's see through the overrides of the above `sloth-rules` example:
+
+```shell
+# This is the very base
+$ kustomize build --load-restrictor LoadRestrictionsNone bases/collections/shared/base | yq 'select(.metadata.name == "sloth-rules") | .spec.version'
+0.46.1
+
+# No overrides, inherits shared base
+$ kustomize build --load-restrictor LoadRestrictionsNone bases/collections/shared/stages/stable | yq 'select(.metadata.name == "sloth-rules") | .spec.version'
+0.46.1
+
+# We have an override for the testing stage. All child collections will inherit this change for this stage and this manifest.
+$ kustomize build --load-restrictor LoadRestrictionsNone bases/collections/shared/stages/testing | yq 'select(.metadata.name == "sloth-rules") | .spec.version'
+1.1.1
+
+# This is component, won't work (well it could, but there is no guarantee and after all these are not meant to be used on their own!)
+$ kustomize build --load-restrictor LoadRestrictionsNone bases/collections/capa/base | yq 'select(.metadata.name == "sloth-rules") | .spec.version'
+Error: no resource matches strategic merge patch "Konfiguration.v1alpha1.konfigure.giantswarm.io/collection-konfiguration.giantswarm": no matches for Id Konfiguration.v1alpha1.konfigure.giantswarm.io/collection-konfiguration.giantswarm; failed to find unique target for patch Konfiguration.v1alpha1.konfigure.giantswarm.io/collection-konfiguration.giantswarm
+
+# We have an override in capa/base but capa/stages/stable does not have one, so it inherits that. Hides the default from shared/base.
+$ kustomize build --load-restrictor LoadRestrictionsNone bases/collections/capa/stages/stable | yq 'select(.metadata.name == "sloth-rules") | .spec.version'
+2.2.2
+
+# We have an override in capa/stages/testing, so it overrides the override from capa/base that overrode shared/stages/testing.
+$ kustomize build --load-restrictor LoadRestrictionsNone bases/collections/capa/stages/testing | yq 'select(.metadata.name == "sloth-rules") | .spec.version'
+3.3.3
+
+# This is inherited from capa/base.
+$ kustomize build --load-restrictor LoadRestrictionsNone bases/collections/capa-asia/stages/stable | yq 'select(.metadata.name == "sloth-rules") | .spec.version'
+2.2.2
+
+# We have an override in capa-asia/stages/testing, so it overrides the override from capa/stages/testing that overrode capa/base, that overrode shared/base.
+$ kustomize build --load-restrictor LoadRestrictionsNone bases/collections/capa-asia/stages/testing | yq 'select(.metadata.name == "sloth-rules") | .spec.version'
+4.4.4
+```
+
 ### Integration with the Generalized Configuration System (GCS)
 
 We need to add support for stages as new layers to the `management-cluster-configuration` schema in order to be able to
