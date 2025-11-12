@@ -139,6 +139,13 @@ This base is then split first into stages under the `stages` folder.
 The `shared/stages` folders contain a `Kustomization`, that is in its most minimal form looks like:
 
 ```yaml
+patches:
+  # This is used to patch in the stage variable for all child collections, and thus, render the stage specific konfiguration.
+  - target:
+      kind: Konfiguration
+      name: collection-konfiguration
+      namespace: giantswarm
+    patch: '[{"op": "add", "path": "/spec/targets/defaults/variables/-", "value": {"name": "stage", "value": "STAGE_NAME"}}]'
 resources:
   - ../../base
 ```
@@ -566,7 +573,7 @@ SOPS_AGE_KEY_FILE=$UMBRELLA_TARGET_DIR/secrets/goten.sops.age.key konfigure rend
   --raw
 ```
 
-Note that `.b` is overriden here in the `goten` MC config map value file.
+Note that `.b` is overridden here in the `goten` MC config map value file.
 
 Now observe for `glippy`:
 
@@ -598,5 +605,10 @@ Please note that the variables are not in any ways tied to real Giant Swarm or w
 If you want multiple flavors or kinds of konfiguration for an "app", go for it. Create `app-operator-snowflake` or `app-operator-unique` and `app-operator-workload-cluster`, it will work.
 
 ### Putting it all together
+
+There are a few more things we need to make it all work:
+
+- some apps in collections use our Flux-based CRD distribution (`crds` kustomization), thus we need some solution for this
+- we need a way to tell for each management cluster in CMC repos, which provider and stage (sometimes same for addon collections) it should use
 
 ## Alternative solutions
