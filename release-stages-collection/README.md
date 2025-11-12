@@ -182,11 +182,150 @@ resources:
   - ../../../capa/stages/stable
 ```
 
+#### Note on addon collections
+
+Addon collections are one-off collections, thus they are not inheriting from a shared base.
+
+They will be structured like the `shared` collection, with a `base` and a `stages` folder.
+
+They have their own `Konfiguration` CR and are reconciled by their own separate Flux `Kustomization`.
+
+#### Questions and answers
+
+*Question*: How to add a new manifest to all provider collections?
+
+*Answer*: Add the manifest to the `shared` collection's `base` folder and reference it in `kustomization.yaml`.
+
+---
+
+*Question*: How to make a change for a manifest for a given stage across all provider collections?
+
+*Answer*: Add a patch in `shared/stages/STAGE_NAME`. Either as a separate file e.g., in a `patches` sub folder
+and reference it in `kustomization.yaml` or in the `kustomization.yaml` directly. For example, to pin the `sloth-rules`
+HelmRelease version for the `testing` stage across all provider collections, add this to the `shared/stages/testing/kustomization.yaml`:
+
+```yaml
+patches:
+  - target:
+      kind: App
+      name: sloth-rules
+      namespace: giantswarm
+    patch: '[{"op": "replace", "path": "/spec/version", "value": "1.1.1"}]'
+```
+
+*Question*: How to make a change for a manifest for all stages for a specific provider collection, let's say `capa`?
+
+*Answer*: Add the patch to the `capa/base/kustomization.yaml` folder. If this is a manifest from `shared`, this patch
+will be applied on top of those patches, thus creating an override for this provider only for all stages. For example:
+
+```yaml
+patches:
+  - target:
+      kind: App
+      name: sloth-rules
+      namespace: giantswarm
+    patch: '[{"op": "replace", "path": "/spec/version", "value": "2.2.2"}]'
+```
+
+---
+
+*Question*: How to make a change for a manifest for a given stage for a specific provider collection, let's say `capa` and `testing`?
+
+*Answer*: Let's stay with the `sloth-rules` example, add the patch to the `capa/stages/testing/kustomization.yaml`:
+
+```yaml
+patches:
+  - target:
+      kind: App
+      name: sloth-rules
+      namespace: giantswarm
+    patch: '[{"op": "replace", "path": "/spec/version", "value": "3.3.3"}]'
+```
+
+This will hide the `2.2.2` version patch from the `capa/base/kustomization.yaml` and apply the `3.3.3` patch on top of it,
+but only for the `testing` stage. For `stable` stage, the `2.2.2` patch will stay on top.
+
+---
+
+*Question*: So this can be chained indefinitely. Could you give me an overview of the override order?
+
+*Answer*: In this example, from bottom to top (so the one further down the list will take final effect):
+
+- `shared/base`
+- `shared/stages/STAGE_NAME`
+- `capa/base`
+- `capa/stages/STAGE_NAME`
+- `capa-asia/base`
+- `capa-asia/stages/STAGE_NAME`
+
+And so on, can be chained indefinitely. So its always the most ancient parent base first, then the given stage from that,
+then iterate on this through the chain up to the top collection.
+
+---
+
+*Question*: Can I add manifest just for a given collection and only for a given stage, let's say `capa` and `testing`?
+
+*Answer*: Sure, why not? Add the manifests to the `capa/stages/testing` folder and reference them in the`kustomization.yaml` there.
+
 ### Integration with the Generalized Configuration System (GCS)
 
-Add support for stages as new layers to the `management-cluster-configuration` schema.
+We need to add support for stages as new layers to the `management-cluster-configuration` schema in order to be able to
+generate different konfiguration per stages.
 
 Visualization can be found in this diagram: https://miro.com/app/board/uXjVKUVwcLg=/.
+
+#### Structure
+
+The following is the proposed layout of `shared-configs` and CCR repository structures, with the following legend:
+
+> (NEW) means this is a new addition to the structure
+
+```
+default
+├── apps
+│   ├── app-operator
+│   ├── ...
+├── config.yaml
+├── stages (NEW)
+│   ├── stable
+│   │   ├── apps
+│   │   │   └── app-operator
+│   │   │       ├── configmap-values.yaml.template
+│   │   │       └── secret-values.yaml.template
+│   │   └── config.yaml
+│   └── testing
+│       ├── apps
+│       │   └── app-operator
+│       │       └── configmap-values.yaml.template
+│       └── config.yaml
+installations
+├── golem
+│   ├── apps
+│   │   ├── dex-app
+│   │   │   ├── configmap-values.yaml.patch
+│   │   │   └── secret-values.yaml.patch
+│   ├── config.yaml.patch
+│   └── secret.yaml
+stages (NEW)
+├── stable
+│   ├── apps
+│   │   └── app-operator
+│   │       ├── configmap-values.yaml.template
+│   │       └── secret-values.yaml.template
+│   └── config.yaml
+└── testing
+    ├── apps
+    │   └── app-operator
+    │       └── configmap-values.yaml.template
+    └── config.yaml
+```
+
+This provides:
+- default, GS specified stages and templates for them shared across all konfiguration rendered for that stage
+    - this does not allow setting secret values files cos its in `shared-configs` (because we would need to share a common AGE key across all customer's MCs)
+- CCR specific stages so per customer stage specific templates can be created
+    - this does not allow setting secret values files cos it would mean we need to share a common AGE key across all of those customer's MCs (possibly though, just we don't want to)
+- the MC specific secret values files must set stage secret template values (error on rendering with that stage otherwise)
 
 #### Setup
 
@@ -203,46 +342,12 @@ SHARED_CONFIGS_BRANCH=introduce-stages make assemble-config-ssh
 
 Clone / checkout `konfiguration-schemas` at branch: `introduce-stages`.
 
-#### Description
 
-Provides:
-- default GS specified stages and templates for them shared across all konfiguration rendered for that stage
-    - this does not allow setting secret values files cos its in `shared-configs`
-- CCR specific stages so per customer stage specific templates can be created
-    - this does not allow setting secret values files cos it would mean we need to share a common AGE key across all of that customers MCs (possible tho, just we dont want to)
-- the MC specific secret values files must set stage secret template values (error on rendering with that stage otherwise)
+#### Questions and answers
 
-#### Structure and where to put what (from e.g. AE perspective)
+*Question*: I want to have a value for a given app across all customers for a given STAGE_NAME stage.
 
----
-
-AE: The customer wants to have a configuration for a given app for only one of their MCs.
-
-Answer: Then you don't need stages, just put it into `installations/MC_NAME/apps/APP_NAME` templates.
-
----
-
-AE: The customer wants to have a value across all their MCs for a given app.
-
-Answer: Then you don't need stages. You need to put the value in all installation app template and the value in the installation value files.
-
----
-
-AE: The customer wants to have something for all their STAGE_NAME stage cluster for a given app.
-
-Answer: Create the templates for the app in CCR repo `stages/STAGE_NAME/apps/APP_NAME`. CM template file name:
-`configmap-values.yaml.template`, Secret template name: `secret-values.yaml.template`. If you want to have
-a default value across all MCs, add it to `stages/STAGE_NAME`config.yaml`. Alternatively if you dont want it on all MCs,
-you can create an if condition for the value being defined in the template too. You can provide a different value
-per MC by setting it in `installations/MC_NAME/config.yaml.patch` Note that secrets must always go under
-`installations/MC_NAME/secret.yaml`, you cant define it under the stages folder, because that would
-require sharing a decryption key across all customer MCs.
-
----
-
-AE: I want to have a value for a given app across al customer for a given STAGE_NAME stage.
-
-Answer: Since we talk about all customers now, you must make the change in `shared-configs`, not CCR that is customer-specific.
+*Answer*: Since we talk about all customers now, you must make the change in `shared-configs`, not CCR that is customer-specific.
 The templates are in: `default/stages/STAGE_NAME/apps/APP_NAME`. CM template file name: `configmap-values.yaml.template`,
 Secret template name: `secret-values.yaml.template`. There is no support for having secret values defined like.
 The config map default values for the stage go under `default/stages/STAGE_NAME/apps/APP_NAME/config.yaml`.
@@ -252,7 +357,17 @@ generate config for an MC. You can also set the value for customer level in the 
 
 ---
 
-#### Example commands
+*Question*: The customer wants to have something for all their STAGE_NAME stage cluster for a given app.
+
+*Answer*: Create the templates for the app in CCR repo `stages/STAGE_NAME/apps/APP_NAME`. CM template file name:
+`configmap-values.yaml.template`, Secret template name: `secret-values.yaml.template`. If you want to have
+a default value across all MCs, add it to `stages/STAGE_NAME`config.yaml`. Alternatively if you dont want it on all MCs,
+you can create an if condition for the value being defined in the template too. You can provide a different value
+per MC by setting it in `installations/MC_NAME/config.yaml.patch` Note that secrets must always go under
+`installations/MC_NAME/secret.yaml`, you cant define it under the stages folder, because that would
+require sharing a decryption key across all customer MCs.
+
+#### Examples
 
 With no `stage` defined (or it could be set to a `none` or a something that does not exist):
 
