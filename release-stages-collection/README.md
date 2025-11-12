@@ -610,5 +610,17 @@ There are a few more things we need to make it all work:
 
 - some apps in collections use our Flux-based CRD distribution (`crds` kustomization), thus we need some solution for this
 - we need a way to tell for each management cluster in CMC repos, which provider and stage (sometimes same for addon collections) it should use
+  - with [remote patches being broken starting Flux 2.5](https://github.com/fluxcd/kustomize-controller/issues/1544), we need another way to do this
 
 ## Alternative solutions
+
+### The most simple solution
+
+Most of the work here comes from moving the collections to MCB repo and introducing the `shared` collection.
+
+90% of the above can be achieved by introducing stages in-place in the currently existing collection repositories.
+
+See: https://github.com/giantswarm/capa-app-collection/pull/100.
+
+For this to use we simply need to patch which path (stage) to use CMC repos and it is also backward compatible by keeping
+the original `kustomization.yaml` in place.
