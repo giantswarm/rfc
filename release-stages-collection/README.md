@@ -614,6 +614,128 @@ There are a few more things we need to make it all work:
 
 #### The CRD problem and possible solutions
 
+There are CRDs we distribute via the `crds` kustomization for apps that are part of collections.
+For example, at [this](https://github.com/giantswarm/management-cluster-bases/blob/4b70cebfcbebd53bbefd45cce60b0663e147c82b/bases/crds/giantswarm/kustomization.yaml)
+point in MCB:
+
+- `app-operator`
+- `konfigure-operator`
+- `silence-operator`
+- `organization-operator`
+- `rbac-operator`
+- `observability-operator`
+
+We need to make sure that these CRDs are installed in the management cluster before the apps that use them. But now we
+also need stages for them. Unfortunately, CRDs are not good for patching; you apply the whole manifest.
+
+Thus, the most straightforward approach - can be checked out [here](https://github.com/giantswarm/management-cluster-bases/tree/stages-experiment/bases/crds/giantswarm)
+is to live with some code duplication here. To do this, let's split the `crds` base in MCB like this:
+
+```
+bases/crds
+├── common-flux-v2
+│   └── kustomization.yaml
+│   └── stages
+│       └── ...
+├── flux-app-v2
+│   └── kustomization.yaml
+│   └── stages
+│       └── ...
+└── giantswarm
+    ├── kustomization.yaml
+    └── stages
+        ├── stable
+        │   └── kustomization.yaml
+        └── testing
+            ├── app-platform
+            │   └── kustomization.yaml
+            ├── konfigure-operator
+            │   └── kustomization.yaml
+            ├── kustomization.yaml
+            ├── observability-bundle
+            │   └── kustomization.yaml
+            ├── organization-operator
+            │   └── kustomization.yaml
+            ├── rbac-operator
+            │   └── kustomization.yaml
+            ├── releases
+            │   └── kustomization.yaml
+            └── silence-operator
+                └── kustomization.yaml
+```
+
+This could be a backward compatible solution and allow to avoid some code duplication. Let's look at it in details
+at the `bases/crds/giantswarm` example. The `common-flux-v2` and `flux-app-v2` ones are more simple and a bit special.
+
+First, we should keep the `bases/crds/giantswarm/kustomization.yaml` for the backward compatibility, assuming that the
+testing stage would have the same result as the current state. Would look like:
+
+```yaml
+resources:
+  - stages/testing
+```
+
+The `stages/testing/kustomization.yaml` would look like this:
+
+```yaml
+resources:
+  - app-platform
+  - konfigure-operator
+  - observability-bundle
+  - organization-operator
+  - rbac-operator
+  - releases
+  - silence-operator
+```
+
+Then each of these sub paths would contain the actual CRDs for that given operator, for example, the `konfigure-operator`
+folder's `kustomization.yaml` would look like this:
+
+```yaml
+resources:
+  - https://raw.githubusercontent.com/giantswarm/konfigure-operator/refs/tags/v1.0.1/config/crd/bases/konfigure.giantswarm.io_konfigurationschemas.yaml
+  - https://raw.githubusercontent.com/giantswarm/konfigure-operator/refs/tags/v1.0.1/config/crd/bases/konfigure.giantswarm.io_konfigurations.yaml
+```
+
+This gives us some code reusability in other stages, for example `stable`, but allowing us to reference some
+parts when they are the same, and create a new subfolder for parts with references to the different CRDs when
+there is a difference between stages. Thus, the `base/crds/giantswarm/stages/stable/kustomization.yaml`
+would look like this, when it reuses / matches the `testing` stage exactly:
+
+```yaml
+resources:
+  - ../testing/app-platform
+  - ../testing/konfigure-operator
+  - ../testing/observability-bundle
+  - ../testing/organization-operator
+  - ../testing/rbac-operator
+  - ../testing/releases
+  - ../testing/silence-operator
+```
+
+If let's say `konfigure-operator` is different, then we create `konfigure-operator` folder with a `kustomization.yaml`
+file that looks like this:
+
+```yaml
+resources:
+  - https://raw.githubusercontent.com/giantswarm/konfigure-operator/refs/tags/<<ANOTHER_VERSION>>/config/crd/bases/konfigure.giantswarm.io_konfigurationschemas.yaml
+  - https://raw.githubusercontent.com/giantswarm/konfigure-operator/refs/tags/<<ANOTHER_VERSION>>/config/crd/bases/konfigure.giantswarm.io_konfigurations.yaml
+```
+
+and the `base/crds/giantswarm/stages/stable/kustomization.yaml` would change to:
+
+```yaml
+resources:
+  - ../testing/app-platform
+  # Use it from this stage with <<ANOTHER_VERSION>>
+  - konfigure-operator
+  - ../testing/observability-bundle
+  - ../testing/organization-operator
+  - ../testing/rbac-operator
+  - ../testing/releases
+  - ../testing/silence-operator
+```
+
 #### Using the new collections in CMCs and migration steps
 
 We should use the above structure the same way we do it for `crds`, `catalogs`, `flux-extras` as remote bases.
@@ -623,7 +745,11 @@ Let's create a standard entrypoint for the collection `Kustomization` with a sin
 ```
 management-clusters
 ├── golem
+│   ├── catalogs
+│   │   └── kustomization.yaml
 │   ├── collections
+│   │   └── kustomization.yaml
+│   ├── extras
 │   │   └── kustomization.yaml
 │...
 ```
