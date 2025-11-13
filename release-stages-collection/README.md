@@ -612,6 +612,122 @@ There are a few more things we need to make it all work:
 - we need a way to tell for each management cluster in CMC repos, which provider and stage (sometimes same for addon collections) it should use
   - with [remote patches being broken starting Flux 2.5](https://github.com/fluxcd/kustomize-controller/issues/1544), we need another way to do this
 
+#### The CRD problem and possible solutions
+
+#### Using the new collections in CMCs and migration steps
+
+We should use the above structure the same way we do it for `crds`, `catalogs`, `flux-extras` as remote bases.
+
+Let's create a standard entrypoint for the collection `Kustomization` with a single `kustomization.yaml` file.
+
+```
+management-clusters
+├── golem
+│   ├── collections
+│   │   └── kustomization.yaml
+│...
+```
+
+This file should reference the remote bases, normally the provider base, but hybrid clusters will reference the addon
+collections here as well. So in a most simple form it will look like this:
+
+```yaml
+resources:
+  - https://github.com/giantswarm/management-cluster-bases//bases/collections/capa/stages/testing?ref=stages-experiment
+```
+
+or with an addon collection, it would look like this:
+
+```yaml
+resources:
+  - https://github.com/giantswarm/management-cluster-bases//bases/collections/capa/stages/testing?ref=stages-experiment
+  - https://github.com/giantswarm/management-cluster-bases//bases/collections/vsphere-aws-addons/stages/testing?ref=stages-experiment
+```
+
+This approach has a lot of benefits:
+
+- the `collection` Kustomization source will change to the CMC source (`management-clusters-fleet`)
+- each management cluster gains the ability to provide their own overrides, changes to collections if needed
+- will use the same method as other parts of CMC repos which simplifies testing / devs can apply the same methods
+- we cut the number of Flux kustomizations by 1 in the case of hybrid clusters, as the same kustomizations will reconcile
+  addon collections as well
+- we cut the number of Flux sources too by 1, as we don't need the collection repo source anymore, but most importantly, 
+  using the same source makes testing easier, by not needing to update / align multiple ones in complex scenarios
+
+##### Implications and migration steps
+
+One implication is that we have patches to Kyverno and Prometheus Operator in MCB on the `collections` Kustomization
+itself. Since these apply to all collections, these MUST be moved to the shared collection. They dont even need to be
+patches anymore. Since collections contain raw, pure manifests, change them directly.
+
+They are located here: https://github.com/giantswarm/management-cluster-bases/blob/4b70cebfcbebd53bbefd45cce60b0663e147c82b/bases/flux-giantswarm-resources/resource-kustomizations.yaml#L96-L124
+
+The migration needs to be done in 2 steps, but only hybrid clusters need both of them.
+
+Please note that this was not fully tried out like, unlike all of the above, so the actual migration might slightly differ.
+This is to give a rough idea / thought through about the potential complexity of the migration. 
+
+First, let's see how to migrate the provider collections.
+
+- prepare the `collections/kustomization.yaml` entrypoints in CMC repos for each MC. Decide which stage to use for each MC.
+- we need two things in the root `kustomization.yaml` for each MC to start with:
+  - first we need a full patch for the path and the source of the `Kustomization`, to point it to
+    `managment-clusters/MC_NAME/collections` and the source to `management-clusters-fleet`. We will remove these later
+    when the KS changes in MCB with the usual replacement:
+    ```yaml
+    replacements:
+    - source:
+      kind: ConfigMap
+      name: management-cluster-metadata
+      namespace: flux-giantswarm
+      fieldPath: data.NAME
+      targets:
+        - select:
+          kind: Kustomization
+          name: collections
+          namespace: flux-giantswarm
+          fieldPaths:
+            - spec.path
+          options:
+            delimiter: "/"
+            index: 2
+      ```
+- the `bases/provider` folders in MCB each contain a `patch-collection-gitrepository.yaml` file. We will need to clean
+  these up, but they should not be in the way of the migration, as when switching, we will not use the `collection`
+  git repository Flux source anymore.
+
+Second, let's see how addon collections work now to understand how they are different.
+
+Addon collections have a separate extras base in MCB that contains their own `Kustomization` and `GitRepository` sources.
+
+```
+extras
+├── vsphere-addons
+│   ├── gitrepository-vsphere-addons-collection.yaml
+│   ├── kustomization-vsphere-addons-collection.yaml
+│   └── kustomization.yaml
+├── vsphere-aws-addons
+│   ├── gitrepository-vsphere-aws-addons-collection.yaml
+│   ├── kustomization-vsphere-aws-addons-collection.yaml
+│   └── kustomization.yaml
+```
+
+Then these are referenced in the hybrid MC root `kustomization.yaml` file like:
+
+```yaml
+resources:
+  - https://github.com/giantswarm/management-cluster-bases//extras/vsphere-aws-addons?ref=main
+```
+
+The rough approach for the migration:
+
+- these Kustomizations have prune enabled, so we need to disable that
+- we need to suspend these sources and kustomizations (either in MCB with the above step or manually)
+- we remove the reference to the `extras` remote base from the MC `kustomization.yaml`
+- we add the new `collections` remote base to the MC `collections/kustomization.yaml`
+- the `collections` Kustomization will now reconcile the addon collections
+- clean up the old addon collection source and kustomization
+
 ## Alternative solutions
 
 ### The most simple solution
