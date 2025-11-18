@@ -1,15 +1,17 @@
 ---
 creation_date: 2025-11-11
 issues:
-  - https://github.com/giantswarm/giantswarm/issues/34532
-  - https://github.com/giantswarm/giantswarm/issues/34217
-  - https://github.com/giantswarm/roadmap/issues/620
+- https://github.com/giantswarm/giantswarm/issues/34532
+- https://github.com/giantswarm/giantswarm/issues/34217
+- https://github.com/giantswarm/roadmap/issues/620
 last_review_date: 2025-11-11
 owners:
-  - https://github.com/orgs/giantswarm/teams/team-honeybadger
-state: proposed
+- https://github.com/orgs/giantswarm/teams/team-honeybadger
+state: review
 summary: Move collections to management-cluster-bases, introduce shared-collection and support stages.
 ---
+
+# Move collections to management-cluster-bases, introduce shared collection and support stages
 
 ## Problem Statement
 
@@ -44,8 +46,9 @@ configuration for the apps in them. The schema is located [here](https://github.
 
 ### Assumptions
 
-- At the point of migration, App CRs in the collections have been replaced with Flux HelmReleases, that can do
-  automatic upgrades to the latest or within a given semversion range, or 
+At the point of migration, App CRs in the collections have been replaced with Flux HelmReleases, that can do
+automatic upgrades to the latest or within a given semversion range. This means that the `push-to-app-collection`
+CircleCI workflow is no longer needed.
 
 ## Design proposal
 
@@ -60,7 +63,7 @@ We think it is not possible to do this without [Kustomize Components](https://ku
 and to be more specific because of this [design decision](https://github.com/kubernetes/enhancements/tree/master/keps/sig-cli/1802-kustomize-components#proposal):
 
 > A kustomization that is marked as a Component has basically the same capabilities as a normal kustomization. The main distinction is that they are evaluated after the resources of the parent kustomization (overlay or component) have been accumulated, and on top of them. This means that:
-> 
+>
 > - A component with transformers can transform the resources that an overlay has previously specified in the resources field. Components with patches do not have to include the target resource in their resources field.
 > - Multiple components can extend and transform the same set of resources sequentially. This is in contrast to overlays, which cannot alter the same base resources, because they clone and extend them in parallel.
 
@@ -775,10 +778,8 @@ This approach has a lot of benefits:
 - the `collection` Kustomization source will change to the CMC source (`management-clusters-fleet`)
 - each management cluster gains the ability to provide their own overrides, changes to collections if needed
 - will use the same method as other parts of CMC repos which simplifies testing / devs can apply the same methods
-- we cut the number of Flux kustomizations by 1 in the case of hybrid clusters, as the same kustomizations will reconcile
-  addon collections as well
-- we cut the number of Flux sources too by 1, as we don't need the collection repo source anymore, but most importantly, 
-  using the same source makes testing easier, by not needing to update / align multiple ones in complex scenarios
+- we cut the number of Flux kustomizations by 1 in the case of hybrid clusters, as the same kustomizations will reconcile addon collections as well
+- we cut the number of Flux sources too by 1, as we don't need the collection repo source anymore, but most importantly, using the same source makes testing easier, by not needing to update / align multiple ones in complex scenarios
 
 ##### Implications and migration steps
 
@@ -791,7 +792,7 @@ They are located here: https://github.com/giantswarm/management-cluster-bases/bl
 The migration needs to be done in 2 steps, but only hybrid clusters need both of them.
 
 Please note that this was not fully tried out like, unlike all of the above, so the actual migration might slightly differ.
-This is to give a rough idea / thought through about the potential complexity of the migration. 
+This is to give a rough idea / thought through about the potential complexity of the migration.
 
 First, let's see how to migrate the provider collections.
 
