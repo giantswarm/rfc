@@ -139,7 +139,7 @@ This base is then split first into stages under the `stages` folder.
 > contents, and then there is a folder in it for stages, for technical reasons how `kustomize` works. Thus, the structure
 > is `shared/base` and `shared/stages`.
 
-The `shared/stages` folders contain a `Kustomization`, that is in its most minimal form looks like:
+The `shared/stages/[STAGE_NAME]` folders contain a `Kustomization`, that is in its most minimal form looks like:
 
 ```yaml
 patches:
@@ -157,8 +157,8 @@ resources:
 
 The `capa` collection `base/kustomization.yaml` is a `Component` that in its most simple form:
 
-- list the manifests beyond the `shared` provider collection that will be included in this collection
-- includes a patch to the `Konfiguration` from the base to include further render targets.
+- lists the manifests beyond the `shared` provider collection that will be included in this collection
+- includes a patch for the `Konfiguration` object, included from the base (`capa/base`), to add new render targets for apps added in this stage.
 
 ```yaml
 apiVersion: kustomize.config.k8s.io/v1alpha1
@@ -171,7 +171,7 @@ resources:
 # ...
 ```
 
-The `capa/stages` folders contain a `Kustomization`. For the example of a `stable` stages, in its most minimal form looks like:
+The `capa/stages/[STAGE_NAME]` folders contain a `Kustomization`. For  example, the `stable` stage, in its most minimal form, looks like:
 
 ```yaml
 components:
@@ -200,7 +200,7 @@ They will be structured like the `shared` collection, with a `base` and a `stage
 
 They have their own `Konfiguration` CR and are reconciled by their own separate Flux `Kustomization`.
 
-#### Questions and answers
+#### Usage examples
 
 *Question*: How to add a new manifest to all provider collections?
 
@@ -375,7 +375,7 @@ stages (NEW)
 ```
 
 This provides:
-- default, GS specified stages and templates for them shared across all konfiguration rendered for that stage
+- default, GS specified stages and templates shared across all konfiguration rendered for that stage
     - this does not allow setting secret values files cos its in `shared-configs` (because we would need to share a common AGE key across all customer's MCs)
 - CCR specific stages so per customer stage specific templates can be created
     - this does not allow setting secret values files cos it would mean we need to share a common AGE key across all of those customer's MCs (possibly though, just we don't want to)
@@ -491,7 +491,7 @@ SHARED_CONFIGS_BRANCH=introduce-stages make assemble-config-ssh
 Clone / checkout `konfiguration-schemas` at branch: `introduce-stages`.
 
 
-#### Questions and answers
+#### Usage examples
 
 *Question*: I want to have a value for a given app across all customers for a given STAGE_NAME stage.
 
@@ -509,7 +509,7 @@ generate config for an MC. You can also set the value for customer level in the 
 
 *Answer*: Create the templates for the app in CCR repo `stages/STAGE_NAME/apps/APP_NAME`. CM template file name:
 `configmap-values.yaml.template`, Secret template name: `secret-values.yaml.template`. If you want to have
-a default value across all MCs, add it to `stages/STAGE_NAME`config.yaml`. Alternatively if you dont want it on all MCs,
+a default value across all MCs, add it to `stages/STAGE_NAME/config.yaml`. Alternatively if you don't want it on all MCs,
 you can create an if condition for the value being defined in the template too. You can provide a different value
 per MC by setting it in `installations/MC_NAME/config.yaml.patch` Note that secrets must always go under
 `installations/MC_NAME/secret.yaml`, you cant define it under the stages folder, because that would
@@ -791,7 +791,7 @@ They are located here: https://github.com/giantswarm/management-cluster-bases/bl
 
 The migration needs to be done in 2 steps, but only hybrid clusters need both of them.
 
-Please note that this was not fully tried out like, unlike all of the above, so the actual migration might slightly differ.
+Please note that this was not fully tried, unlike all of the above, so the actual migration might slightly differ.
 This is to give a rough idea / thought through about the potential complexity of the migration.
 
 First, let's see how to migrate the provider collections.
