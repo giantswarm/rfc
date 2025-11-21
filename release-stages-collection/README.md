@@ -20,7 +20,7 @@ versions of apps in different stages.
 
 ## Current status
 
-Collections are gitops repositories constantly reconciled with Flux to our management clusters.
+Collections are GitOps repositories constantly reconciled with Flux to our management clusters.
 
 Each provider supported by us has its own collection. There are so-called addons collections that are reconciled
 separately from the provider collections in selected, hybrid / multi-provider MCs.
