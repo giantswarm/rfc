@@ -28,7 +28,13 @@ separately from the provider collections in selected, hybrid / multi-provider MC
 Each collection has a Konfiguration CR in them that uses the `management-clusters` KonfigurationSchema to generate
 configuration for the apps in them. The schema is located [here](https://github.com/giantswarm/konfiguration-schemas/tree/management-cluster-configuration/v1.0.0/schemas/management-cluster-configuration).
 
-## Goals, non-goals, assumptions
+## Assumptions
+
+At the point of migration, App CRs in the collections have been replaced with Flux HelmReleases, that can do
+automatic upgrades to the latest or within a given semversion range. This means that the `push-to-app-collection`
+CircleCI workflow is no longer needed.
+
+## Goals and non-goals
 
 ### Goals
 
@@ -43,12 +49,6 @@ configuration for the apps in them. The schema is located [here](https://github.
 
 - Automatic promotion / propagation of any kind, be it patches or konfiguration.
 - Automatic upgrades of apps in collections.
-
-### Assumptions
-
-At the point of migration, App CRs in the collections have been replaced with Flux HelmReleases, that can do
-automatic upgrades to the latest or within a given semversion range. This means that the `push-to-app-collection`
-CircleCI workflow is no longer needed.
 
 ## Design proposal
 
