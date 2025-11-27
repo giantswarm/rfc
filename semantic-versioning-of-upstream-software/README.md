@@ -8,7 +8,6 @@ state: review
 summary: Describes our approach for versioning our own packages of upstream software.
 ---
 
-
 # Semantic Versioning of Upstream Software
 
 
