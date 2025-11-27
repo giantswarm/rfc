@@ -25,8 +25,8 @@ Collections are GitOps repositories constantly reconciled with Flux to our manag
 Each provider supported by us has its own collection. There are so-called addons collections that are reconciled
 separately from the provider collections in selected, hybrid / multi-provider MCs.
 
-Each collection has a Konfiguration CR in them that uses the `management-clusters` KonfigurationSchema to generate
-configuration for the apps in them. The schema is located [here](https://github.com/giantswarm/konfiguration-schemas/tree/management-cluster-configuration/v1.0.0/schemas/management-cluster-configuration).
+Each collection has a Konfiguration CR in it that uses the `management-clusters` KonfigurationSchema to generate
+configuration for the apps in it. The schema is located [konfiguration-schemas repository](https://github.com/giantswarm/konfiguration-schemas/tree/management-cluster-configuration/v1.0.0/schemas/management-cluster-configuration).
 
 ## Assumptions
 
@@ -56,8 +56,8 @@ CircleCI workflow is no longer needed.
 
 We will demonstrate it via three parts: `shared` -> `capa` -> `capa-asia`, to prove that it could be chained indefinitely.
 
-The core of the problem is that we want to have building blocks that split to stage specific blocks.
-Then we want to have other blocks that "inherit" these blocks and also splits further into more specific blocks, and so on.
+The core of the problem is that we want to have building blocks that split into stage-specific blocks.
+Then we want to have other blocks that "inherit" these blocks and also split further into more specific blocks, and so on.
 
 We think it is not possible to do this without [Kustomize Components](https://kubectl.docs.kubernetes.io/guides/config_management/components/),
 and to be more specific because of this [design decision](https://github.com/kubernetes/enhancements/tree/master/keps/sig-cli/1802-kustomize-components#proposal):
@@ -182,7 +182,7 @@ resources:
 
 #### Capa Asia (provider) collection in details
 
-Same as `capa` collection, but in the `stages/kustomization.yaml` files, instead of the `shared` stage bheing included,
+Same as `capa` collection, but in the `stages/kustomization.yaml` files, instead of the `shared` stage being included,
 the new parent is `capa`, thus in its most basic form - for a `stable` stage - looks like:
 
 ```yaml
