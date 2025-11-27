@@ -98,7 +98,7 @@ For example, package `1.1.1` could deploy upstream `1.1.0`.
 
 However, there are two main problems with this approach:
 
-1. Many apps are already decoupled, with packages released with versions greater than the upstream version. 
+1. Many apps are already decoupled, with packages released with versions greater than the upstream version.
    An app with upstream version `1.2.3` may already have a Giant Swarm release versioned `2.0.0`.
    If we then recouple the package and upstream version, at some point upstream can decide to release version `2.0.0`.
    Unless we "unrelease" our original `2.0.0` (that deployed upstream `1.2.3`), this would cause our release automation to deploy older software.
