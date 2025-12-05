@@ -16,14 +16,14 @@ summary: Move collections to management-cluster-bases, introduce shared-collecti
 ## Problem Statement
 
 Collections are constantly deploying the latest version of apps inside them. We want to be able to override
-versions of apps in different stages.
+versions and configurations of apps in different stages.
 
 ## Current status
 
 Collections are GitOps repositories constantly reconciled with Flux to our management clusters.
 
-Each provider supported by us has its own collection. There are so-called addons collections that are reconciled
-separately from the provider collections in selected, hybrid / multi-provider MCs.
+Each provider supported by us has its own collection (e.g., capa-app-collection). There are so-called addons collections that are reconciled
+separately from the provider collections in selected, hybrid / multi-provider MCs (e.g., https://github.com/giantswarm/vsphere-aws-addons-app-collection).
 
 Each collection has a Konfiguration CR in it that uses the `management-clusters` KonfigurationSchema to generate
 configuration for the apps in it. The schema is located [konfiguration-schemas repository](https://github.com/giantswarm/konfiguration-schemas/tree/management-cluster-configuration/v1.0.0/schemas/management-cluster-configuration).
