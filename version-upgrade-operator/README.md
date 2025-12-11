@@ -5,11 +5,12 @@ issues:
 last_review_date: 2025-07-02
 owners:
   - https://github.com/orgs/giantswarm/teams/team-honeybadger
-state: review
+state: canceled
 summary:
   This RFC presents a solution that will allow our customers and us to configure automated app upgrades,
   including cluster apps, according to a pre-defined policy, that includes time schedule and version
-  restrictions.
+  restrictions. After the release of similar features in flux-operator, we decided to cancel this custom
+  component.
 ---
 
 # Automatic app upgrades
