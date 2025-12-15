@@ -101,6 +101,10 @@ autoupgrade capabilities entirely by pinning app versions to static semVer tag, 
 1. we implement changes in our CICD process, so the tagging schema is easy to follow
 1. we set the accepted semVer ranges for the apps in each stage
 
+### Upgrading multiple apps at the same time / reusing semVer configuration
+
+#TODO
+
 ## Example developer's workflows and the related release process
 
 Let's assume we create 3 stages: dev, testing and prod. Each of them is assigned to a group of WCs and configures a
@@ -159,4 +163,22 @@ In any case, when your lock (or locks) are no longer needed, you have to revert 
 
 ### Full development workflow example
 
-#TODO
+In this example, we simulate a developer working on a new feature of the `hello-world` app, assuming we have the 3
+release stages mentioned above. The last stable release of the app is `1.2.2`.
+
+1. The developer creates a new branch called `dev-deploy/new-feature` and starts working on the code. Since the branch
+   has the `dev-deploy` prefix, every commit to this branch results in a build that is tagged
+   `v1.2.3-dev.new-feature.X`. Because this tag is "accepted" by `dev` stage apps, every build is automatically deployed
+   to dev MCs.
+1. When the developer is happy enough with the new feature, he/she merges the `dev-deploy/new-feature` into `main`,
+   solves potential problems and creates a new `rc.1` tag. When built, this app version is automatically deployed to
+   clusters with the `testing` semVer configured.
+1. After testing for some time and fixing potential problems, the developer is ready to release a stable version. He
+   does that by bumping the `minor` component of the version tag, marking this release as API backward compatible, but
+   providing new features. The new version is picked up automatically by flux running on "stable" clusters.
+
+## Necessary changes
+
+1. We need to change our tagging and releasing CICD automation
+1. We need to make sure that when a new chart is available in an OCI registry, the images it uses are also already
+   available, otherwise the automatic chart update will fail because of the image.
