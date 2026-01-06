@@ -7,7 +7,7 @@ issues:
 last_review_date: 2025-11-11
 owners:
 - https://github.com/orgs/giantswarm/teams/team-honeybadger
-state: review
+state: approved
 summary: Move collections to management-cluster-bases, introduce shared-collection and support stages.
 ---
 
