@@ -5,7 +5,7 @@ issues:
 last_review_date: 2025-12-11
 owners:
 - https://github.com/orgs/giantswarm/teams/team-honeybadger
-status: review
+state: review
 summary: We want to use flux and flux-operator's automatic upgrades capabilities to create automatic upgrades for different release stages, so we don't have to manually or through extra automation care about those rollouts.
 ---
 
