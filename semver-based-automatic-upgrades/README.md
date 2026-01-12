@@ -40,6 +40,8 @@ deployed to a local (MC) or a remote (WC) cluster. The proposed solution will re
 the version of an app to deploy is deterministic, but is calculated dynamically based on the semVer expression stored in
 the deployment object (possibly in a gitops repo) and from the set of tags discovered in an OCI registry. The specific version of a chart to deploy will be calculated dynamically and will not be stored in the gitops repo.
 
+Please note that this RFC proposes the format and semantics of different tags, but doesn't strictly define how to assign different selection rules to different stages. The problem of creating and configuring such changes will be solved separately and was described in [this RFC](../release-stages-collection/README.md) for collections. It will be enhanced to other apps as well.
+
 *Note*:
 In case we want to have a manual approval process for rolling any version change for an app, we can still configure
 `ImageAutomationController` to push to a separate branch, and then we can review and merge it manually.
@@ -51,7 +53,7 @@ In case we want to have a manual approval process for rolling any version change
   customers (just an example).
 - We want automatic rollouts, so that a new release of app is applied automatically, without further manual
   configuration, but only to selected MCs.
-- This also includes any apps deployed to WCs, as long as they are defined on an MC.
+- This also includes any apps deployed to WCs, as long as they are defined on an MC. This means that we can use this with our customers to let them test pre-releases of the giant swarm maintained software.
 - This covers also time-restricted/scheduled upgrades, if they come from `flux-operator`.
 
 ## Out of scope use cases
@@ -101,10 +103,11 @@ autoupgrade capabilities entirely by pinning app versions to static semVer tag, 
 
 ### Implementation steps
 
-1. we agree on the currently configured set of release stages
-1. we agree on the supported set of tag formats for each stage
-1. we implement changes in our CICD process, so the tagging schema is easy to follow
-1. we set the accepted semVer ranges for the apps in each stage
+1. We agree on the currently configured set of release stages.
+1. We agree on the supported set of tag formats for each stage.
+1. We implement changes in our CICD process, so the tagging schema is easy to follow.
+1. We set the accepted semVer ranges for the apps in each stage. To avoid manually setting ranges for each existing app,
+   we can use the patching feature of `Kustomizations` and - for example - patch the version of every deployed HelmRelease to the correct default value for this stage, ie. a testing cluster deployment sets and app version to `*-rc.*` by default.
 
 ### CICD process changes
 
@@ -194,6 +197,16 @@ release stages mentioned above. The last stable release of the app is `1.2.2`.
 1. After testing for some time and fixing potential problems, the developer is ready to release a stable version. He
    does that by bumping the `minor` component of the version tag, marking this release as API backward compatible, but
    providing new features. The new version is picked up automatically by flux running on "stable" clusters.
+
+### Emergency rollback
+
+At some point, some releases will obviously fail. It is important that the developers know how to rollback the configuration to the last known working state, if the "fix and roll forward" approach can't be used. There are a few options possible:
+
+1. For the affected resource, edit it ad hoc and change the versions that accepts a range to a specific known version or limit its range so that the failed version is not included. For gitops controlled resources, this has to be done in the gitops repo, possibly taking into account patches that default the app version.
+1. If can't immediately change the config in the gitops repository, and the object is deployed from one, you can pause the reconciliation of the owning `Kustomization` object and then manually force a specfic version of the app to be deployed.
+
+**Note**:
+Please remember that we can still reflect every version change of an object in the gitops repository and then use the "rollback commit" solution, if we use the [image automation controller](https://github.com/giantswarm/image-automation-controller) for setting the chart version. This solution, however, requires constant manual approvals by a user and is not covered by this RFC.
 
 ## Necessary changes
 
