@@ -16,7 +16,7 @@ so we don't have to manually or through extra automation care about those rollou
 ## Introduction
 
 Flux can automatically detect and apply new releases of a Helm Chart as new tags for the configured chart are created in
-the OCI repository. These upgrades can be based on restrictions: we can use
+the OCI repository. These upgrades can be based on matching the semVer tag as both a semVer range and a regexp to match. We can use
 [semVer tags, tag ranges and regexp filters](https://fluxcd.io/flux/components/source/ocirepositories/#reference) to
 decide which tags will be considered for the automatic upgrade and which won't.
 
@@ -25,21 +25,22 @@ drives automatic upgrades for specific release stages by just assigning git tags
 releases. No configuration with the deployment tools will be required.
 
 For example, if we want an app to be automatically deployed and patched as soon as a new patch release is available
-(stable stage), we can configure the automatic upgrade semVer for the app to the `X.Y.*`, where "X" and "Y" are set to
-specific values, and the `*` means that any patch release will be automatically deployed.
+(let's assume this is a valid behavior for a stable stage), we can configure the automatic upgrade semVer for the app to the `X.Y.*`, where "X" and "Y" are set to
+specific values, and the `*` means that any patch release will be automatically deployed. That way we can automatically deliver fixes for an app (including security) without manually configuring the cluster to select and app version to run.
 
 Now, if we want to expand this idea to multi-stage deployments, we can configure different stages with different semVer
 expressions. For example:
 
 - "dev", deploy any version of an app that matches tag `*-dev.*`
 - "testing", deploy any version of an app that matches tag `*-rc.*`
-- "stable-32", deploy any version of the app that matches tag `>=32.0.0` (this excludes `-*` tags)
+- "stable-32", deploy any version of the app that matches tag `>=32.0.0` (this excludes `-*` tags, so pre-releases)
 
 We can use this mechanism for any `HelmRelease` or `ResourceSet` object that is created on an MC, for any object
-deploying to local (MC) or remote (WC) cluster. The proposed solution will result in "commitless gitops workflow", where
+deployed to a local (MC) or a remote (WC) cluster. The proposed solution will result in "commitless gitops workflow", where
 the version of an app to deploy is deterministic, but is calculated dynamically based on the semVer expression stored in
-the deployment object (possibly in a gitops repo) and from the set of tags discovered in an OCI registry.
+the deployment object (possibly in a gitops repo) and from the set of tags discovered in an OCI registry. The specific version of a chart to deploy will be calculated dynamically and will not be stored in the gitops repo.
 
+*Note*:
 In case we want to have a manual approval process for rolling any version change for an app, we can still configure
 `ImageAutomationController` to push to a separate branch, and then we can review and merge it manually.
 
@@ -65,11 +66,14 @@ The following are right now considered out of scope of the current work, but sti
 
 ### Overview
 
+We will introduce strict opinionated tagging patterns, then will assign acceptable tag ranges and regexp matchers to clusters of
+specific release stage.
+
 ### Implementation idea
 
 We will use `flux-operator` and `helm-controller` abilities to discover tags in remote OCI repositories using the new
 recommended `OCIRepository` object. Tags matching the configured semVer expression will be applied to related
-`ResourceSets` or `HelmReleases`. Each release channel will provide its set of deployed apps (mostly `collections`),
+`ResourceSets` or `HelmReleases`. Each release channel will provide tag acceptance criteria for the set of deployed apps (mostly `collections`),
 where each app will define its own accepted semVer expression for tags.
 
 To be able to use SemVer tags for this, we will need to enhance our CICD tooling to make the proposed git tagging schema
@@ -77,8 +81,9 @@ easier to use by the developers.
 
 Proposed tagging schema and its tentative mapping to MC stages:
 
-- Deployments for Giant Swarm dev MCs should install the most recent dev release available. So, for the "dev" base, we
+- Deployments for Giant Swarm `dev` MCs should install the most recent dev release available. So, for the "dev" base, we
   deploy apps with `dev` tags matching "[0-9]+\.[0-9]+\.[0-9]+-dev\.(branch)\.[0-9]+" (ie. `1.9.2-dev.my-feature.1`)
+  - **Note**: alternatively, we can set it to "*-*" to install any latest version, including pre-releases. Please note that "*" matches stable releases only, so no pre-releases are considered to match, unless you explicitely set the pattern to accept them.
 - We want a separate set of rules to apply for giant swarm testing MCs. So, for the "testing" base we deploy apps with
   `rc` tags matching "[0-9]+\.[0-9]+\.[0-9]+-rc\.[0-9]+" (ie. `1.9.2-rc.1`)
   - If we want to make it more granular and for example include a separate stage for giant swarm "testing",
@@ -101,30 +106,43 @@ autoupgrade capabilities entirely by pinning app versions to static semVer tag, 
 1. we implement changes in our CICD process, so the tagging schema is easy to follow
 1. we set the accepted semVer ranges for the apps in each stage
 
-### Upgrading multiple apps at the same time / reusing semVer configuration
+### CICD process changes
 
-#TODO
+1. We keep the current `main#release#[patch,minor,major]` logic, that will now create tags that are considered stable releases.
+1. We add new `main#release#[patch-rc,minor-rc,major-rc]` logic, that will bump the selected part of the tag, but create a RC tag for it. Examples:
+   1. `1.2.3` + `main#release#patch-rc` = `1.2.4-rc.1`
+   1. `1.2.3` + `main#release#minor-rc` = `1.3.0-rc.1`
+   1. `1.2.3` + `main#release#major-rc` = `2.0.0-rc.1`
+   1. `1.2.3-rc.1` + `main#release#patch-rc` = `1.2.4-rc.2`
+1. We don't build any commit from any branch by tagging it with `X.Y.Z-commit_hash`. The tags of this form are not semVer compatible and will result in incorrect sorting of tags.
+1. The above will be replaced with the following automation:
+   1. If there's a branch named `devrelease/[NAME]`, then every commit in this branch will trigger a build that will be tagged `X.Y.X-dev.NAME.Z`. Examples for a branch named `devrelease/my-feature`:
+      1. first commit in a new branch `devrelease/my-feature` + last commit in the parent tree is `1.2.3` = `1.2.3-dev.my-feature.1`
+      1. 10th commit in the same branch `devrelease/my-feature` + last commit in the parent tree is `1.2.3` = `1.2.3-dev.my-feature.10`
+   1. If the branch name doesn't have the `devrelease` prefix, builds are not autoamtically triggered, but a release can still be created by manually assigning a correct tag.
+      1. Example: there's a branch `i-dont-care` and a developer creates a tag `1.2.3-dev.awesome.1`: the build is triggered and pushed to the registry.
 
 ## Example developer's workflows and the related release process
 
-Let's assume we create 3 stages: dev, testing and prod. Each of them is assigned to a group of WCs and configures a
+Let's assume we have 3 release stages: dev, testing and prod. Each of them is assigned to a group of clusters and configures a
 separate set of semVers for apps.
 
 ### "stable" stage
 
-Each app in this one is configured to deploy only stable releases, with tags matching `vX.Y.Z`, like `2.0.0`. Each time
+Each app in this release stage is configured to deploy only stable releases, with tags matching `X.Y.Z`, like `2.0.0`. Each time
 a new stable release of any of the apps is created on GitHub, the build succeeds and a new chart is uploaded to the OCI
 registry, the app will be automatically deployed to matching clusters. We can limit this to patch releases by
 configuring a semVer like `2.0.*` or to minors and patches with `2.*.*`. In that case, upgrading beyond patch or minor
 requires manual intervention and a commit in the gitOps repository. Tags of this form should be created from the `main`
-branch.
+branch. That way a stable release is still created by a developer by creating the `main#release#[patch,minor,major]` tag.
 
 ### "testing" stage
 
-This one will deploy apps released with `v2.0.0-rc.X` tags. We're assuming any tag matching the `-rc*` is deployed
+This one will deploy apps released with `2.0.0-rc.X` tags. We're assuming any tag matching the `-rc*` is deployed
 automatically. If there are multiple developers working on the same app in parallel, they should coordinate the `rc`
 release and figure out what they want to be deployed in the `testing` stage. `rc` tags are not automatically generated,
-so the developers still have to create them explicitly. Tags of this form should be created from the `main` branch.
+so the developers still have to create them explicitly. Tags of this form should be created from the `main` branch. A release
+is created by a developer by creating the `main#release#[patch-rc,minor-rc,major-rc]` tag.
 
 ### "dev" stage
 
@@ -136,21 +154,21 @@ suffix, accepting any branch name. This can be limited by a developer working on
 
 From a developer's perspective, he/she should choose whether to deploy to the "dev" stage or not. If yes, we want to
 create an automation that makes it easier for the developers. The idea is that he/she has to work on a branch that
-matches a naming schema, like `dev-deploy/my-branch`. The CI/CD process will be adjusted so that every commit on this
-branch results automatically in a build and tag that matches `vX.Y.Z-dev.my-branch.W`, where `W` is the number of
+matches a naming schema, like `devrelease/my-branch`. The CI/CD process will be adjusted so that every commit on this
+branch results automatically in a build and tag that matches `X.Y.Z-dev.my-branch.W`, where `W` is the number of
 commits since the fork. Of course, such tags can be also created manually, from a branch with any name.
 
 Since for "dev" environments the latest tag is discovered and applied automatically, the new dev version will be
 deployed and available for testing as soon as the CI/CD pipeline finishes. There's nothing the developer has to do
-except assigning a correct specific tag to the release.
+except naming the branch.
 
 This solution can create a problem when we have parallel builds for different features, like when multiple developers
 work in parallel on different features of the same app, on different branches. In this scenario, each developer creates
 a series of tags based on its own branch name (automatically for each commit or manually). Let's assume one developer
 works on `app-operator` app in a branch `lukasz-feature`. Each of his builds should generate a tag formatted like
-`v2.0.0-dev.lukasz-feature.1`. Now, he might want to "lock a dev cluster" to this single branch builds, so no builds
+`2.0.0-dev.lukasz-feature.1`. Now, he might want to "lock a dev cluster" to this single branch builds, so no builds
 from other dev branches are deployed there. He needs to go to the GitOps repo and reconfigure automatic deployments
-regexp (for 1 cluster where you want to test your builds) into `v2.0.0-dev\.lukasz-feature\.\d+`. This should "lock"
+regexp (for 1 cluster where you want to test your builds) into `2.0.0-dev\.lukasz-feature\.\d+`. This should "lock"
 your cluster for testing only this branch (more specifically, releases tagged from that branch). Your "lock" commit in
 the GitOps repo should also have pretty clear comment, like "Fixing dev version of app-operator to deploy from
 'lukasz-feature' branch on 'golem'". Please note, that `lukasz-feature` based builds will be still deployed to any other
@@ -166,9 +184,9 @@ In any case, when your lock (or locks) are no longer needed, you have to revert 
 In this example, we simulate a developer working on a new feature of the `hello-world` app, assuming we have the 3
 release stages mentioned above. The last stable release of the app is `1.2.2`.
 
-1. The developer creates a new branch called `dev-deploy/new-feature` and starts working on the code. Since the branch
+1. The developer creates a new branch called `devrelease/new-feature` and starts working on the code. Since the branch
    has the `dev-deploy` prefix, every commit to this branch results in a build that is tagged
-   `v1.2.3-dev.new-feature.X`. Because this tag is "accepted" by `dev` stage apps, every build is automatically deployed
+   `1.2.3-dev.new-feature.X`. Because this tag is "accepted" by `dev` stage apps, every build is automatically deployed
    to dev MCs.
 1. When the developer is happy enough with the new feature, he/she merges the `dev-deploy/new-feature` into `main`,
    solves potential problems and creates a new `rc.1` tag. When built, this app version is automatically deployed to
