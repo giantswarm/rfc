@@ -2,7 +2,7 @@
 creation_date: 2025-12-11
 issues:
 - https://github.com/giantswarm/giantswarm/issues/24237
-last_review_date: 2025-12-11
+last_review_date: 2025-12-15
 owners:
 - https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: review
@@ -18,11 +18,39 @@ the OCI repository. These upgrades can be based on matching the semVer tag as bo
 [semVer tags, tag ranges and regexp filters](https://fluxcd.io/flux/components/source/ocirepositories/#reference) to
 decide which tags will be considered for the automatic upgrade and which won't.
 
-Using the feature and combining this with a defined tagging schema will allow us to create a process, where a developer
+Using this feature and combining it with a defined tagging schema will allow us to create a process, where a developer
 drives automatic upgrades for specific release stages by just assigning git tags of specific format to Helm Chart
 releases. No configuration with the deployment tools will be required.
 
-For example, if we want an app to be automatically deployed and patched as soon as a new patch release is available
+This RFC serves three related purposes:
+
+1. Proposing proper semVer-compatible tagging for our software releases
+2. Demonstrating how to use these tags with Flux's automatic upgrade capabilities. The automatic upgrade functionality depends on adhering to the proposed tagging process, but the mechanism itself is provided by Flux and works with any semVer-compatible tags.
+3. Discussing with our developers what is the set of tagging schemas they find appropriate.
+
+### Scope and context
+
+The proposed tagging schema and conventions described in this RFC apply specifically to software developed and maintained by Giant Swarm. This RFC does not propose enforcing any tagging requirements on customer software. We want to offer the underlying mechanism (semVer-based automatic upgrades using Flux) to everyone, including customers, who can use it with their own tagging schemes. However, the specific tag formats (`-dev.*`, `-rc.*`, etc.) and the workflow described here are intended for Giant Swarm's internal release engineering process.
+
+This RFC establishes the semVer tagging foundation that enables more advanced features. We're currently in planning or evaluation of more tools that will integrate with core Flux features and will also require semVer tagging. Only as a context, please know that we're evaluating the following tools:
+
+- **Flux Operator with ResourceSets**: Already available and committed to, this will provide:
+  - Grouping resources into deployment units (replacing bundles with enhanced templating)
+  - Dependencies between cluster objects
+  - Conditional deployments
+  - CEL evaluation of target cluster resources
+  - Scheduled upgrades for cluster apps
+
+- **Sveltos**: Currently in early evaluation, this could provide:
+  - Gated deployments
+  - Dynamic deployments based on target cluster tags
+  - Event-based deployments
+
+The current RFC focuses on the foundational tagging scheme and basic automatic upgrade usage, which is an embedded feature of flux. The advanced features above will be covered in separate RFCs as they mature.
+
+## General idea
+
+As an example, if we want an app to be automatically deployed and patched as soon as a new patch release is available
 (let's assume this is a valid behavior for a stable stage), we can configure the automatic upgrade semVer for the app to the `X.Y.*`, where "X" and "Y" are set to
 specific values, and the `*` means that any patch release will be automatically deployed. That way we can automatically deliver fixes for an app (including security) without manually configuring the cluster to select and app version to run.
 
@@ -38,11 +66,7 @@ deployed to a local (MC) or a remote (WC) cluster. The proposed solution will re
 the version of an app to deploy is deterministic, but is calculated dynamically based on the semVer expression stored in
 the deployment object (possibly in a gitops repo) and from the set of tags discovered in an OCI registry. The specific version of a chart to deploy will be calculated dynamically and will not be stored in the gitops repo.
 
-Please note that this RFC proposes the format and semantics of different tags, but doesn't strictly define how to assign different selection rules to different stages. The problem of creating and configuring such changes will be solved separately and was described in [this RFC](../release-stages-collection/README.md) for collections. It will be enhanced to other apps as well.
-
-*Note*:
-In case we want to have a manual approval process for rolling any version change for an app, we can still configure
-`ImageAutomationController` to push to a separate branch, and then we can review and merge it manually.
+Please note that this RFC proposes the format and semantics of different tags and how we can map them to release channels we want to have, but the proposition is not final - please provide your feedback about the set of tags and matching rules you find necessary and useful.
 
 ## Use cases
 
@@ -52,12 +76,15 @@ In case we want to have a manual approval process for rolling any version change
 - We want automatic rollouts, so that a new release of app is applied automatically, without further manual
   configuration, but only to selected MCs.
 - This also includes any apps deployed to WCs, as long as they are defined on an MC. This means that we can use this with our customers to let them test pre-releases of the giant swarm maintained software.
+- Customers can test pre-release versions (e.g., RC releases) of Giant Swarm maintained software by configuring their app deployments to accept the appropriate tag range (e.g., `*-rc.*` for RC versions). This can be done for individual apps or en-masse using tools like Kustomize patches, depending on the customer's deployment approach. This allows customers to test our pre-releases without requiring commits or PR approvals just to get an updated version.
 - This covers also time-restricted/scheduled upgrades, if they come from `flux-operator`.
 
 ## Out of scope use cases
 
 The following are right now considered out of scope of the current work, but still valid for the future:
 
+- dependency management other than the one Flux already offers for HelmReleases
+- advanced health checking of the target cluster
 - promotion tools: allowing a change (accepted tags configuration) to be propagated from 1 release channel to another in
   an automated way
   - use case: upgrading customer's WCs by release channel, gated and accepted by a user
@@ -67,7 +94,7 @@ The following are right now considered out of scope of the current work, but sti
 ### Overview
 
 We will introduce strict opinionated tagging patterns, then will assign acceptable tag ranges and regexp matchers to clusters of
-specific release stage.
+specific release stage. We propose a starting set of tags and matching rule, but they can be easily extended or modified in the future.
 
 ### Implementation idea
 
@@ -91,6 +118,8 @@ Proposed tagging schema and its tentative mapping to MC stages:
     swarm testing, `beta` - giant swarm "stable testing", `rc` - customer testing
 - For the "stable" stage, we deploy apps with tags matching "[0-9]+\.[0-9]+\.[0-9]+" (ie. `1.9.1`)
 
+**Note on tag format flexibility:** The RFC proposes `stable`, `rc`, and `dev` as examples, but the system is not limited to these values. Any semVer-compatible pre-release tag format can be used. For example, teams can create custom pre-release tags like `X.Y.Z-ducttape.W` and configure deployments to accept these tags. The only limitation is with stable releases, where there's just one stable tag pattern (`X.Y.Z`), though different deployments can still choose different version ranges (e.g., `21.x.x` vs `22.x.x` or `*` for always up-to-date).
+
 The above means that the deployed version of an application will entirely depend on the set of semVer tags available in
 a remote OCI registries. In other words, developers decide where a specific version of an app will be deployed by
 assigning tags to releases they create.
@@ -98,6 +127,8 @@ assigning tags to releases they create.
 Since a release stage has completely independent set of app configurations, including the set of configured semVer
 expressions, we can do anything that is possible by tag manipulation. As an example, in one release stage we can disable
 autoupgrade capabilities entirely by pinning app versions to static semVer tag, like `1.1.1`.
+
+This approach is flexible enough to support multiple stages on the same workload cluster in different namespaces, as each deployment configuration is independent and can specify its own semVer expression.
 
 ### Implementation steps
 
@@ -114,7 +145,7 @@ autoupgrade capabilities entirely by pinning app versions to static semVer tag, 
    1. `1.2.3` + `main#release#patch-rc` = `1.2.4-rc.1`
    1. `1.2.3` + `main#release#minor-rc` = `1.3.0-rc.1`
    1. `1.2.3` + `main#release#major-rc` = `2.0.0-rc.1`
-   1. `1.2.3-rc.1` + `main#release#patch-rc` = `1.2.4-rc.2`
+   1. `1.2.3-rc.1` + `main#release#patch-rc` = `1.2.3-rc.2`
 1. We don't build any commit from any branch by tagging it with `X.Y.Z-commit_hash`. The tags of this form are not semVer compatible and will result in incorrect sorting of tags.
 1. The above will be replaced with the following automation:
    1. If there's a branch named `devrelease/[NAME]`, then every commit in this branch will trigger a build that will be tagged `X.Y.X-dev.NAME.Z`. Examples for a branch named `devrelease/my-feature`:
@@ -148,7 +179,7 @@ is created by a developer by creating the `main#release#[patch-rc,minor-rc,major
 ### "dev" stage
 
 On selected "dev" MCs, we configure automated upgrades to always deploy the latest discovered tag matching a dev
-release. This means that by default a "dev" cluster always runs the latest build from _any dev branch_ that decided to
+release. This means that by default a "dev" cluster always runs the latest build from **any dev branch** that decided to
 create a tag matching the dev build. We assume that the tags created on the dev branches have the format
 `[X.Y.Z]-dev.[branch_name].[build_number]`. By default, we configure dev stage apps to accept any tag having the `-dev`
 suffix, accepting any branch name. This can be limited by a developer working on the app.
@@ -201,7 +232,7 @@ release stages mentioned above. The last stable release of the app is `1.2.2`.
 At some point, some releases will obviously fail. It is important that the developers know how to rollback the configuration to the last known working state, if the "fix and roll forward" approach can't be used. There are a few options possible:
 
 1. For the affected resource, edit it ad hoc and change the versions that accepts a range to a specific known version or limit its range so that the failed version is not included. For gitops controlled resources, this has to be done in the gitops repo, possibly taking into account patches that default the app version.
-1. If can't immediately change the config in the gitops repository, and the object is deployed from one, you can pause the reconciliation of the owning `Kustomization` object and then manually force a specfic version of the app to be deployed.
+1. If can't immediately change the config in the gitops repository, and the object is deployed from one, you can pause the reconciliation of the owning `Kustomization` object and then manually force a specific version of the app to be deployed.
 
 **Note**:
 Please remember that we can still reflect every version change of an object in the gitops repository and then use the "rollback commit" solution, if we use the [image automation controller](https://github.com/giantswarm/image-automation-controller) for setting the chart version. This solution, however, requires constant manual approvals by a user and is not covered by this RFC.
