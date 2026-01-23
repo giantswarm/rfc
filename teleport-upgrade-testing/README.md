@@ -137,7 +137,7 @@ locals {
 
 module "infra" {
   source = "../../modules/infra"
-  
+
   teleport_cluster_name  = local.teleport_cluster_name
   teleport_chart_version = var.teleport_chart_version  # Parameterized
   instance_type          = "t3.medium"                 # Cost optimized
@@ -273,7 +273,7 @@ spec:
       type: string
       description: "Keep environment after test for debugging"
       default: "false"
-      
+
   tasks:
     - name: deploy-teleport-ci
       taskRef:
