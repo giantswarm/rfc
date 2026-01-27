@@ -2,7 +2,7 @@
 creation_date: 2025-12-11
 issues:
   - https://github.com/giantswarm/giantswarm/issues/24237
-last_review_date: 2025-12-15
+last_review_date: 2026-01-27
 owners:
   - https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: review
@@ -41,8 +41,8 @@ maintained by Giant Swarm. This RFC does not propose enforcing any tagging requi
 We want to offer the underlying mechanism (semVer-based automatic upgrades using Flux) to everyone, including
 customers, who can use it with their own tagging schemes. However, the specific tag formats (`-dev.*`,
 `-rc.*`, etc.) and the workflow described here are intended for Giant Swarm's internal release engineering
-process. The main goal of applying this scheme is to achieve auto-upgrade capabilities for our managed apps
-and cluster apps.
+process. The main goal of applying this scheme is to achieve auto-upgrade capabilities for our MC apps and
+cluster apps.
 
 This RFC establishes the semVer tagging foundation that enables more advanced features. We're currently in
 planning or evaluation of more tools that will integrate with core Flux features and will also require semVer
@@ -76,11 +76,11 @@ different semVer expressions. For example:
 
 - "dev", deploy any version of an app that matches tag `*-dev.*`
 - "testing", deploy any version of an app that matches tag `*-rc.*`
-- "stable-32", deploy any version of the app that matches tag `>=32.0.0` (this excludes `-*` tags, so
+- "stable", deploy any version of the app that matches tag `>=32.0.0` (this excludes `-*` tags, so
   pre-releases)
 
 We can use this mechanism for any `HelmRelease` or `ResourceSet` object that is created on an MC, for any
-object deployed to a local (MC) or a remote (WC) cluster. The proposed solution will result in "commitless
+object deployed to a local (MC) or a remote (WC) cluster. The proposed solution will result in "commit-less
 gitops workflow", where the version of an app to deploy is deterministic, but is calculated dynamically based
 on the semVer expression stored in the deployment object (possibly coming from a gitops repo) and from the set
 of tags discovered in an OCI registry. The specific version of a chart to deploy will be calculated
@@ -127,8 +127,7 @@ can be easily extended or modified in the future.
 We will use `flux-operator` and `helm-controller` abilities to discover tags in remote OCI repositories using
 the new recommended `OCIRepository` object. Tags matching the configured semVer expression will be applied to
 related `ResourceSets` or `HelmReleases`. Each release channel will provide tag acceptance criteria for the
-set of deployed apps (mostly `collections`), where each app will define its own accepted semVer expression for
-tags.
+set of deployed apps, where each app will define its own accepted semVer expression for tags.
 
 To be able to use SemVer tags for this, we will need to enhance our CICD tooling to make the proposed git
 tagging schema easier to use by the developers. The proposed schema is backward compatible for stable
@@ -138,15 +137,15 @@ not semVer compliant.
 Proposed default tagging schema:
 
 - For the "stable" release, we keep the current tagging schema with tags matching `[0-9]+\.[0-9]+\.[0-9]+`
-  (ie. `1.9.1`)
+  (i.e. `1.9.1`)
 - For the "release candidate" stage, we introduce a new tag according to the recommended way of semVer
-  tagging: `rc` suffixed tags matching `[0-9]+\.[0-9]+\.[0-9]+-rc\.[0-9]+` (ie. `1.9.2-rc.1`)
+  tagging: `rc` suffixed tags matching `[0-9]+\.[0-9]+\.[0-9]+-rc\.[0-9]+` (i.e. `1.9.2-rc.1`)
 - For `dev` builds, we want to build every commit of a non-`main` branch a developer is working on. We need to
   make this builds to have a tag that allows to identify the branch it is coming from and to make them
   sortable according to semVer. The proposed schema is thus
   `[0-9]+\.[0-9]+\.[0-9]+-dev\.(branch)\.[0-9]{8}\.[0-9]{6}` where `branch` is the name of the branch the
   build is coming from and the suffix is a time stamp with date and time parts. For example, if the last
-  stable tag in history is `1.9.1` and the branch name is `my-feature-1`, the build results in a tag like
+  stable tag in history is `1.9.1` and the branch name is `my-feature`, the build results in a tag like
   `1.9.2-dev.my-feature.20260127.094959`.
 
 The default matching scheme for apps deployed to our MCs is:
@@ -247,7 +246,7 @@ to the developer, depending on the usage scenario.
 Most of the apps we work on get deployed on MCs and are tested during the development process on `testing`
 channel MCs. Since running a whole MC with all its apps configured to run on dev builds would result in a
 highly unstable and potentially unusable environment, we assume the apps running on such MCs will be
-configured to auto-upgrade on stabel and RC releases only. When a developer wants to test a new dev branch of
+configured to auto-upgrade on stable and RC releases only. When a developer wants to test a new dev branch of
 an app, he will configure the app on one of the `testing` MCs to accept dev builds from the branch he/she
 works on. This is an extension of the process we have in our `resrvations` channel in slack. So, the process
 goes like this:
@@ -272,7 +271,7 @@ At some point, some releases will obviously fail. It is important that the devel
 configuration to the last known working state, if the "fix and roll forward" approach can't be used. There are
 a few options possible:
 
-1. For the affected resource, edit it ad hoc and change the versions that accepts a range to a specific known
+1. For the affected resource, edit it ad-hoc and change the versions that accepts a range to a specific known
    version or limit its range so that the failed version is not included. For gitops controlled resources,
    this has to be done in the gitops repo.
 1. If the operator can't immediately change the config in the gitops repository, and the object is deployed
