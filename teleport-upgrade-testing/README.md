@@ -382,8 +382,10 @@ The upgrade testing must validate compatibility across the entire stack. When up
 
 ### Trigger mechanisms
 
-1. **Manual (PR comment)**: `/run teleport-upgrade-test TELEPORT_TARGET_VERSION=<version>`
+1. **Manual (PR comment)**: `/run teleport-upgrade-test TELEPORT_TARGET_VERSION=<version> [TELEPORT_CURRENT_VERSION=<version>]`
    - Example: `/run teleport-upgrade-test TELEPORT_TARGET_VERSION=19.0.0`
+   - Example with explicit start version: `/run teleport-upgrade-test TELEPORT_CURRENT_VERSION=17.0.0 TELEPORT_TARGET_VERSION=19.0.0`
+   - If `TELEPORT_CURRENT_VERSION` is omitted, defaults to current production version
 2. **Manual (workflow_dispatch)**: GitHub Actions UI with version inputs
 3. **Automated (weekly)**: Cron schedule every Friday at 06:00 UTC
    - Automatically fetches the latest stable Teleport version as target
