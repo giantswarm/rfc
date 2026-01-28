@@ -134,7 +134,13 @@ tagging schema easier to use by the developers. The proposed schema is backward 
 releases, but adds and optional 'Release Candidate' stage and fixes the dev builds tagging, which right now is
 not semVer compliant.
 
-Proposed default tagging schema:
+This RFC introduces two related parts. The second one, automated app upgrades, will become possible as a
+configuration of a standard flux feature. It is blocked by implementing the first one.
+
+### Proposed default tagging schema
+
+In order to become semVer compatible and our tags to reflect software maturity, we will introduce the
+following tagging schema:
 
 - For the "stable" release, we keep the current tagging schema with tags matching `[0-9]+\.[0-9]+\.[0-9]+`
   (i.e. `1.9.1`)
@@ -148,7 +154,13 @@ Proposed default tagging schema:
   stable tag in history is `1.9.1` and the branch name is `my-feature`, the build results in a tag like
   `1.9.2-dev.my-feature.20260127.094959`.
 
-The default matching scheme for apps deployed to our MCs is:
+### The default matching scheme for apps
+
+This matching schema is proposed to achieve automatic upgrades functionality for different maturity levels of
+our software. This is a generic solution, but we want to use for apps deployed to our MCs and for automatic
+upgrades of WC clusters. Since this solution includes the usage of regexp, which tend to be error prone, we
+will provide standard configuration templates users can use, so that no regexps need to be created from
+scratch.
 
 - For `stable`, we use stable tags for all apps, so `*` semVer expression. If preferred, this can be limited
   by the app owner to be limit to a subset of stable releases, like `1.x.x` or `1.2.x`. In that case, upgrades
@@ -162,11 +174,12 @@ The default matching scheme for apps deployed to our MCs is:
   `*-dev.my-feature.*`. The change will have to be reversed once the testing is done. As this is a multi-step
   process prone to human error, we will provide a tool to execute it in one go.
 
-**Note on tag format flexibility:** The RFC proposes `stable`, `rc`, and `dev` as the default solution we
-should use. Still, the naming of tags and the configuration of accepted tags on app deployment won't be
-limited in any way and will allow app owners to introduce new tag schemas and match expressions, if they need
-to do so. Owners can also configure the match expression to match 1 tag exactly, effectively disabling any
-auto-upgrade on the app.
+### Note on tag format flexibility
+
+The RFC proposes `stable`, `rc`, and `dev` as the default solution we should use. Still, the naming of tags
+and the configuration of accepted tags on app deployment won't be limited in any way and will allow app owners
+to introduce new tag schemas and match expressions, if they need to do so. Owners can also configure the match
+expression to match 1 tag exactly, effectively disabling any auto-upgrade on the app.
 
 The above tagging and matching schemas mean that the deployed version of an application will entirely depend
 on the set of semVer tags available in a remote OCI registries. In other words, developers decide where a
