@@ -145,14 +145,13 @@ following tagging schema:
 - For the "stable" release, we keep the current tagging schema with tags matching `[0-9]+\.[0-9]+\.[0-9]+`
   (i.e. `1.9.1`)
 - For the "release candidate" stage, we introduce a new tag according to the recommended way of semVer
-  tagging: `rc` suffixed tags matching `[0-9]+\.[0-9]+\.[0-9]+-rc\.[0-9]+` (i.e. `1.9.2-rc.1`)
+  tagging: `rc` suffixed tags formatted `-rc.N` (i.e. `1.9.2-rc.1`)
 - For `dev` builds, we want to build every commit of a non-`main` branch a developer is working on. We need to
-  make this builds to have a tag that allows to identify the branch it is coming from and to make them
-  sortable according to semVer. The proposed schema is thus
-  `[0-9]+\.[0-9]+\.[0-9]+-dev\.(branch)\.[0-9]{8}\.[0-9]{6}` where `branch` is the name of the branch the
-  build is coming from and the suffix is a time stamp with date and time parts. For example, if the last
-  stable tag in history is `1.9.1` and the branch name is `my-feature`, the build results in a tag like
-  `1.9.2-dev.my-feature.20260127.094959`.
+  make these builds to have a tag that allows to identify the branch it is coming from and to make them
+  sortable according to semVer. The proposed schema is thus to append suffix `-dev.[BRANCH].[DATE].[TIME]`
+  where `BRANCH` is the name of the branch the build is coming from and the suffix is a time stamp with date
+  and time parts. For example, if the last stable tag in history is `1.9.1` and the branch name is
+  `my-feature`, the build results in a tag like `1.9.2-dev.my-feature.20260127.094959`.
 
 ### The default matching scheme for apps
 
@@ -160,19 +159,24 @@ This matching schema is proposed to achieve automatic upgrades functionality for
 our software. This is a generic solution, but we want to use for apps deployed to our MCs and for automatic
 upgrades of WC clusters. Since this solution includes the usage of regexp, which tend to be error prone, we
 will provide standard configuration templates users can use, so that no regexps need to be created from
-scratch.
+scratch. It is important to note that the [semVer](https://semver.org/) implementation in flux is
+[masterminds/semver](https://github.com/Masterminds/semver#checking-version-constraints), which is important
+especially for versions comparisons.
 
-- For `stable`, we use stable tags for all apps, so `*` semVer expression. If preferred, this can be limited
-  by the app owner to be limit to a subset of stable releases, like `1.x.x` or `1.2.x`. In that case, upgrades
-  beyond minor or patch version will require a reconfiguration of the match expression by the owner.
-- For `stable-testing`, we use the newest stable or RC tag available for each app.
+- For `stable`, we use stable tags for all apps, so `*` semVer expression (in `OCIRepository`: `semver: "*"`,
+  no `semverFilter`). If preferred, this can be limited by the app owner to be limit to a subset of stable
+  releases, like `1.x.x` or `1.2.x`. In that case, upgrades beyond minor or patch version will require a
+  reconfiguration of the match expression by the owner.
+- For `stable-testing`, we use the newest stable or RC tag available for each app (in `OCIRepository`:
+  `semver: "*-*"`, `semverFilter: ".*-rc\..*"`)
 - For `testing`, we use by default the same tag matching as for `stable-testing`. App developers, that want to
   test a dev release of an app they are working on, will reconfigure the app's expression to match the dev
   builds of the branch they are working on. This will match the behaviour we have in the `reservations`
   channel. As an example, a dev working on a `my-feature` branch of app `X` will reconfigure, as part of the
-  reservation process, the app's accepted range on the chosen `testing` MC from the default `*-rc.*` to
-  `*-dev.my-feature.*`. The change will have to be reversed once the testing is done. As this is a multi-step
-  process prone to human error, we will provide a tool to execute it in one go.
+  reservation process, the app's semver filter on the chosen `testing` MC from the default `.*-rc\..*` to
+  `.*-dev\.my-feature\..*` (in `OCIRepository`: `semver: "*-*"`, `semverFilter: ".*-dev\.my-feature\..*"`).
+  The change will have to be reversed once the testing is done. As this is a multi-step process prone to human
+  error, we will provide a tool to execute it in one go.
 
 ### Note on tag format flexibility
 
@@ -281,8 +285,8 @@ goes like this:
    `*-rc\.*` to `*-dev\.new-feature\.*`.
 1. Work on the new feature. Each commit to the branch `new-feature` results in a build and automatic
    deployment to the configured MC `M`.
-1. When done, revert the commit from 2. in the GitOps repos and announce in `#resrvations` that the work there
-   is done.
+1. When done, revert the commit from 2. in the GitOps repos and announce in `#reservations` that the work
+   there is done.
 
 Because this is a multi-step process in which it's easy to forget about reverting the changes, we will add a
 tool in `devctl` to automate it and automatically revert the dev deployment after a configured time. The
