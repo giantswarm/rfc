@@ -209,6 +209,17 @@ following way:
       1. Example: there's a branch `nobuild/i-dont-care` and a developer creates a tag `1.2.3-dev.awesome.1`:
          the build is triggered and pushed to the OCI registry.
 
+### Note on promotion logic
+
+The workflow described below can be also seen as a kind of version promotion workflow. Please note, that the
+potential of implementing an automatic promotion is very limited and does apply only to promoting an app
+through pre-release software maturity stages. Once the application is released and gets a stable tag, this
+solution can't be easily used to move the same app version between different environments using stable app
+releases. In that sense, the problem is outside of the scope of this RFC.
+
+In other words, the process here focuses on automatically upgrading the software from a configured maturity
+pipeline, but does not cope with promoting the same single version of an app across multiple environments.
+
 ## Example developer's workflows and the related release process
 
 Let's assume we have 3 release stages: dev, testing and prod. Each of them is assigned to a group of clusters
