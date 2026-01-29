@@ -1,15 +1,12 @@
 ---
 creation_date: 2025-12-11
 issues:
-  - https://github.com/giantswarm/giantswarm/issues/24237
+- https://github.com/giantswarm/giantswarm/issues/24237
 last_review_date: 2026-01-27
 owners:
-  - https://github.com/orgs/giantswarm/teams/team-honeybadger
-state: review
-summary:
-  We want to use flux and flux-operator's automatic upgrades capabilities to create automatic upgrades for
-  different release stages, so we don't have to manually or through extra automation care about those
-  rollouts.
+- https://github.com/orgs/giantswarm/teams/team-honeybadger
+state: approved
+summary: We want to use flux and flux-operator's automatic upgrades capabilities to create automatic upgrades for different release stages, so we don't have to manually or through extra automation care about those rollouts.
 ---
 
 # Using semVer tags for automatic app upgrades in different release stages
