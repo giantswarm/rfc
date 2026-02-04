@@ -3,7 +3,7 @@ creation_date: 2026-01-30
 issues: []
 owners:
 - https://github.com/orgs/giantswarm/teams/team-cabbage
-state: review
+state: approved
 summary: Use wildcard TLS certificates on management clusters with Envoy Gateway to eliminate per-service domain configuration in gateway-api-config.
 ---
 
