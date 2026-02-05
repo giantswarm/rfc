@@ -49,24 +49,38 @@ Create a script (e.g., `~/bin/run-claude.sh`) that:
 - Launches Claude Code inside a bubblewrap sandbox
 - Passes secrets as `op://` URIs (not raw values)
 
-```bash
-#!/bin/sh
+```sh
+#!/usr/bin/env sh
+set -e
 PROJECT_DIR="$(realpath .)"
-if [ -s "$1" ]; then
+if [ -d "$1" ]
+then
     PROJECT_DIR="$(realpath "$1")"
 fi
 
-# Safety check: prevent running in home or root directories
-if [ "$PROJECT_DIR" = "$(realpath "$HOME")" ] || [ "$PROJECT_DIR" = "$(realpath /)" ]; then
-    echo "Error: don't give Claude access to high-level directories! Run it somewhere else." 1>&2
+if [ "$PROJECT_DIR" = "$(realpath "$HOME")" -o "$PROJECT_DIR" = "$(realpath /)" ]
+then
+    echo "Error: don't give claude access to high-level directories! Run it somewhere else." >&2
     exit 1
 fi
 
-# Configuration
-vault="ai-jonas"  # Change to your vault name
+# GH_TOKEN and similar below contain only paths into the 1Password vault assigned to the service account
+vault=ai-jonas
 account_token="$(op item get --vault 'Employee' "service-account-token-$vault" --reveal --fields credential)"
 
-bwrap \
+temp_passwd="$(mktemp)"
+trap 'rm -f "$temp_passwd"' EXIT
+getent passwd "$(id -u)" >> "$temp_passwd"
+
+# Ensure bind directories exist
+for dir in .m2 .gradle go .npm .java .cache/pip .cache/helm .cache/go .cache/go-build .local/share/claude; do
+    mkdir -p "$HOME/$dir"
+done
+
+exec bwrap \
+    --unshare-user-try \
+    --uid $(id -u) \
+    --gid $(id -g) \
     --ro-bind /usr /usr \
     --ro-bind /lib /lib \
     --ro-bind /lib64 /lib64 \
@@ -74,7 +88,8 @@ bwrap \
     --ro-bind /etc/resolv.conf /etc/resolv.conf \
     --ro-bind /etc/hosts /etc/hosts \
     --ro-bind /etc/ssl /etc/ssl \
-    --ro-bind /etc/passwd /etc/passwd \
+    --ro-bind /etc/alternatives /etc/alternatives \
+    --ro-bind "$temp_passwd" /etc/passwd \
     --ro-bind /etc/group /etc/group \
     --ro-bind "$HOME/.gitconfig" "$HOME/.gitconfig" \
     --ro-bind "$HOME/.1password" "$HOME/.1password" \
@@ -97,10 +112,13 @@ bwrap \
     --bind "$HOME/.cache/helm" "$HOME/.cache/helm" \
     --bind "$HOME/.cache/go" "$HOME/.cache/go" \
     --bind "$HOME/.cache/go-build" "$HOME/.cache/go-build" \
+    --bind "$SSH_AUTH_SOCK" "$SSH_AUTH_SOCK" \
     --setenv "OP_SERVICE_ACCOUNT_TOKEN" "$account_token" \
     --setenv "GH_TOKEN" "op://$vault/OPSCTL_GITHUB_TOKEN/password" \
     --setenv "GITHUB_TOKEN" "op://$vault/OPSCTL_GITHUB_TOKEN/password" \
     --setenv "OPSCTL_GITHUB_TOKEN" "op://$vault/OPSCTL_GITHUB_TOKEN/password" \
+    --setenv "SSH_AUTH_SOCK" "$SSH_AUTH_SOCK" \
+    --setenv "SSH_ASKPASS" "$SSH_ASKPASS" \
     --tmpfs /tmp \
     --proc /proc \
     --dev /dev \
@@ -192,6 +210,8 @@ Modify the `--ro-bind` (read-only) and `--bind` (read-write) lines to match your
 - Should we provide a centralized, team-managed vault instead of individual `ai-$NAME` vaults?
 - How should this integrate with CI/CD pipelines that also use Claude Code?
 - Could the `run-claude.sh` script be improved, e.g. to make it more compatible or protect the service account token better?
+- Mac support? Use docker or another sandboxing app?
+- Enterprise monitoring/logging?
 
 ## References
 
