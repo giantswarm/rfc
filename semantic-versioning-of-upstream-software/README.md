@@ -13,6 +13,8 @@ summary: Describes our approach for versioning our own packages of upstream soft
 ## Background
 
 Giant Swarm is moving towards more extensive release automation as described in [RFC Semver Based Automatic Upgrades][6].
+It is highly recommended to read that RFC before this one.
+
 This automation relies on [SemVer][1] to determine ordering of release versions.
 Most of Giant Swarm's apps were already compliant, but some added an incrementing suffix like `-gs1`.
 These are apps that package upstream software that have versioning over which we have no control.
