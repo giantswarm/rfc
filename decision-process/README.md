@@ -16,8 +16,6 @@ This RFC-of-RFCs aims to expand on the current RFC process by introducing an exp
 
 We use the terms "RFC" and "decision" quite interchangeably. Think of a _decision_ as precisely what the word means, and an _RFC_ as its written-down version as Markdown file.
 
-At the moment, the concept of [ADRs](https://intranet.giantswarm.io/docs/product/architecture-specs-adrs/adr/) and [PDRs](https://intranet.giantswarm.io/docs/product/pdr/) are not covered here and their processes do not change yet. We may want to amend this later.
-
 Goals of the process:
 
 - Quick progress on RFCs and decision making
