@@ -41,7 +41,9 @@ This approach ensures secrets are never directly exposed to Claude Code while st
 
 This ensures the service account has minimal permissions—only accessing secrets explicitly placed in the AI vault.
 
-### Step 3: Create the Launcher Script
+### Step 3: Configure Claude to run in Sandbox
+
+#### OPTION A) External Sandbox via Launcher Script
 
 Create a script (e.g., `~/bin/run-claude.sh`) that:
 
@@ -139,6 +141,10 @@ Make the script executable:
 chmod +x ~/bin/run-claude.sh
 ```
 
+#### OPTION B) Trust and use Claude's builtin sandbox support
+
+Install a sandbox provider (e.g. Bubblewrap mentioned above), start Claude Code (*without sandbox/normally*), enter `/sandbox` in Claude to perform initial configuration.
+
 ### Step 4: Configure Claude Code to Use `op run`
 
 Claude Code must be instructed to prefix authenticated commands with `op run --` so that 1Password injects the actual secret values at runtime.
@@ -158,7 +164,9 @@ Example:
 This allows secrets stored as `op://` URIs to be resolved at runtime.
 ```
 
-### Step 5: IDE Plugin Configuration
+Alternatively a Claude [Skill](https://code.claude.com/docs/en/skills) may be created, as prototyped [in this PR](https://github.com/giantswarm/claude-code/pull/20).
+
+### Step 5: (OPTIONAL, external sandbox only) IDE Plugin Configuration
 
 Configure your IDE's Claude Code plugin to use the launcher script instead of calling `claude` directly:
 
@@ -189,7 +197,7 @@ To add additional secrets for Claude Code to use:
    --setenv "MY_NEW_TOKEN" "op://$vault/my-secret-name/password" \
    ```
 
-### Adjusting Filesystem Access
+### (OPTIONAL, external sandbox only) Adjusting Filesystem Access
 
 Modify the `--ro-bind` (read-only) and `--bind` (read-write) lines to match your development environment. The current configuration supports:
 
