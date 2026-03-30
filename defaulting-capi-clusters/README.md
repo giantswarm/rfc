@@ -1,6 +1,10 @@
 ---
 creation_date: 2021-07-23
-state: approved
+last_review_date: 2026-03-30
+owners:
+- https://github.com/orgs/giantswarm/teams/team-tenet
+state: obsolete
+summary: Use Kubernetes mutating webhooks to centralize CAPI cluster defaulting. Webhooks source default values from config-controller, enabling consistent defaults across all cluster creation methods.
 ---
 
 # Defaulting of CAPI clusters with webhooks
