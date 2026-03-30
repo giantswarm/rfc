@@ -2,11 +2,11 @@
 creation_date: 2021-11-24
 issues:
 - https://github.com/giantswarm/giantswarm/issues/19349
-last_review_date: 2024-02-24
+last_review_date: 2026-03-30
 owners:
-- https://github.com/orgs/giantswarm/teams/team-horizon
-state: approved
-summary: This RFC describes a general vision for improving the user experience of Managed Apps.
+- https://github.com/orgs/giantswarm/teams/team-planeteers
+state: obsolete
+summary: Spreads managed app ownership from one team to multiple teams for holistic ownership, enabling deeper operations, automated upgrades, and reduced customer operational load.
 ---
 
 # Managed Apps Vision
