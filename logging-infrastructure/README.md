@@ -1,6 +1,10 @@
 ---
 creation_date: 2023-01-12
+last_review_date: 2026-03-30
+owners:
+- https://github.com/orgs/giantswarm/teams/team-atlas
 state: approved
+summary: Adopt a distributed Loki setup with one instance per installation to comply with customer data residency requirements. Evaluate object storage solutions per provider and build a POC starting with one provider.
 ---
 
 # Logging infrastructure
