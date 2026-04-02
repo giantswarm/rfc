@@ -89,6 +89,9 @@ Implementing (7) presents significant challenges with the current feature set of
 5. Onboarding a new customer must require **no changes** to existing customers.
 6. Customer on- or off-boarding must require **no changes** to pre-existing authorization policies.
 7. No customer or entity may **impersonate or influence** another customer's identities, nor use the identities available to them to access another customer's system.
+8. Certificate issuance and validation must be sufficiently available to support secure certificate usage.
+  a. Short-lived credentials (TTL of 5 minutes for JWTs) must be supported.
+  b. Implication: Short-lived credentials require a nearby issuance.
 
 ### Assumptions
 
@@ -97,7 +100,6 @@ Implementing (7) presents significant challenges with the current feature set of
 
 ### Challenges
 
-- **Short-lived credentials require nearby issuance.** With certificate TTLs of ~1 hour, the issuing authority must be continuously reachable.
 - **External validation must also be scoped and available.** Discovery endpoints / trust bundles for validation must be reliably reachable by external verifiers (AWS STS, Azure Entra ID).
 - **Identity path design leaks information.** Paths encoding internal architecture (application names, customer names, regions) are visible to relying parties. The naming scheme must balance expressiveness with information exposure.
 - **Global vs. local identity.** Some Giant Swarm workloads need a global identity (e.g. Mimir reporting to Grafana Cloud), while others need a customer-local identity (e.g. Alloy scraping endpoints that must survive customer offboarding). A workload may need both, and this need may change during its lifetime.
