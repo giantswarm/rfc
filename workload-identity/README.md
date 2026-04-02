@@ -1,5 +1,6 @@
 ---
 creation_date: 2026-04-01
+issues: []
 owners:
 - https://github.com/orgs/giantswarm/teams/team-shield
 state: review
