@@ -1,6 +1,10 @@
 ---
 creation_date: 2023-08-24
+last_review_date: 2026-03-30
+owners:
+- https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: approved
+summary: Each management cluster gets its own `crds` Flux kustomization for flexibility in CRD management, replacing the shared `all` composite with a `common` one. Vintage provider-specific CRDs are versioned based on the apiextensions library.
 ---
 
 # Extension to Giant Swarm CRD management via Flux
