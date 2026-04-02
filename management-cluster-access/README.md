@@ -1,6 +1,10 @@
 ---
 creation_date: 2023-01-25
+last_review_date: 2026-03-30
+owners:
+- https://github.com/orgs/giantswarm/teams/team-shield
 state: approved
+summary: Introduce Azure AD as a second SSO identity provider alongside GitHub to eliminate the single point of failure for management cluster access. Keep 1Password kubeconfig as an emergency fallback and integrate it into `opsctl login`. Automate SSO setup for both management and workload clusters.
 ---
 
 # Ensure no single point of failure in management cluster access
