@@ -1,8 +1,10 @@
 ---
 creation_date: 2023-08-07
+last_review_date: 2026-03-30
 owners:
 - https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: approved
+summary: Use kustomize in management-cluster-bases to manage essential CRDs (Giant Swarm, Flux, VPA, etc.) in a unified way. Replace `opsctl ensure crds` and provide a framework for adding any new CRDs without further migrations.
 ---
 
 # Manage essential CRDs via MCB
