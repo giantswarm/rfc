@@ -256,7 +256,7 @@ If accepting the default suggestions above, the high-level plan would involve:
   b. requirements and design of GS "regional" SPIRE clusters.
   c. design of workload certificate injection.
   d. (dependent on (c)) design of workload sidecar proxy mechanism.
-  e. final 
+  e. finalize ID/path schema.
 3. Stand up GS root SPIRE.
 4. Stand up first GS regional for select test installation(s).
 5. Deploy GS agent to select test installations.
