@@ -51,6 +51,8 @@ Credentials must be made available to the identity holder and the application mu
 
 ## Use cases for validation
 
+![Use Cases](../@rfc/workload-identity/003use-cases.png)
+
 The following use cases drive the design. Each combines a relying party (who validates), an identity holder (who proves identity), and a scope.
 
 1. **External service authenticates any Giant Swarm application globally.** An external API trusts "any Giant Swarm net-exporter" regardless of which customer cluster it runs in.
@@ -162,7 +164,9 @@ This topology is structurally symmetric with the company plane: central root →
 - **Offboarding**: remove the federation entry. The customer's trust domain continues independently (constraint 4).
 - **Adding a region**: no federation changes needed. The new MC connects to the existing customer root and is immediately part of the trust domain.
 
-### Diagram
+### Diagrams
+
+![Trust Planes](../@rfc/workload-identity/002-trust-planes.png)
 
 ![Architecture Diagram](../@rfc/workload-identity/001-architecture-v2.png)
 
@@ -206,7 +210,7 @@ Regional and WC intermediate certs likely need longer lifetimes for semi-airgapp
 | 4 — Operational after departure | Customer holds the SPIRE root, all MC/WC nested servers, and CA keys in their KMS. The entire hierarchy is in customer infrastructure. If Model A, the customer takes over operational responsibility for the root cluster. |
 | 5 — New customer, no change | New trust domain + new agents + one federation entry. Nothing existing is modified. |
 | 6 — On/offboarding, no authz change | Policies supporting wildcards are very flexible. All policies (even without wildcards) work for same trust domain. Cross-domain trust (e.g. a customer service trusting Giant Swarm applications) would need to be reconfigured. |
-| 7 — No cross-customer impersonation | Separate root CAs per customer. Only GS leaf credentials in customer infrastructure — no company CA keys. |
+| 7 — No cross-customer impersonation | Separate root CAs per customer. Only GS leaf credentials in customer infrastructure, no company CA keys. |
 
 ## Open questions
 
@@ -220,11 +224,11 @@ Regional and WC intermediate certs likely need longer lifetimes for semi-airgapp
 
 5. **How many customer SPIREs?** In theory, we could operate customers with only WC or MC SPIREs, and not require both. The MC SPIRE could issue for all WC agents, or WC SPIREs could nest directly under the global root. The most resilient would be to use both.
 
-6. **How/where does Giant Swarm run our regional SPIRE?** We can't (yet) run nested SPIRE servers within customer MCs because they would have access to key material that allows lateral movement to other customer trust domains. To keep "per-customer, per-region" failure domains, we would need to run a SPIRE server "next to" each MC, but in a place customers can't access. Where is that? (there is a future feature called "named path" support which may allow us to safely run it on the customer MC, but it's already years in the making).
+6. **How/where does Giant Swarm run our regional SPIRE?** We can't (yet) run nested SPIRE servers within customer MCs because they would have access to key material that allows lateral movement to other customer trust domains. To keep "per-customer, per-region" failure domains, we would need to run a SPIRE server "next to" each MC, but in a place customers can't access. Where is that? (there is a future feature called "Name Constraints" support which will someday allow us to safely run it on the customer MC, but it's already years in the making).
 
 7. **Air gap?** I think it makes sense to assume we need this eventually. Are there airgap-specific use cases?
 
-8. **Support for external --> any customer authentication.** Use case 7 describes the possibility for an external service to authenticate "any instance of one|any application belonging to any Giant Swarm customer". This is currently very difficult to implement. The correct solution would involve identities signed by both Giant Swarm and the customer. This is not yet supported. So, how important is this use case?
+8. **Support for external --> any customer authentication.** Use case 7 describes the possibility for an external service to authenticate "any instance of one|any application belonging to any Giant Swarm customer". This is currently very difficult to implement. The correct solution would involve identities signed by both Giant Swarm and the customer. This is different than dual identities, this is a single identity which is signed by two parties, which is not yet supported by SPIRE. So, how important is this use case?
 
 9. **Customer SPIRE root placement.** The customer root needs to live somewhere highly available. Options include a dedicated WC in the customer's primary region, co-location in the first MC, a lightweight non-K8s host, or customer-provided infrastructure. The dedicated WC is the current recommendation, but introduces a single-region placement for a cross-region dependency.
 
@@ -235,3 +239,28 @@ Regional and WC intermediate certs likely need longer lifetimes for semi-airgapp
 12. **Network path: agent to regional server, and MC/regional to customer root.** How will agents reach their issuing servers? The MC→customer root connection is cross-region if the root is in a different region.
 
 13. **Service mesh integration.** SPIRE can feed SVIDs to Envoy and Cilium. No investigation has been done on the technical details for that. Is someone interested in doing this?
+
+## Alternatives
+
+- Prefer provider-native identity mechanisms first. Instead of defaulting to a SPIRE identity, we instead use native platforms like AWS IRSA and Azure Workload Identity. The downside of this is the heterogeneity and complexity of maintaining parallel identity minting systems for each provider. Plus, we would still need to offer a solution for on-prem clusters.
+- Build around a single alternative offering. Teleport would be the most obvious choice here, but in theory we could also choose AWS or Azure identities. We see the lock-in as a major downside. If using Teleport, we'd need to upgrade to Teleport Enterprise, which has unknown cost. The effort to maintain such a solution is unknown but may be less than SPIRE.
+
+## Implementation plan
+
+Details will be filled in based on discussions.
+
+If accepting the default suggestions above, the high-level plan would involve:
+1. SPIKE to test the delegation + federation work as expected.
+2. Refine:
+  a. requirements and design of GS root SPIRE cluster (hardening, does it need to sit outside normal KaaS/Platform infra? etc.).
+  b. requirements and design of GS "regional" SPIRE clusters.
+  c. design of workload certificate injection.
+  d. (dependent on (c)) design of workload sidecar proxy mechanism.
+  e. final 
+3. Stand up GS root SPIRE.
+4. Stand up first GS regional for select test installation(s).
+5. Deploy GS agent to select test installations.
+6. Begin issuing certificates to workloads on the test environment.
+7. Expand "regional" SPIRE and agent deployments to all Giant Swarm environments.
+  a. Most likely, including agents in a KaaS release.
+8. Make the packaged platform components available for customer installs.
