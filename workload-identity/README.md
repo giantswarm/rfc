@@ -55,21 +55,21 @@ Credentials must be made available to the identity holder and the application mu
 
 The following use cases drive the design. Each combines a relying party (who validates), an identity holder (who proves identity), and a scope.
 
-1. **External service authenticates any Giant Swarm application globally.** An external API trusts "any Giant Swarm net-exporter" regardless of which customer cluster it runs in.
-2. **External service authenticates Giant Swarm applications scoped to a customer or region.** A customer's S3 bucket trusts "Giant Swarm Falco in Customer X's clusters in Europe only."
-3. **Customer workload authenticates any Giant Swarm application.** A customer application allows "any Giant Swarm Prometheus" to scrape it.
-4. **Customer workload authenticates Giant Swarm applications locally.** A customer application allows "Giant Swarm Prometheus in this cluster" to scrape it.
-5. **Giant Swarm service authenticates a customer application broadly.** A Giant Swarm API trusts "any Customer X Muster."
-6. **Giant Swarm service authenticates specific customer application instances.** A Giant Swarm API trusts "Customer X's Jenkins in this cluster."
+- **(A)** **External service authenticates any Giant Swarm application globally.** An external API trusts "any Giant Swarm net-exporter" regardless of which customer cluster it runs in.
+- **(B)** **External service authenticates Giant Swarm applications scoped to a customer or region.** A customer's S3 bucket trusts "Giant Swarm Falco in Customer X's clusters in Europe only."
+- **(C)** **Customer workload authenticates any Giant Swarm application.** A customer application allows "any Giant Swarm Prometheus" to scrape it.
+- **(D)** **Customer workload authenticates Giant Swarm applications locally.** A customer application allows "Giant Swarm Prometheus in this cluster" to scrape it.
+- **(E)** **Giant Swarm service authenticates a customer application broadly.** A Giant Swarm API trusts "any Customer X Muster."
+- **(F)** **Giant Swarm service authenticates specific customer application instances.** A Giant Swarm API trusts "Customer X's Jenkins in this cluster."
 
 Bonus: connections where both sides have federated trust in the other can optionally be secured with mTLS.
 
 ### Discussion use cases:
 
-7. **External service authenticates any instance of any customer application.** An external service trusts "any Jenkins belonging to any Giant Swarm customer".
-Implementing (7) presents significant challenges with the current feature set of the proposed solution. Let's discuss if this is important.
+- **(G)** **External service authenticates any instance of any customer application.** An external service trusts "any Jenkins belonging to any Giant Swarm customer".
+Implementing (G) presents significant challenges with the current feature set of the proposed solution. Let's discuss if this is important.
 
-8. **Offline management of air-gapped clusters.** It *is* possible to run a local trust domain behind an air gap. It _may_ be possible to maintain a *nested* branch of a *global* trust domain behind an air gap by updating intermediate key material out of band, or very infrequently, but that was not examined for this RFC.
+- **(H)** **Offline management of air-gapped clusters.** It *is* possible to run a local trust domain behind an air gap. It _may_ be possible to maintain a *nested* branch of a *global* trust domain behind an air gap by updating intermediate key material out of band, or very infrequently, but that was not examined for this RFC.
 
 ### Use case dimensions
 
@@ -104,7 +104,7 @@ Implementing (7) presents significant challenges with the current feature set of
 
 - **External validation must also be scoped and available.** Discovery endpoints / trust bundles for validation must be reliably reachable by external verifiers (AWS STS, Azure Entra ID).
 - **Identity path design leaks information.** Paths encoding internal architecture (application names, customer names, regions) are visible to relying parties. The naming scheme must balance expressiveness with information exposure.
-- **Global vs. local identity.** Some Giant Swarm workloads need a global identity (e.g. Mimir reporting to Grafana Cloud), while others need a customer-local identity (e.g. Alloy scraping endpoints that must survive customer offboarding). A workload may need both, and this need may change during its lifetime.
+- **Global vs. local identity.** Some Giant Swarm workloads may need multiple identities for differeny use cases. For example, a workload may need a global identity (e.g. Mimir reporting to Grafana Cloud), while others need a customer-local identity (e.g. Alloy scraping endpoints that must survive customer offboarding). A workload may need both, and this need may change during its lifetime.
 - **Customer lifecycle edge cases.** Departure-and-return, organizational splits, and acquisitions all affect trust domain naming and federation state.
 - **Customers access MCs.** Customers would have access to key material stored in a management cluster.
 
@@ -131,12 +131,12 @@ The CNCF-graduated projects have extensive support from community and commercial
 
 **Note:** A SPIFFE trust domain is an arbitrary string, and need not be a valid DNS domain at all. However, there are slight benefits if the trust domain does resolve to the location of the trust bundle for the trust domain.
 
-Constraints 1–2 and 4–7 require isolated, customer-owned trust domains. But use cases 1–2 require a single trust anchor that external services can federate with without per-customer configuration. No single trust domain satisfies both, so:
+Constraints 1–2 and 4–7 require isolated, customer-owned trust domains. But use cases A–B require a single trust anchor that external services can federate with without per-customer configuration. No single trust domain satisfies both, so:
 
 1. **Giant Swarm Platform identity plane** — One trust domain (`spiffe://wid.giantswarm.com`) for all Giant Swarm platform workloads across all regions and customers. Controlled entirely by Giant Swarm.
 2. **Customer identity plane** — One trust domain per customer (`spiffe://wid.customer-x.com`), running in the customer's infrastructure with customer-held CA keys.
 
-Federation between planes enables cross-domain authentication (use cases 3–6).
+Federation between planes enables cross-domain authentication (use cases C–F).
 
 ### Company plane topology
 
@@ -228,7 +228,7 @@ Regional and WC intermediate certs likely need longer lifetimes for semi-airgapp
 
 7. **Air gap?** I think it makes sense to assume we need this eventually. Are there airgap-specific use cases?
 
-8. **Support for external --> any customer authentication.** Use case 7 describes the possibility for an external service to authenticate "any instance of one|any application belonging to any Giant Swarm customer". This is currently very difficult to implement. The correct solution would involve identities signed by both Giant Swarm and the customer. This is different than dual identities, this is a single identity which is signed by two parties, which is not yet supported by SPIRE. So, how important is this use case?
+8. **Support for external --> any customer authentication.** Use case G describes the possibility for an external service to authenticate "any instance of one|any application belonging to any Giant Swarm customer". This is currently very difficult to implement. The correct solution would involve identities signed by both Giant Swarm and the customer. This is different than dual identities, this is a single identity which is signed by two parties, which is not yet supported by SPIRE. So, how important is this use case?
 
 9. **Customer SPIRE root placement.** The customer root needs to live somewhere highly available. Options include a dedicated WC in the customer's primary region, co-location in the first MC, a lightweight non-K8s host, or customer-provided infrastructure. The dedicated WC is the current recommendation, but introduces a single-region placement for a cross-region dependency.
 
