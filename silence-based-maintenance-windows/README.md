@@ -95,6 +95,6 @@ A Go service deployed between Alertmanager and PagerDuty that reads routing rule
 
 ## Communication plan
 
-- Post the RFC PR to `#news-engineering` and relevant team channels for review.
+- Post the RFC PR to `#news-ops` and relevant team channels for review.
 - Once approved, announce the new maintenance workflow and `silencectl` tool in `#topic-ops`.
 - Update the on-call runbook and maintenance documentation.
