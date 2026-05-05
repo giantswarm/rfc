@@ -44,7 +44,7 @@ While alerts are silenced and not routed to PagerDuty, they can still be observe
 
 ### CLI tool: `silencectl`
 
-A new CLI tool to make creating and managing temporary silences straightforward.
+A new CLI tool to make creating and managing temporary `Silence` CRs straightforward.
 
 **Core functionality:**
 - Create a temporary silence for a given installation with a specified duration
