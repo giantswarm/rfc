@@ -93,6 +93,10 @@ A Go service deployed between Alertmanager and PagerDuty that reads routing rule
 2. **Document the maintenance workflow** -- write a runbook explaining how to use temporary silences together with the Alerts Timeline dashboard during maintenance operations.
 3. **Communicate to on-call engineers** -- announce the new workflow and tooling.
 
+## Future work
+
+- **Scheduled silences** -- extend the `Silence` CR with a start date so that silences can be created ahead of time and activated automatically at a given moment. This would let engineers prepare maintenance windows in advance instead of having to be at the keyboard exactly when the operation starts.
+
 ## Communication plan
 
 - Post the RFC PR to `#news-ops` and relevant team channels for review.
