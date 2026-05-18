@@ -1,6 +1,10 @@
 ---
 creation_date: 2022-11-09
-state: approved
+last_review_date: 2026-03-30
+owners:
+- https://github.com/orgs/giantswarm/teams/team-honeybadger
+state: obsolete
+summary: Install Crossplane via management-clusters-fleet, with a pre-defined immutable list of providers which we manage and don't allow changes to. Customers provide their own secrets and provider configuration.
 ---
 
 # Crossplane MVP on Management Clusters
