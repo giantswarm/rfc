@@ -2,7 +2,7 @@
 creation_date: 2025-12-11
 issues:
 - https://github.com/giantswarm/giantswarm/issues/24237
-last_review_date: 2026-01-27
+last_review_date: 2026-05-20
 owners:
 - https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: approved
