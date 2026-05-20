@@ -2,7 +2,7 @@
 creation_date: 2025-12-11
 issues:
 - https://github.com/giantswarm/giantswarm/issues/24237
-last_review_date: 2026-01-27
+last_review_date: 2026-05-20
 owners:
 - https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: approved
@@ -145,10 +145,12 @@ following tagging schema:
   tagging: `rc` suffixed tags formatted `-rc.N` (i.e. `1.9.2-rc.1`)
 - For `dev` builds, we want to build every commit of a non-`main` branch a developer is working on. We need to
   make these builds to have a tag that allows to identify the branch it is coming from and to make them
-  sortable according to semVer. The proposed schema is thus to append suffix `-dev.[BRANCH].[DATE].[TIME]`
+  sortable according to semVer. The proposed schema is thus to append suffix `-dev.[BRANCH].[YYYY-MM-DD].[HH-MM-SS]`
   where `BRANCH` is the name of the branch the build is coming from and the suffix is a time stamp with date
-  and time parts. For example, if the last stable tag in history is `1.9.1` and the branch name is
-  `my-feature`, the build results in a tag like `1.9.2-dev.my-feature.20260127.094959`.
+  and time parts. Date and time use hyphens as separators (e.g. `2026-01-27` and `09-49-59`) so that each
+  part is a semVer alphanumeric pre-release identifier, which allows leading zeros and maintains correct
+  lexicographic sort order. For example, if the last stable tag in history is `1.9.1` and the branch name is
+  `my-feature`, the build results in a tag like `1.9.2-dev.my-feature.2026-01-27.09-49-59`.
 
 ### The default matching scheme for apps
 
@@ -214,9 +216,9 @@ following way:
    result in incorrect sorting of tags.
 1. The above will be replaced with the following automation:
    1. For each branch named `[NAME]` other than `main`, every commit in this branch will by default trigger a
-      build that will be tagged `X.Y.X-dev.NAME.DATE.TIME`. Examples for a branch named `my-feature`:
+      build that will be tagged `X.Y.Z-dev.NAME.YYYY-MM-DD.HH-MM-SS`. Examples for a branch named `my-feature`:
       1. A new commit in a new branch `my-feature` + last commit in the parent tree is `1.2.3` =
-         `1.2.4-dev.my-feature.20260112.120959`
+         `1.2.4-dev.my-feature.2026-01-12.12-09-59`
    1. If the branch name starts with the `nobuild/` prefix, builds are not automatically triggered, but a
       release can still be created by manually assigning a correct tag. This allows us to save resources on
       the build pipeline, OCI storage and release auto-upgrade processes.
@@ -260,7 +262,7 @@ be created from the `main` branch. A release is created by a developer by creati
 
 ### "dev" stage
 
-We assume that the tags created on the dev branches have the format `[X.Y.Z]-dev.[branch_name].[date].[time]`.
+We assume that the tags created on the dev branches have the format `[X.Y.Z]-dev.[branch_name].[YYYY-MM-DD].[HH-MM-SS]`.
 
 In general case, an application deployment for "dev" environments should be configured to accept any tag
 matching a dev build from a wanted tag, for example `*-dev.my-feature.*.*`. Applying this configuration is up
