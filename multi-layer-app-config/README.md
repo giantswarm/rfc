@@ -83,7 +83,7 @@ The merging algorithm is as follows:
 
 In case of multiple items in `extraConfigs` having the same priority, the order on the list is binding, with the item lower on the list being merged later (overriding those higher on the list).
 
-The idea is modeled after Flux's [HelmRelease configuration](https://fluxcd.io/docs/components/helm/api/#helm.toolkit.fluxcd.io/v2beta1.ValuesReference).
+The idea is modeled after Flux's [HelmRelease configuration](https://fluxcd.io/docs/components/helm/api/#helm.toolkit.fluxcd.io/v2.ValuesReference).
 
 #### Example
 
