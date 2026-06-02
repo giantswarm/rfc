@@ -134,7 +134,7 @@ not semVer compliant.
 This RFC introduces two related parts. The second one, automated app upgrades, will become possible as a
 configuration of a standard flux feature. It is blocked by implementing the first one.
 
-### Proposed default tagging schema
+### Tagging schema
 
 In order to become semVer compatible and our tags to reflect software maturity, we will introduce the
 following tagging schema:
@@ -147,7 +147,8 @@ following tagging schema:
   make these builds to have a tag that allows to identify the branch it is coming from and to make them
   sortable according to semVer. The proposed schema is thus to append suffix `-dev.[BRANCH].[YYYY-MM-DD].[HH-MM-SS]`
   where `BRANCH` is the name of the branch the build is coming from and the suffix is a time stamp with date
-  and time parts. Date and time use hyphens as separators (e.g. `2026-01-27` and `09-49-59`) so that each
+  and time parts, where the time stamp comes from the current commit. Date and time use hyphens as separators
+  (e.g. `2026-01-27` and `09-49-59`) so that each
   part is a semVer alphanumeric pre-release identifier, which allows leading zeros and maintains correct
   lexicographic sort order. For example, if the last stable tag in history is `1.9.1` and the branch name is
   `my-feature`, the build results in a tag like `1.9.2-dev.my-feature.2026-01-27.09-49-59`.
