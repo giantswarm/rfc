@@ -147,7 +147,7 @@ following tagging schema:
   make these builds to have a tag that allows to identify the branch it is coming from and to make them
   sortable according to semVer. The proposed schema is thus to append suffix `-dev.[BRANCH].[YYYY-MM-DD].[HH-MM-SS]`
   where `BRANCH` is the name of the branch the build is coming from and the suffix is a time stamp with date
-  and time parts, where the time stamp comes from the current commit. Date and time use hyphens as separators
+  and time parts, where the time stamp comes from the current commit time stamp converted to UTC. Date and time use hyphens as separators
   (e.g. `2026-01-27` and `09-49-59`) so that each
   part is a semVer alphanumeric pre-release identifier, which allows leading zeros and maintains correct
   lexicographic sort order. For example, if the last stable tag in history is `1.9.1` and the branch name is
