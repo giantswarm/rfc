@@ -1,12 +1,15 @@
 ---
 creation_date: 2025-12-11
 issues:
-- https://github.com/giantswarm/giantswarm/issues/24237
-last_review_date: 2026-05-20
+  - https://github.com/giantswarm/giantswarm/issues/24237
+last_review_date: 2026-06-08
 owners:
-- https://github.com/orgs/giantswarm/teams/team-honeybadger
+  - https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: approved
-summary: We want to use flux and flux-operator's automatic upgrades capabilities to create automatic upgrades for different release stages, so we don't have to manually or through extra automation care about those rollouts.
+summary:
+  We want to use flux and flux-operator's automatic upgrades capabilities to create automatic upgrades for
+  different release stages, so we don't have to manually or through extra automation care about those
+  rollouts.
 ---
 
 # Using semVer tags for automatic app upgrades in different release stages
@@ -144,15 +147,25 @@ following tagging schema:
 - For the "release candidate" stage, we introduce a new tag according to the recommended way of semVer
   tagging: `rc` suffixed tags formatted `-rc.N` (i.e. `1.9.2-rc.1`)
 - For `dev` builds, we want to build every commit of a non-`main` branch a developer is working on. We need to
-  make these builds to have a tag that allows to identify the branch it is coming from and to make them
-  sortable according to semVer. The proposed schema is thus to append suffix `-dev.[BRANCH].[YYYY-MM-DD].[HH-MM-SS]`
-  where `BRANCH` is the name of the branch the build is coming from and the suffix is a time stamp with date
-  and time parts, where the time stamp comes from the current commit's commiter date converted to UTC
-  (so the date displayed with `git log --format='%ci'` format, not the author's date).
-  Date and time use hyphens as separators (e.g. `2026-01-27` and `09-49-59`) so that each
-  part is a semVer alphanumeric pre-release identifier, which allows leading zeros and maintains correct
-  lexicographic sort order. For example, if the last stable tag in history is `1.9.1` and the branch name is
-  `my-feature`, the build results in a tag like `1.9.2-dev.my-feature.2026-01-27.09-49-59`.
+  make these builds to have a tag that allows to identify the branch and the commit it is coming from and to
+  make them sortable according to semVer. The proposed schema is thus to append suffix
+  `-dev.[BRANCH].[YYYY-MM-DD].[HH-MM-SS].h[COMMIT_SHA]` where `BRANCH` is the (sanitized) name of the branch
+  the build is coming from, the time stamp comes from the current commit's commiter date converted to UTC (so
+  the date displayed with `git log --format='%ci'` format, not the author's date) and `COMMIT_SHA` is the
+  short (7 hex chars) git hash of the built commit, for tag-to-commit traceability. Date and time use hyphens
+  as separators (e.g. `2026-01-27` and `09-49-59`) so that each part is a semVer alphanumeric pre-release
+  identifier, which allows leading zeros and maintains correct lexicographic sort order. The commit hash is
+  prefixed with a literal `h` so the part is always alphanumeric (a bare hex hash could be all-digits, which
+  is compared numerically and forbids leading zeros). For example, if the last stable tag in history is
+  `1.9.1` and the branch name is `my-feature`, the build results in a tag like
+  `1.9.2-dev.my-feature.2026-01-27.09-49-59.h1a2b3c4`.
+- Because these tags are often used as Kubernetes attributes, they must be DNS- and label-compatible and at
+  most 63 characters in total. To guarantee this, the branch name is lowercased and sanitized to `[a-z0-9-]`,
+  and the whole tag length is bounded (configurable, default 63). When the branch name would overflow the
+  budget, its middle is dropped and a `--` marker is inserted, keeping the head and the (more distinctive)
+  tail (e.g. `renovate-up--s-to-latest`); the appended commit hash still uniquely identifies the source
+  commit. Only the branch part is ever shortened — the version, time stamp and commit hash are always kept
+  intact, so the per-branch chronological sort order is never affected.
 
 ### The default matching scheme for apps
 
@@ -218,9 +231,10 @@ following way:
    result in incorrect sorting of tags.
 1. The above will be replaced with the following automation:
    1. For each branch named `[NAME]` other than `main`, every commit in this branch will by default trigger a
-      build that will be tagged `X.Y.Z-dev.NAME.YYYY-MM-DD.HH-MM-SS`. Examples for a branch named `my-feature`:
+      build that will be tagged `X.Y.Z-dev.NAME.YYYY-MM-DD.HH-MM-SS.hSHA`. Examples for a branch named
+      `my-feature`:
       1. A new commit in a new branch `my-feature` + last commit in the parent tree is `1.2.3` =
-         `1.2.4-dev.my-feature.2026-01-12.12-09-59`
+         `1.2.4-dev.my-feature.2026-01-12.12-09-59.h1a2b3c4`
    1. If the branch name starts with the `nobuild/` prefix, builds are not automatically triggered, but a
       release can still be created by manually assigning a correct tag. This allows us to save resources on
       the build pipeline, OCI storage and release auto-upgrade processes.
@@ -264,7 +278,8 @@ be created from the `main` branch. A release is created by a developer by creati
 
 ### "dev" stage
 
-We assume that the tags created on the dev branches have the format `[X.Y.Z]-dev.[branch_name].[YYYY-MM-DD].[HH-MM-SS]`.
+We assume that the tags created on the dev branches have the format
+`[X.Y.Z]-dev.[branch_name].[YYYY-MM-DD].[HH-MM-SS].h[commit_sha]`.
 
 In general case, an application deployment for "dev" environments should be configured to accept any tag
 matching a dev build from a wanted tag, for example `*-dev.my-feature.*.*`. Applying this configuration is up
