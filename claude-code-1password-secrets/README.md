@@ -80,6 +80,7 @@ for dir in .m2 .gradle go .npm .java .cache/pip .cache/helm .cache/go .cache/go-
 done
 
 exec bwrap \
+    --tmpfs /tmp \
     --unshare-user-try \
     --uid $(id -u) \
     --gid $(id -g) \
@@ -93,17 +94,22 @@ exec bwrap \
     --ro-bind /etc/alternatives /etc/alternatives \
     --ro-bind "$temp_passwd" /etc/passwd \
     --ro-bind /etc/group /etc/group \
-    --ro-bind "$HOME/.gitconfig" "$HOME/.gitconfig" \
     --ro-bind "$HOME/.1password" "$HOME/.1password" \
     --ro-bind "$HOME/.nvm" "$HOME/.nvm" \
     --ro-bind "$HOME/.local" "$HOME/.local" \
     --ro-bind "$HOME/.ssh" "$HOME/.ssh" \
     --ro-bind "$HOME/.config/gh" "$HOME/.config/gh" \
+    --ro-bind "$HOME/.kube" "$HOME/.kube" \
+    --ro-bind "/opt" "/opt" \
+    --bind "$HOME/.config/gws" "$HOME/.config/gws" \
+    --dir "$HOME/bin" \
     --dir "$XDG_RUNTIME_DIR" \
     --ro-bind "$HOME/bin" "$HOME/bin" \
+    --bind "$HOME/.gitconfig" "$HOME/.gitconfig" \
     --bind "$PROJECT_DIR" "$PROJECT_DIR" \
     --bind "$HOME/.claude" "$HOME/.claude" \
     --bind "$HOME/.claude.json" "$HOME/.claude.json" \
+    --ro-bind "$HOME/.agents" "$HOME/.agents" \
     --bind "$HOME/.local/share/claude" "$HOME/.local/share/claude" \
     --bind "$HOME/.m2" "$HOME/.m2" \
     --bind "$HOME/.gradle" "$HOME/.gradle" \
@@ -121,7 +127,8 @@ exec bwrap \
     --setenv "OPSCTL_GITHUB_TOKEN" "op://$vault/OPSCTL_GITHUB_TOKEN/password" \
     --setenv "SSH_AUTH_SOCK" "$SSH_AUTH_SOCK" \
     --setenv "SSH_ASKPASS" "$SSH_ASKPASS" \
-    --tmpfs /tmp \
+    --setenv "DO_NOT_TRACK" "true" \
+    --setenv "CLAUDE_CODE_NO_FLICKER" "1" \
     --proc /proc \
     --dev /dev \
     --share-net \
@@ -132,7 +139,7 @@ exec bwrap \
     --ro-bind /dev/null "$PROJECT_DIR/.env" \
     --ro-bind /dev/null "$PROJECT_DIR/.env.local" \
     --ro-bind /dev/null "$PROJECT_DIR/.env.production" \
-    "$(command -v claude)" --dangerously-skip-permissions
+    "$(command -v claude)"
 ```
 
 Make the script executable:
