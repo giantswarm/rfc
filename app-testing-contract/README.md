@@ -164,6 +164,14 @@ installNamespace: kube-system
 upgrade: true   # whether an upgrade flow applies to this app
 ```
 
+`upgrade` is the declarative form of each harness's existing upgrade
+primitive: atf's `WithIsUpgrade(true)` (install the latest release,
+upgrade to the version under test) and ATS's upgrade scenario. It is
+explicit rather than inferred from the presence of `upgrade`-typed tests
+because the upgrade flow is the expensive one, and the combination is a
+lint: `upgrade: true` with zero `upgrade`-typed tests collected fails the
+run, catching typo'd tags and markers instead of silently passing.
+
 Everything harness-specific stays in the harness's own config:
 `.ats/main.yaml` (cluster types, catalogs, executor options) and
 `tests/e2e/config.yaml` (appCatalog, providers, MC test options). Values
