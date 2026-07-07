@@ -80,22 +80,33 @@ three peer types, matching ATS's existing `StepType`s; a test carries one.
 |---|---|---|
 | `smoke` | normal flow, first | fast, fail-fast sanity checks |
 | `functional` | normal flow, after smoke | full feature tests |
-| `upgrade` | upgrade flow, once after the upgrade | verifies the app still works, and seeded state survived, across an upgrade |
+| `upgrade` | upgrade flow, before and after the upgrade | verifies the app still works across an upgrade; the pre run is the baseline |
 
 `upgrade` is a peer type, not a modifier on the others. The upgrade flow
-does not re-run the `smoke` and `functional` suites before and after the
-upgrade; it runs only the `upgrade`-typed tests, and it runs them once,
-after the upgrade. This matches both harnesses: ATS's upgrade scenario
-runs the `upgrade` type only, and atf's upgrade suite runs its test
-function once after upgrading.
+does not re-run the `smoke` and `functional` suites; it runs only the
+`upgrade`-typed tests. It runs them twice: once on the old version before
+the upgrade (`APP_TEST_UPGRADE_STAGE=pre`) and once after
+(`APP_TEST_UPGRADE_STAGE=post`). The pre run is the baseline that makes a
+post failure attributable to the upgrade rather than to a pre-existing
+break. This is ATS's existing behavior; atf gains the pre run.
 
-The asymmetric case (state that must survive the upgrade) is split by
-concern: an imperative **pre-upgrade hook** seeds the state on the old
-version (create a pod, write a record), and an `upgrade`-typed test
-verifies it after the upgrade. The seeding is a side effect, so it is a
-hook, not a test that reruns; the verification is an assertion, so it is a
-test. The `upgrade` test can read `APP_TEST_UPGRADE_FROM_VERSION` /
-`APP_TEST_UPGRADE_TO_VERSION` if it needs the version pair. See Hooks below.
+A symmetric invariant ("the app answers") is just an `upgrade` test that
+asserts the same thing on both sides, and gets the baseline for free. The
+asymmetric case (state that must survive the upgrade) has two shapes. When
+the "before" step is a pure side effect, seed it in the `pre-upgrade` hook
+and verify in the `post` run. When it is easier to keep in one file, a
+single test branches on the stage:
+
+```go
+if os.Getenv("APP_TEST_UPGRADE_STAGE") != "post" {
+    t.Skip("verification runs after the upgrade")
+}
+```
+
+Seeding-as-side-effect belongs in a hook, not a test that reruns;
+verification is an assertion, so it is a test. Upgrade tests and the
+`pre-upgrade` hook also receive `APP_TEST_UPGRADE_FROM_VERSION` /
+`APP_TEST_UPGRADE_TO_VERSION`.
 
 Assertions live in tests; setup, teardown, and upgrade seeding live in
 hooks (next section).
@@ -150,6 +161,7 @@ no cluster creation, no chart install, no App CRs.
 | `APP_TEST_CLUSTER_TYPE` | yes | cluster the app runs on: `kind` (local single-node, no cloud), `capi` (a CAPI workload cluster with cloud identity), or `external` (a pre-existing cluster the runner did not provision) |
 | `APP_TEST_KUBERNETES_VERSION` | optional | Kubernetes server version |
 | `APP_TEST_VALUES_FILE` | optional | values file the app was deployed with |
+| `APP_TEST_UPGRADE_STAGE` | upgrade flow only | `pre` or `post`: which side of the upgrade this `upgrade`-type run is on |
 | `APP_TEST_UPGRADE_FROM_VERSION` / `APP_TEST_UPGRADE_TO_VERSION` | upgrade flow only | versions on either side of the upgrade; available to the `pre-upgrade` hook and `upgrade`-typed tests |
 | `APP_TEST_EXTRA_*` | optional | harness extras, for example `APP_TEST_EXTRA_GITOPS_ENGINE` |
 
@@ -184,11 +196,13 @@ In the **normal flow**, the executor is invoked once per applicable test
 type, in order: `smoke`, then `functional`. `upgrade`-typed tests do not
 run here.
 
-In the **upgrade flow** (`upgrade: true`), the runner instead: deploys the
-previous version, runs the `pre-upgrade` hook if present, upgrades to the
-version under test, waits for it to settle, then invokes the executor once
-for the `upgrade` type. The `smoke` and `functional` suites are not
-re-run; the upgrade tests run once, after the upgrade.
+In the **upgrade flow** (`upgrade: true`), the runner: deploys the previous
+version and waits for it to settle, invokes the executor for the `upgrade`
+type with `APP_TEST_UPGRADE_STAGE=pre` (the baseline), runs the
+`pre-upgrade` hook if present, upgrades to the version under test and waits
+for it to settle, then invokes the executor for the `upgrade` type with
+`APP_TEST_UPGRADE_STAGE=post`. The `smoke` and `functional` suites are not
+part of this flow.
 
 "No tests for this type" is a pass, not a failure (Go: build constraints
 exclude all files; pytest: exit code 5), because a repo may legitimately
@@ -340,18 +354,22 @@ behind is a bug against that runner, not a licence to fork the contract.
 - **apptest-framework** gains a convention-runner: after provisioning the
   workload cluster and App CR, it fetches the WC kubeconfig
   (`Framework.GetClusterKubeConfig`), writes it to a file, exports the env
-  contract, detects the executor, and runs it per test type. The image
-  gains `uv` and `gotestsum`. Existing in-process suites are unaffected.
-  Enabling facts: Ginkgo runs under plain `go test`, and pytest tests
-  built on pytest-helm-charts already read `KUBECONFIG`, so existing ATS
-  tests of both languages are immediately reusable on workload clusters.
-- **app-test-suite** exports the canonical `APP_TEST_*` names alongside
-  its legacy `ATS_*` ones, stops running the `upgrade` type in a pre-upgrade
-  pass and runs it once post-upgrade (its existing `pre_upgrade`/
-  `post_upgrade` config hooks map onto the conventional `pre-upgrade` hook),
-  discovers the conventional hooks by path in addition to its config-wired
-  ones, searches `tests/app/` in addition to its current `tests/ats/`
-  default, reads the shared config keys, and emits junit via gotestsum. Its
+  contract, detects the executor, and runs it per test type. For the
+  upgrade flow it gains the pre run: it runs the `upgrade` type against the
+  previous version (`APP_TEST_UPGRADE_STAGE=pre`) before upgrading, where
+  today it runs the suite once after. Its `BeforeUpgrade` callback maps onto
+  the conventional `pre-upgrade` hook. The image gains `uv` and `gotestsum`.
+  Existing in-process suites are unaffected. Enabling facts: Ginkgo runs
+  under plain `go test`, and pytest tests built on pytest-helm-charts
+  already read `KUBECONFIG`, so existing ATS tests of both languages are
+  immediately reusable on workload clusters.
+- **app-test-suite** exports the canonical `APP_TEST_*` names alongside its
+  legacy `ATS_*` ones (including `APP_TEST_UPGRADE_STAGE` for the pre/post
+  runs it already performs), discovers the conventional hooks by path in
+  addition to its config-wired ones (its `pre_upgrade` config hook maps onto
+  the conventional `pre-upgrade` hook), searches `tests/app/` in addition to
+  its current `tests/ats/` default, reads the shared config keys, and emits
+  junit via gotestsum. Its upgrade pre/post behavior is unchanged. Its
   TEST_CONTRACT.md becomes a pointer to this RFC plus ATS-specific detail.
 - **clustertest** gains `wait.IsDeploymentReady(name, namespace)` so both
   runners and non-portable suites share the same readiness vocabulary, and
