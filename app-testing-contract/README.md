@@ -13,13 +13,30 @@ summary: Defines a harness-neutral contract for app tests so the same test files
 
 ## Problem
 
-We test managed apps with two harnesses. app-test-suite (ATS) deploys the
-chart on a kind cluster in the PR pipeline. apptest-framework (atf) stands
-up a workload cluster on a management cluster and installs an App CR in the
-e2e pipeline. Both need "does the deployed app actually work" checks, and
-today each repo writes them twice, in two idioms (pytest or plain Go for
-ATS, Ginkgo suites for atf). In practice one side is usually empty or
-stale.
+We run "does the deployed app actually work" checks at two cadences, on
+purpose:
+
+- **app-test-suite (ATS)** deploys the chart on a kind cluster and runs
+  fast checks per pull request.
+- **apptest-framework (atf)** stands up a workload cluster on a management
+  cluster, installs an App CR, and runs the full suite nightly.
+
+Both cadences earn their keep and we are keeping both: kind gives quick
+per-PR signal, a real workload cluster catches what kind cannot (cloud
+identity, real storage, upgrades). The split is not the problem. The
+problem is that the two harnesses have divergent authoring models: ATS
+expects pytest or plain Go, atf expects Ginkgo suites. Covering both
+cadences means writing the same check twice in two idioms, so in practice
+a repo writes it for one harness, or for neither. Adoption of both is
+close to zero, and teams that did adopt a single harness are often
+unhappy living in two worlds.
+
+So this RFC is not a dedup exercise; there is little duplication to
+remove, because the double-idiom cost suppressed writing the tests in the
+first place. It unifies the *authoring* model: one directory, one idiom
+per repo, discovered and run the same way by both harnesses. A test
+written once runs per-PR on kind (the subset kind can support) and nightly
+on a workload cluster (everything), with no second copy to keep in sync.
 
 ATS already publishes a testing contract
 ([docs/TEST_CONTRACT.md](https://github.com/giantswarm/app-test-suite/blob/master/docs/TEST_CONTRACT.md)),
@@ -190,6 +207,35 @@ want it enforced list the types they expect in `config.yaml` (see below);
 a listed type collecting zero fails the run. Test results are emitted as
 junit XML: `gotestsum --junitfile` for Go, `pytest --junitxml` for Python.
 
+### Cadence and feedback latency
+
+The two cadences buy quick per-PR signal at the cost of a gap: the fast
+runner on kind cannot exercise what kind lacks (cloud identity, real
+storage, load balancers), so a test gated to those environments runs only
+in the nightly workload-cluster flow. Its signal is then detached from the
+change that broke it. A pull request that breaks a cloud-only path passes
+per-PR CI green and fails nightly, hours later, against a batch of
+unrelated commits.
+
+This is an accepted property of the split, not a defect the contract
+introduces, but the contract must not let it be silent or unescapable:
+
+1. **A nightly-only test is a conscious choice, never an accident.** A
+   test that gates itself off kind (category 2) is by construction
+   per-PR-invisible. Reviewers see that in the diff; the collected-count
+   output makes "ran nowhere per-PR" legible rather than looking like
+   coverage.
+2. **There is an on-demand full-flow trigger.** A change that touches a
+   cloud-only path can request the workload-cluster flow against the pull
+   request instead of waiting for the scheduled run, via the existing
+   `/run` pipeline convention. Catching a cloud regression a day late is
+   the default; paying for it on the PR is one comment away.
+
+Prefer expressing a real capability need over a hard environment gate (see
+`APP_TEST_CLUSTER_TYPE` below): a test that only needs cloud identity, not
+kind-vs-WC specifically, will also run per-PR on any `external` cluster
+that provides it, which shrinks the nightly-only set.
+
 ### Shared configuration
 
 `tests/app/config.yaml` carries only the keys both harnesses need:
@@ -270,6 +316,21 @@ conforming only if it passes the suite in its CI; both ATS and atf wire it
 in. New guarantees land in the suite in the same change that adds them
 here.
 
+Per-runner conformance is necessary but not sufficient: two runners can
+each satisfy the letter of the contract and still disagree on what a test
+observes, which is the failure that actually bites (a smoke test that
+passes fast-CI and flakes nightly). The suite therefore also asserts
+*parity*: the same fixture run through both runners must yield the same
+collected-per-type counts and the same pass/fail outcome, and any
+divergence fails the suite. The known sharp edge is guarantee 2, "the app
+is settled": ATS reaches it via a Helm release reporting installed, atf
+via an App CR reconciled to `deployed`, and those are not the same instant.
+The contract fixes the observable, not the mechanism: settled means the
+app's own readiness (its Deployments/StatefulSets Available) holds, and the
+parity fixture asserts a runner does not hand off to tests before it does.
+`clustertest.wait.IsDeploymentReady` is the shared vocabulary for that
+check so both runners and the tests mean the same thing by "ready".
+
 The contract is versioned. This document is `v1`; the version is declared
 in `tests/app/config.yaml` as `contractVersion: 1`. A runner refuses a
 directory whose declared version it does not implement rather than
@@ -299,11 +360,17 @@ behind is a bug against that runner, not a licence to fork the contract.
   searches `tests/app/` in addition to its current `tests/ats/` default,
   reads the shared config keys, and emits junit via gotestsum. Its
   TEST_CONTRACT.md becomes a pointer to this RFC plus ATS-specific detail.
-- **clustertest** gains `wait.IsDeploymentReady(name, namespace)` so
-  non-portable suites share the same readiness vocabulary.
+- **clustertest** gains `wait.IsDeploymentReady(name, namespace)` so both
+  runners and non-portable suites share the same readiness vocabulary, and
+  the settled-parity assertion has one definition to check against.
+- **the on-demand full-flow trigger**: the workload-cluster pipeline runs
+  on the `/run` convention against a pull request, not only on the nightly
+  schedule, so a change touching a cloud-only path can pull its signal
+  forward without waiting for the batch.
 - **the conformance suite** lives in this repo alongside the RFC: the
-  fixture app plus the guarantee assertions. Both runners run it in CI;
-  it is the acceptance gate for "implements the contract."
+  fixture app plus the guarantee assertions, including the cross-runner
+  parity check. Both runners run it in CI; it is the acceptance gate for
+  "implements the contract."
 - **devctl `gen apptest` and template-app** scaffold the conventional
   layout for new repos.
 - Migration is opt-in as repos get touched; there is no flag day.
@@ -322,3 +389,12 @@ behind is a bug against that runner, not a licence to fork the contract.
 - **A `values: {ats: ..., e2e: ...}` map in the shared config.** Rejected:
   it bakes harness names into the neutral file, the configuration
   equivalent of a test gating on the harness's name.
+- **One runner with two modes instead of two runners behind a contract.**
+  A single runner covering both fast-kind and workload-cluster modes would
+  need no contract to police, since there would be nothing to keep in step.
+  Rejected because the two cadences map onto two mature codebases owned by
+  two teams (ATS by team-honeybadger, atf by team-tenet), each carrying
+  provisioning and pipeline machinery the other does not want. Collapsing
+  them is a larger, riskier rewrite than aligning their edges, and the
+  parity check gives most of the anti-drift benefit at a fraction of the
+  cost. If the two runners keep diverging in practice, revisit this.
