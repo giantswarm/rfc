@@ -53,14 +53,29 @@ carry several types.
 |---|---|
 | `smoke` | fast, fail-fast sanity checks, run first |
 | `functional` | full feature tests |
-| `pre_upgrade` | runs before the app is upgraded (for example: seed a workload) |
-| `post_upgrade` | runs after the app is upgraded (for example: verify the workload survived) |
+| `upgrade` | runs twice during an upgrade flow: before and after the upgrade |
 
-`upgrade` remains a deprecated alias meaning both `pre_upgrade` and
-`post_upgrade`, so existing ATS tests keep working during migration.
-Distinct pre/post types replace the previous single `upgrade` type because
-the canonical upgrade test is asymmetric, which one type run twice cannot
-express.
+Types answer "what kind of test"; lifecycle position is not a type. The
+upgrade flow runs `upgrade`-typed tests twice and tells them where they
+are via `ATS_UPGRADE_STAGE` (`pre` or `post`). The canonical asymmetric
+upgrade test (seed a workload before, verify it survived after) branches
+or skips on the stage:
+
+```go
+if os.Getenv("ATS_UPGRADE_STAGE") != "post" {
+    t.Skip("verification runs after the upgrade")
+}
+```
+
+This keeps the type set identical to ATS's published contract (no
+migration for existing tests) and matches the principle used everywhere
+else in this contract: tests gate on environment properties. Pre-only
+tests appear as named skips in the post run and vice versa, which is
+accepted for the simpler taxonomy.
+
+Runner hooks (ATS's pre/post-hook executables, atf's `BeforeUpgrade`
+callback) remain harness-side machinery for setup and teardown around the
+flow; they are not part of this contract. Assertions live in tests.
 
 ### Inputs
 
@@ -77,6 +92,7 @@ no cluster creation, no chart install, no App CRs.
 | `ATS_CLUSTER_TYPE` | yes | `kind`, `external`, or `capi` |
 | `ATS_CLUSTER_VERSION` | optional | Kubernetes server version |
 | `ATS_APP_CONFIG_FILE_PATH` | optional | values file the app was deployed with |
+| `ATS_UPGRADE_STAGE` | upgrade runs only | `pre` or `post`: which side of the upgrade this run is on |
 | `ATS_UPGRADE_FROM_VERSION` / `ATS_UPGRADE_TO_VERSION` | upgrade runs only | versions on either side of the upgrade |
 | `ATS_EXTRA_*` | optional | harness extras, for example `ATS_EXTRA_GITOPS_ENGINE` |
 
@@ -92,8 +108,9 @@ Before invoking the executor, a conforming runner guarantees:
    GitOps engine; atf: App CR reconciled to `deployed`),
 2. all required variables above are exported,
 3. the executor is invoked once per applicable test type, in order:
-   `smoke`, then `functional`; for upgrade flows: `pre_upgrade`, then the
-   upgrade is performed, then `post_upgrade`.
+   `smoke`, then `functional`; for upgrade flows: `upgrade` with
+   `ATS_UPGRADE_STAGE=pre`, then the upgrade is performed, then `upgrade`
+   with `ATS_UPGRADE_STAGE=post`.
 
 "No tests for this type" is a pass, not a failure (Go: build constraints
 exclude all files; pytest: exit code 5). Test results are emitted as junit
@@ -143,8 +160,8 @@ belongs in category 3.
   Enabling facts: Ginkgo runs under plain `go test`, and pytest tests
   built on pytest-helm-charts already read `KUBECONFIG`, so existing ATS
   tests of both languages are immediately reusable on workload clusters.
-- **app-test-suite** implements the `pre_upgrade` / `post_upgrade` types
-  in its upgrade scenario (keeping `upgrade` as the alias), searches
+- **app-test-suite** exports `ATS_UPGRADE_STAGE` to test processes in its
+  upgrade scenario (it already sets the equivalent for hooks), searches
   `tests/app/` in addition to its current `tests/ats/` default, reads the
   shared config keys, and emits junit via gotestsum. Its
   TEST_CONTRACT.md becomes a pointer to this RFC plus ATS-specific detail.
