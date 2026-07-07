@@ -13,89 +13,77 @@ summary: Defines a harness-neutral contract for app tests so the same test files
 
 ## Problem
 
-We run "does the deployed app actually work" checks at two cadences, on
-purpose:
+We test managed apps two ways, and we want to keep both:
 
-- **app-test-suite (ATS)** deploys the chart on a kind cluster and runs
-  fast checks per pull request.
-- **apptest-framework (atf)** stands up a workload cluster on a management
-  cluster, installs an App CR, and runs the full suite nightly.
+- **app-test-suite (ATS)** installs the chart on a kind cluster and runs
+  quick checks on every PR.
+- **apptest-framework (atf)** creates a real workload cluster, installs the
+  App CR, and runs the full suite nightly.
 
-Both cadences earn their keep and we are keeping both: kind gives quick
-per-PR signal, a real workload cluster catches what kind cannot (cloud
-identity, real storage, upgrades). The split is not the problem. The
-problem is that the two harnesses have divergent authoring models: ATS
-expects pytest or plain Go, atf expects Ginkgo suites. Covering both
-cadences means writing the same check twice in two idioms, so in practice
-a repo writes it for one harness, or for neither. Adoption of both is
-close to zero, and teams that did adopt a single harness are often
-unhappy living in two worlds.
+kind is fast but can't do cloud identity, real storage, or upgrades; the
+workload cluster can. So the two are a fast/slow pair, not duplicates.
 
-So this RFC is not a dedup exercise; there is little duplication to
-remove, because the double-idiom cost suppressed writing the tests in the
-first place. It unifies the *authoring* model: one directory, one idiom
-per repo, discovered and run the same way by both harnesses. A test
-written once runs per-PR on kind (the subset kind can support) and nightly
-on a workload cluster (everything), with no second copy to keep in sync.
+The trouble is writing the tests. ATS wants pytest or plain Go; atf wants
+Ginkgo. To cover both you write the same check twice in two styles, so most
+repos write it for one harness or skip it. Almost nobody has both, and the
+people stuck on one aren't happy about it.
 
-ATS already publishes a testing contract
+This RFC doesn't dedupe existing tests; there aren't many to dedupe, for
+the reason above. It makes the two harnesses agree on how tests are written
+and run, so you write a check once and both run it: the kind-compatible
+part on every PR, everything nightly.
+
+ATS already has a test contract
 ([docs/TEST_CONTRACT.md](https://github.com/giantswarm/app-test-suite/blob/master/docs/TEST_CONTRACT.md)),
-but it lives in one harness's repo and only that harness implements it.
-This RFC extracts the contract, makes it harness-neutral, and extends
-apptest-framework to implement it too. The contract is deliberately not
-tied to a test framework or language.
+but it lives in the ATS repo and only ATS follows it. We lift it out, make
+it harness-neutral, and make atf follow it too. It stays independent of any
+test framework or language.
 
 ## Decision
 
 ### The conventional directory
 
-Each app repo has one conventional test directory: `tests/app/`. It
-contains the app's tests, written against the contract below. Any harness
-that deploys the app runs this directory the same way. Presence of the
-directory is the opt-in; there is no per-repo wiring.
+Tests live in one directory: `tests/app/`. Any harness that deploys the app
+runs that directory the same way. Having the directory is the opt-in;
+there's nothing else to wire up.
 
-The directory is one Go module or one Python project, never both. The
-executor is detected from its contents:
+It's either one Go module or one Python project, not both. The runner picks
+the executor from what's there:
 
-- `go.mod` present: `go test -mod=readonly -tags=<type>`
-- `pyproject.toml` present: `uv sync --frozen && uv run pytest -m <type>`
-- both present, or neither present in a non-empty directory:
-  configuration error, fail fast
+- `go.mod`: `go test -mod=readonly -tags=<type>`
+- `pyproject.toml`: `uv sync --frozen && uv run pytest -m <type>`
+- both, or neither in a non-empty directory: config error, stop.
 
-Dependencies are pinned and installed offline: Go reads a committed
-`go.sum` under `-mod=readonly`, Python a committed `uv.lock` under
-`--frozen`. A runner never resolves versions from the network at test
-time; a missing or stale lockfile is a failure, not a silent fetch. This
-keeps the dependency closure identical across harnesses and auditable.
+Dependencies are pinned and installed offline: Go from a committed `go.sum`
+(`-mod=readonly`), Python from a committed `uv.lock` (`--frozen`). No runner
+resolves versions from the network at test time; a missing or stale
+lockfile fails instead of quietly fetching. Same dependency set everywhere,
+and you can audit it.
 
-An empty `tests/app/` (no module, no project) is not an opt-in and is
-ignored.
+An empty `tests/app/` (no module, no project) isn't an opt-in and is
+skipped.
 
 ### Test types
 
-A test declares its type via a Go build tag or pytest marker. There are
-three peer types, matching ATS's existing `StepType`s; a test carries one.
+Each test carries one type, set with a Go build tag or a pytest marker.
+There are three, the same ones ATS already has:
 
-| Type | Runs | Meaning |
+| Type | Runs | What it is |
 |---|---|---|
-| `smoke` | normal flow, first | fast, fail-fast sanity checks |
+| `smoke` | normal flow, first | quick sanity checks |
 | `functional` | normal flow, after smoke | full feature tests |
-| `upgrade` | upgrade flow, before and after the upgrade | verifies the app still works across an upgrade; the pre run is the baseline |
+| `upgrade` | upgrade flow, before and after | checks the app still works across an upgrade |
 
-`upgrade` is a peer type, not a modifier on the others. The upgrade flow
-does not re-run the `smoke` and `functional` suites; it runs only the
-`upgrade`-typed tests. It runs them twice: once on the old version before
-the upgrade (`APP_TEST_UPGRADE_STAGE=pre`) and once after
-(`APP_TEST_UPGRADE_STAGE=post`). The pre run is the baseline that makes a
-post failure attributable to the upgrade rather than to a pre-existing
-break. This is ATS's existing behavior; atf gains the pre run.
+`upgrade` is its own type, not a flag on the others. The upgrade flow
+doesn't re-run smoke and functional; it runs the `upgrade` tests, once on
+the old version (`APP_TEST_UPGRADE_STAGE=pre`) and once after upgrading
+(`=post`). The pre run is the baseline: if it passes and post fails, the
+upgrade caused it, not something that was already broken.
 
-A symmetric invariant ("the app answers") is just an `upgrade` test that
-asserts the same thing on both sides, and gets the baseline for free. The
-asymmetric case (state that must survive the upgrade) has two shapes. When
-the "before" step is a pure side effect, seed it in the `pre-upgrade` hook
-and verify in the `post` run. When it is easier to keep in one file, a
-single test branches on the stage:
+Most upgrade checks are symmetric ("the app answers") and assert the same
+thing both times. When some state has to survive the upgrade, either seed it
+in the `pre-upgrade` hook and check it in the post run, or keep it in one
+test that branches on the stage:
 
 ```go
 if os.Getenv("APP_TEST_UPGRADE_STAGE") != "post" {
@@ -103,54 +91,44 @@ if os.Getenv("APP_TEST_UPGRADE_STAGE") != "post" {
 }
 ```
 
-Seeding-as-side-effect belongs in a hook, not a test that reruns;
-verification is an assertion, so it is a test. Upgrade tests and the
-`pre-upgrade` hook also receive `APP_TEST_UPGRADE_FROM_VERSION` /
-`APP_TEST_UPGRADE_TO_VERSION`.
-
-Assertions live in tests; setup, teardown, and upgrade seeding live in
-hooks (next section).
+Seeding is a side effect, so it's a hook; checking is an assertion, so it's
+a test. Upgrade tests and the `pre-upgrade` hook also get
+`APP_TEST_UPGRADE_FROM_VERSION` / `APP_TEST_UPGRADE_TO_VERSION`.
 
 ### Hooks
 
-Hooks do imperative work with a side effect (install a prerequisite, seed
-a pod, clean up an external resource); tests assert. Keeping the two
-separate is what lets the upgrade flow seed state without re-running a test
-suite. Setup, seeding, and teardown are app-specific just like assertions
-and duplicate across harnesses the same way, so the contract defines
-portable hooks: optional executables in the conventional directory, invoked
-by the runner with the same environment as tests.
+Hooks do things with side effects (install a prerequisite, create a pod,
+clean up); tests check things. Splitting them is what lets the upgrade flow
+seed state without re-running a suite. Like tests, setup and teardown are
+per-app and get duplicated across harnesses, so the contract makes them
+portable too: optional executables in `tests/app/`, run with the same
+environment as tests.
 
 | Hook | Runs |
 |---|---|
 | `tests/app/hooks/setup` | after the cluster is ready, before the app is deployed (for example: install prerequisites) |
-| `tests/app/hooks/pre-upgrade` | upgrade flow only: after the previous version is deployed, before the upgrade (for example: create a pod or write a record whose survival an `upgrade` test then verifies) |
+| `tests/app/hooks/pre-upgrade` | upgrade flow only: after the previous version is deployed, before the upgrade (for example: create a pod or write a record an `upgrade` test then checks survived) |
 | `tests/app/hooks/teardown` | after all tests, before the harness tears anything down (for example: clean up external resources) |
 
-A hook is any executable file at that path: a script with a shebang or a
-built binary, invoked directly (not sourced, not run through a language
-toolchain). Because it runs out of process, it is exempt from the
-directory's one-language rule and may be written in whatever suits it;
-keep it thin, since anything substantial belongs in a test or a
-harness-native hook.
+A hook is any executable at that path: a script with a shebang or a built
+binary, run directly (not sourced). It runs out of process, so the
+one-language rule doesn't apply and you can write it in whatever fits. Keep
+it small; anything bigger is a test or a harness-native hook.
 
-A missing hook is a no-op. A non-zero exit fails the run. Hooks gate on
-environment properties exactly like category-2 tests (`APP_TEST_CLUSTER_TYPE`
-and friends); the `pre-upgrade` hook additionally receives
-`APP_TEST_UPGRADE_FROM_VERSION` / `APP_TEST_UPGRADE_TO_VERSION`.
+A missing hook does nothing. A non-zero exit fails the run. Hooks gate on
+the environment like category-2 tests do; `pre-upgrade` also gets the
+from/to versions.
 
-Convention discovery of these three paths is the portable, zero-wiring
-default a conforming runner must implement. A harness may *also* keep its
-own config-wired hook flags, so existing repos need no immediate move and
-harness-specific points stay available. Where a flag targets one of the
-three contract points, it and the convention hook are alternatives: if both
-are set for the same point, the runner fails fast (as with a directory that
-has both `go.mod` and `pyproject.toml`), so migration is "drop the file,
-remove the flag" in one change rather than a silent double-run. Only the
-convention path is a contract guarantee and exercised by the conformance
-suite; the flags are harness-native.
+Convention discovery of those three paths is the default, and every runner
+has to implement it. That's the zero-wiring part. A harness can also keep
+its own hook flags, so existing repos don't have to move and
+harness-specific hooks still work. If a flag and a convention file point at
+the same contract hook, the runner stops (same as finding both `go.mod` and
+`pyproject.toml`), so migrating is "add the file, drop the flag" in one
+commit rather than running both. Only the convention path is guaranteed and
+checked by the conformance suite; the flags are each harness's own business.
 
-How each harness supplies the three contract points today:
+How the three points map today:
 
 | Contract hook | ATS | atf |
 |---|---|---|
@@ -158,22 +136,19 @@ How each harness supplies the three contract points today:
 | `pre-upgrade` | `--upgrade-tests-upgrade-hook` at `PRE_UPGRADE` | `BeforeUpgrade` |
 | `teardown` (after tests) | `--app-tests-post-hook` | suite callback |
 
-Each runner satisfies a point either by discovering the convention file or
-through the mapped flag, not both at once. Points outside this table
-(ATS's `POST_UPGRADE` stage, its pre/post test hooks) stay harness-native.
+A runner covers each point with either the file or the flag, not both.
+Anything not in that table (ATS's `POST_UPGRADE`, its pre/post test hooks)
+stays harness-native.
 
-The boundary is the same as for tests: a portable hook only gets the app
-cluster's `KUBECONFIG`. Work that needs the harness's own machinery (MC
-access, App CR manipulation, framework state) stays in harness-native
-hooks: ATS's config-wired hooks at points the contract does not cover (its
-pre/post *test* hooks, the `post-upgrade` stage) and atf's suite callbacks
-(`AfterClusterReady`, `BeforeUpgrade`), which remain available and are not
-part of this contract.
+Same boundary as tests: a hook only gets the app cluster's `KUBECONFIG`.
+Anything that needs harness internals (MC access, the App CR, framework
+state) stays in a harness-native hook: ATS's config hooks for points we
+don't cover, or atf's `AfterClusterReady` / `BeforeUpgrade`.
 
 ### Inputs
 
-Tests receive everything through the environment. They never provision:
-no cluster creation, no chart install, no App CRs.
+Tests get everything from the environment. They don't provision anything:
+no clusters, no chart installs, no App CRs.
 
 | Variable | Required | Meaning |
 |---|---|---|
@@ -189,12 +164,12 @@ no cluster creation, no chart install, no App CRs.
 | `APP_TEST_UPGRADE_FROM_VERSION` / `APP_TEST_UPGRADE_TO_VERSION` | upgrade flow only | versions on either side of the upgrade; available to the `pre-upgrade` hook and `upgrade`-typed tests |
 | `APP_TEST_EXTRA_*` | optional | harness extras, for example `APP_TEST_EXTRA_GITOPS_ENGINE` |
 
-The canonical prefix is `APP_TEST_`, neutral to both harnesses. The
-existing implementation publishes these variables under the legacy `ATS_`
-prefix; conforming runners export both, so no existing test breaks and
-dual export costs nothing ongoing. New and scaffolded tests use
-`APP_TEST_`. The mapping is mechanical (`ATS_X` becomes `APP_TEST_X`)
-with three exceptions renamed for clarity:
+The prefix is `APP_TEST_`, which reads the same under either harness. ATS
+publishes these under the old `ATS_` prefix today; runners export both so
+nothing breaks, and new tests use `APP_TEST_`. Dual export isn't free (two
+names to know and grep for), so `ATS_` is deprecated and drops on the next
+contract version. Most names map straight across (`ATS_X` to `APP_TEST_X`);
+three are renamed because the old names were unclear:
 
 | Legacy | Canonical |
 |---|---|
@@ -202,238 +177,201 @@ with three exceptions renamed for clarity:
 | `ATS_APP_CONFIG_FILE_PATH` | `APP_TEST_VALUES_FILE` |
 | `ATS_CLUSTER_VERSION` | `APP_TEST_KUBERNETES_VERSION` |
 
-`KUBECONFIG` is unchanged: it is the Kubernetes-wide convention, not ours.
+`KUBECONFIG` stays as-is; it's the standard name, not ours.
 
 ### Runner guarantees
 
-A conforming runner guarantees, before invoking the executor:
+Before the tests run, a conforming runner makes sure:
 
-1. the `setup` hook, if present, ran after the cluster was ready and
-   before the app was deployed,
-2. the app is deployed and settled (ATS: chart installed via Helm or a
-   GitOps engine; atf: App CR reconciled to `deployed`),
-3. all required variables above are exported,
-4. the `teardown` hook, if present, runs after the last test type, before
+1. the `setup` hook ran, if present, after the cluster was ready and before
+   the app was deployed,
+2. the app is deployed and settled (ATS: Helm release installed, or via a
+   GitOps engine; atf: App CR at `deployed`),
+3. the required variables are exported,
+4. the `teardown` hook runs, if present, after the last test type and before
    the harness's own teardown.
 
-In the **normal flow**, the executor is invoked once per applicable test
-type, in order: `smoke`, then `functional`. `upgrade`-typed tests do not
-run here.
+Normal flow: run `smoke`, then `functional`. Upgrade tests don't run here.
 
-In the **upgrade flow** (`upgrade: true`), the runner: deploys the previous
-version and waits for it to settle, invokes the executor for the `upgrade`
-type with `APP_TEST_UPGRADE_STAGE=pre` (the baseline), runs the
-`pre-upgrade` hook if present, upgrades to the version under test and waits
-for it to settle, then invokes the executor for the `upgrade` type with
-`APP_TEST_UPGRADE_STAGE=post`. The `smoke` and `functional` suites are not
-part of this flow.
+Upgrade flow (any `upgrade` tests collected): install the previous version
+and let it settle, run `upgrade` tests with `APP_TEST_UPGRADE_STAGE=pre`, run the
+`pre-upgrade` hook, upgrade and let it settle, run `upgrade` tests with
+`=post`. smoke and functional don't run here.
 
-"No tests for this type" is a pass, not a failure (Go: build constraints
-exclude all files; pytest: exit code 5), because a repo may legitimately
-carry only some types. Zero collection is never silent, though: the runner
-records the collected count per type, so a typo'd tag or marker (which also
-collects zero) is visible in the output rather than a green run. Repos that
-want it enforced list the types they expect in `config.yaml` (see below);
-a listed type collecting zero fails the run. Test results are emitted as
-junit XML: `gotestsum --junitfile` for Go, `pytest --junitxml` for Python.
+"No tests of this type" passes rather than fails (Go excludes all files via
+build tags; pytest exits 5), since a repo may only have some types. It isn't
+silent, though: the runner reports how many tests it collected per type, so
+a mistyped tag (also zero) shows up instead of going green. Repos that want
+it strict list their expected types in `config.yaml`; a listed type with
+zero tests fails. Results come out as junit XML (`gotestsum --junitfile`,
+`pytest --junitxml`).
 
 ### Cadence and feedback latency
 
-The two cadences buy quick per-PR signal at the cost of a gap: the fast
-runner on kind cannot exercise what kind lacks (cloud identity, real
-storage, load balancers), so a test gated to those environments runs only
-in the nightly workload-cluster flow. Its signal is then detached from the
-change that broke it. A pull request that breaks a cloud-only path passes
-per-PR CI green and fails nightly, hours later, against a batch of
-unrelated commits.
+kind can't do cloud identity, storage, or load balancers, so tests that
+need those only run nightly. Their result isn't tied to the PR that caused
+it: a PR can break a cloud-only path, pass PR CI, and fail that night
+against a batch of other commits.
 
-This is an accepted property of the split, not a defect the contract
-introduces, but the contract must not let it be silent or unescapable:
+We accept that, but two things keep it from being a silent trap:
 
-1. **A nightly-only test is a conscious choice, never an accident.** A
-   test that gates itself off kind (category 2) is by construction
-   per-PR-invisible. Reviewers see that in the diff; the collected-count
-   output makes "ran nowhere per-PR" legible rather than looking like
-   coverage.
-2. **There is an on-demand full-flow trigger.** A change that touches a
-   cloud-only path can request the workload-cluster flow against the pull
-   request instead of waiting for the scheduled run, via the existing
-   `/run` pipeline convention. Catching a cloud regression a day late is
-   the default; paying for it on the PR is one comment away.
+1. A nightly-only test is a choice you can see. Gating a test off kind
+   (category 2) makes it invisible per-PR by design; the skip shows by name
+   and the collected counts show it didn't run, so it doesn't read as
+   coverage it isn't.
+2. You can pull the nightly flow forward. `/run` triggers the
+   workload-cluster flow on a PR, so a cloud-path change can get its result
+   now instead of that night.
 
-Prefer expressing a real capability need over a hard environment gate (see
-`APP_TEST_CLUSTER_TYPE` below): a test that only needs cloud identity, not
-kind-vs-WC specifically, will also run per-PR on any `external` cluster
-that provides it, which shrinks the nightly-only set.
+Where you can, gate on the capability you need rather than kind-vs-WC (see
+Harness-specific tests): a test that needs cloud identity also runs on an
+`external` cluster that has it.
 
 ### Shared configuration
 
-`tests/app/config.yaml` carries only the keys both harnesses need:
+`tests/app/config.yaml` holds only what both harnesses need:
 
 ```yaml
 contractVersion: 1            # contract version this directory targets
 installNamespace: kube-system
-upgrade: true                 # whether an upgrade flow applies to this app
 expectedTypes: [smoke, functional, upgrade]   # optional: types that must collect at least one test
 ```
 
-`upgrade` is the declarative form of each harness's existing upgrade
-primitive: atf's `WithIsUpgrade(true)` (install the latest release,
-upgrade to the version under test) and ATS's upgrade scenario. It is
-explicit rather than inferred from the presence of `upgrade`-typed tests
-because the upgrade flow is the expensive one.
+The upgrade flow is inferred, not configured: if the runner collects any
+`upgrade`-typed tests it runs the upgrade flow, otherwise it doesn't. Same
+presence-is-the-opt-in rule as the directory and the other types, so there's
+no separate switch to keep in sync. Each harness still learns which version
+to upgrade from through its own config (ATS's stable-app settings, atf's
+latest published release); that part is harness-specific, not contract.
 
-The two settings lint against each other and against what is collected, so
-a mistake fails the run instead of passing green:
+The one lint: a type in `expectedTypes` that collects zero tests fails the
+run. `expectedTypes` is optional; leave it out to keep the "no tests is
+fine" default. It's also how you make a type mandatory. List `upgrade`, and
+a typo'd tag (which collects zero) fails instead of quietly skipping the
+flow.
 
-- `upgrade: true` with zero `upgrade`-typed tests collected fails (dead
-  flow, or a typo'd tag).
-- `upgrade`-typed tests present with `upgrade` unset or false fails (tests
-  that would never run).
-- any type in `expectedTypes` collecting zero fails; `expectedTypes` is
-  optional, and omitting it keeps the permissive "no tests is a pass"
-  default for repos that do not want the check.
-
-Everything harness-specific stays in the harness's own config:
-`.ats/main.yaml` (cluster types, catalogs, executor options) and
-`tests/e2e/config.yaml` (appCatalog, providers, MC test options). Values
-files also stay per harness: values legitimately differ between a kind
-cluster and a workload cluster, and each provisioner consumes them through
-its own mechanism.
+Everything harness-specific stays in that harness's config: `.ats/main.yaml`
+(cluster types, catalogs, executor options) and `tests/e2e/config.yaml`
+(appCatalog, providers, MC options). Values files stay per-harness too; a
+kind cluster and a workload cluster legitimately want different values, and
+each harness loads them its own way.
 
 ### Harness-specific tests
 
-The contract covers the default case, not everything. Where a test goes:
+The contract is for the common case. Where a test goes:
 
-1. Asserts on the deployed app and works on any cluster: `tests/app/`,
-   no gate. This should be the bulk.
-2. Asserts on the deployed app but is only meaningful in one environment:
-   `tests/app/` plus a runtime skip on contract environment, for example
+1. Checks the deployed app, works anywhere: `tests/app/`, no gate. Most
+   tests.
+2. Checks the deployed app but only makes sense in one environment:
+   `tests/app/` with a runtime skip, for example
    `if os.Getenv("APP_TEST_CLUSTER_TYPE") != "kind" { t.Skip(...) }`. Skips
-   stay visible by name in both runners' output.
+   still show by name.
 3. Needs harness machinery (MC access, bundle installs, AWS/IRSA, cluster
-   manipulation): a regular in-process apptest-framework suite under
-   `tests/e2e/suites/`, unchanged by this RFC.
+   manipulation): a normal atf suite under `tests/e2e/suites/`, which this
+   RFC doesn't touch.
 
-A repo may therefore hold two Go modules, `tests/app/` (portable) and
-`tests/e2e/` (atf-native), each with its own `go.mod`. They stay separate
-modules on purpose: the portable one must build without the atf
-dependency tree. Repos that want unified tooling across them add a
-`go.work` at the repo root; it is not required and is never committed as a
-contract artifact.
+So a repo can hold two Go modules: `tests/app/` (portable) and `tests/e2e/`
+(atf-native), each with its own `go.mod`. They're separate on purpose, since
+the portable one has to build without atf's dependencies. If you want one
+toolchain over both, add a `go.work` at the repo root; it's optional and
+never part of the contract.
 
-Tests may gate on environment properties the contract exposes, never on
-which harness is running them. A test that needs the harness's name
-belongs in category 3.
+Gate on what the contract tells you about the environment, never on which
+harness is running. If a test needs to know the harness name, it's
+category 3.
 
-`APP_TEST_CLUSTER_TYPE` is a capability axis, not a harness label. That
-`kind` tends to mean ATS and `capi` tends to mean atf today is
-incidental, and a gate written as "am I really asking about the harness?"
-is a category error even when it happens to work. Gate on the property you
-actually depend on: if a test needs cloud identity, express that (and let
-`external` clusters that also provide it pass the same gate) rather than
-hard-coding `!= "kind"`. If the property you need is not on any contract
-variable, the test needs harness machinery and belongs in category 3.
+`APP_TEST_CLUSTER_TYPE` is about capability, not which harness. `kind`
+usually being ATS and `capi` usually being atf is a coincidence, and gating
+on it as a stand-in for the harness is wrong even when it happens to work.
+Gate on what you actually need: if a test needs cloud identity, check for
+that, so an `external` cluster with cloud identity passes the same gate. If
+what you need isn't in any contract variable, the test needs harness
+machinery, which is category 3.
 
 ### Conformance, versioning, and ownership
 
-Two independent runners implement one contract, so drift is the default
-failure mode unless something mechanically checks them. The contract ships
-with a conformance suite: a fixture `tests/app/` (a trivial app, one test
-of each type, one hook, a lockfile) plus a set of assertions on the
-env-var, ordering, exit-code, and lint guarantees above. A runner is
-conforming only if it passes the suite in its CI; both ATS and atf wire it
-in. New guarantees land in the suite in the same change that adds them
-here.
+Two runners, one contract, so they'll drift unless something checks. The
+contract ships a conformance suite: a fixture `tests/app/` (trivial app, one
+test per type, a hook, a lockfile) and assertions on the env vars, ordering,
+exit codes, and lints above. A runner conforms only if it passes the suite
+in CI; ATS and atf both wire it in. New guarantees go into the suite in the
+same PR that adds them here.
 
-Per-runner conformance is necessary but not sufficient: two runners can
-each satisfy the letter of the contract and still disagree on what a test
-observes, which is the failure that actually bites (a smoke test that
-passes fast-CI and flakes nightly). The suite therefore also asserts
-*parity*: the same fixture run through both runners must yield the same
-collected-per-type counts and the same pass/fail outcome, and any
-divergence fails the suite. The known sharp edge is guarantee 2, "the app
-is settled": ATS reaches it via a Helm release reporting installed, atf
-via an App CR reconciled to `deployed`, and those are not the same instant.
-The contract fixes the observable, not the mechanism: settled means the
-app's own readiness (its Deployments/StatefulSets Available) holds, and the
-parity fixture asserts a runner does not hand off to tests before it does.
-`clustertest.wait.IsDeploymentReady` is the shared vocabulary for that
-check so both runners and the tests mean the same thing by "ready".
+Passing per runner isn't enough: both can pass and still disagree on what a
+test sees, which is the drift that hurts (a smoke test that's green on PR
+and flaky at night). So the suite also checks parity: the same fixture
+through both runners has to collect the same counts and end with the same
+result, or the suite fails. The known trap is guarantee 2, "settled": ATS
+gets there when the Helm release reports installed, atf when the App CR
+reads `deployed`, and those aren't the same moment. The contract pins the
+observable, not the mechanism: settled means the app's own workloads are
+Available, and the parity fixture checks that neither runner starts tests
+early. `clustertest.wait.IsDeploymentReady` is the shared definition of
+ready.
 
-The contract is versioned. This document is `v1`; the version is declared
-in `tests/app/config.yaml` as `contractVersion: 1`. A runner refuses a
-directory whose declared version it does not implement rather than
-guessing. Breaking changes bump the integer and the conformance suite
-carries a fixture per supported version.
+The contract is versioned. This is `v1`, declared as `contractVersion: 1`.
+A runner refuses a version it doesn't implement instead of guessing. A
+breaking change bumps the number, and the suite keeps a fixture per version.
 
-team-tenet stewards the contract (owns this document and the conformance
-suite, arbitrates when the two runners disagree). team-honeybadger and
-team-bumblebee own the ATS and atf implementations respectively. A change
-to the contract is a PR here that updates the suite; a runner falling
-behind is a bug against that runner, not a licence to fork the contract.
+team-tenet owns the contract: this doc, the suite, and the call when the
+runners disagree. team-honeybadger owns ATS, team-bumblebee owns atf.
+Changing the contract is a PR here that updates the suite. A runner lagging
+is a bug in that runner, not a reason to fork.
 
 ## Implementation
 
-- **apptest-framework** gains a convention-runner: after provisioning the
-  workload cluster and App CR, it fetches the WC kubeconfig
-  (`Framework.GetClusterKubeConfig`), writes it to a file, exports the env
-  contract, detects the executor, and runs it per test type. For the
-  upgrade flow it gains the pre run: it runs the `upgrade` type against the
-  previous version (`APP_TEST_UPGRADE_STAGE=pre`) before upgrading, where
-  today it runs the suite once after. Its `BeforeUpgrade` callback maps onto
-  the conventional `pre-upgrade` hook. The image gains `uv` and `gotestsum`.
-  Existing in-process suites are unaffected. Enabling facts: Ginkgo runs
-  under plain `go test`, and pytest tests built on pytest-helm-charts
-  already read `KUBECONFIG`, so existing ATS tests of both languages are
-  immediately reusable on workload clusters.
-- **app-test-suite** exports the canonical `APP_TEST_*` names alongside its
-  legacy `ATS_*` ones (including `APP_TEST_UPGRADE_STAGE` for the pre/post
-  runs it already performs), keeps its existing hook flags and additionally
-  discovers the conventional hooks by path (failing fast if a flag and a
-  convention hook target the same point), and gains a pre-deploy hook point
-  for `setup`: its `--app-tests-pre-hook` fires after deploy, so `setup`
-  (before deploy, for prerequisites) is a new call between
-  `_ensure_cluster_prerequisites` and the chart install. It searches
-  `tests/app/` in addition to its current `tests/ats/` default, reads the
-  shared config keys, and emits junit via gotestsum. Its upgrade pre/post
-  behavior is unchanged. Its TEST_CONTRACT.md becomes a pointer to this RFC
-  plus ATS-specific detail.
-- **clustertest** gains `wait.IsDeploymentReady(name, namespace)` so both
-  runners and non-portable suites share the same readiness vocabulary, and
-  the settled-parity assertion has one definition to check against.
-- **the on-demand full-flow trigger**: the workload-cluster pipeline runs
-  on the `/run` convention against a pull request, not only on the nightly
-  schedule, so a change touching a cloud-only path can pull its signal
-  forward without waiting for the batch.
-- **the conformance suite** lives in this repo alongside the RFC: the
-  fixture app plus the guarantee assertions, including the cross-runner
-  parity check. Both runners run it in CI; it is the acceptance gate for
-  "implements the contract."
-- **devctl `gen apptest` and template-app** scaffold the conventional
-  layout for new repos.
-- Migration is opt-in as repos get touched; there is no flag day.
-  Pilot: [giantswarm/muster#954](https://github.com/giantswarm/muster/pull/954).
+- **apptest-framework** gets a convention-runner: after the workload cluster
+  and App CR are up, it grabs the WC kubeconfig
+  (`Framework.GetClusterKubeConfig`), writes it out, exports the env
+  contract, picks the executor, and runs it per type. For upgrades it adds
+  the pre run. Today it runs the suite once after the upgrade; now it also
+  runs `upgrade` tests against the old version first
+  (`APP_TEST_UPGRADE_STAGE=pre`). `BeforeUpgrade` maps to the `pre-upgrade`
+  hook. The image adds `uv` and `gotestsum`. In-process suites are
+  untouched. Two things make this cheap: Ginkgo runs under plain `go test`,
+  and pytest tests built on pytest-helm-charts already read `KUBECONFIG`, so
+  existing ATS tests in either language run on workload clusters as-is.
+- **app-test-suite** exports the `APP_TEST_*` names next to the old `ATS_*`
+  ones (including `APP_TEST_UPGRADE_STAGE`, which it already has pre/post
+  runs for), keeps its hook flags and also discovers the convention hooks by
+  path (stopping if a flag and a file point at the same one), and adds a
+  pre-deploy point for `setup`. Its `--app-tests-pre-hook` runs after
+  deploy, so `setup` is a new call between `_ensure_cluster_prerequisites`
+  and the install. It looks in `tests/app/` as well as today's `tests/ats/`,
+  reads the shared config, and emits junit via gotestsum. Its upgrade
+  pre/post behavior doesn't change. Its TEST_CONTRACT.md becomes a pointer
+  here plus ATS-specific detail.
+- **clustertest** gets `wait.IsDeploymentReady(name, namespace)` so both
+  runners and the atf-native suites share one definition of ready, and the
+  parity check has one thing to assert against.
+- **the on-demand trigger**: the workload-cluster pipeline runs on `/run`
+  against a PR, not just nightly, so a cloud-path change can get its result
+  without waiting.
+- **the conformance suite** lives here with the RFC: the fixture app and the
+  assertions, parity check included. Both runners run it in CI; it's what
+  "conforms" means.
+- **devctl `gen apptest` and template-app** scaffold the layout for new
+  repos.
+- Migration happens as repos get touched; no flag day. Pilot:
+  [giantswarm/muster#954](https://github.com/giantswarm/muster/pull/954).
 
 ## Alternatives considered
 
-- **A shared assertions library consumed by both harnesses per repo.**
-  Prototyped in muster; the module, replace directives, and adapter
-  helpers protected a dozen lines of predicate logic per repo. Rejected in
-  favor of aligning the runners so the test files themselves are shared.
-- **Standardizing on Ginkgo as the contract.** Ginkgo runs under
-  `go test`, so it is allowed, but mandating it would exclude the pytest
-  repos and couple the contract to a framework for no gain. The contract
-  standardizes selection and inputs, not the test framework.
-- **A `values: {ats: ..., e2e: ...}` map in the shared config.** Rejected:
-  it bakes harness names into the neutral file, the configuration
-  equivalent of a test gating on the harness's name.
-- **One runner with two modes instead of two runners behind a contract.**
-  A single runner covering both fast-kind and workload-cluster modes would
-  need no contract to police, since there would be nothing to keep in step.
-  Rejected because the two cadences map onto two mature codebases owned by
-  two teams (ATS by team-honeybadger, atf by team-tenet), each carrying
-  provisioning and pipeline machinery the other does not want. Collapsing
-  them is a larger, riskier rewrite than aligning their edges, and the
-  parity check gives most of the anti-drift benefit at a fraction of the
-  cost. If the two runners keep diverging in practice, revisit this.
+- **A shared assertions library both harnesses import per repo.** Tried it
+  in muster; the module, replace directives, and adapter code guarded about
+  a dozen lines of predicate per repo. Not worth it; better to align the
+  runners so the test files themselves are shared.
+- **Standardize on Ginkgo.** Ginkgo runs under `go test`, so it's allowed,
+  but requiring it would shut out the pytest repos and tie the contract to a
+  framework for nothing. We standardize selection and inputs, not the
+  framework.
+- **A `values: {ats: ..., e2e: ...}` map in the shared config.** No: it puts
+  harness names in the neutral file, which is the config version of gating a
+  test on the harness.
+- **One runner with two modes instead of two behind a contract.** One runner
+  covering kind and workload clusters wouldn't need a contract at all. But
+  the two modes line up with two mature codebases owned by two teams
+  (ATS/honeybadger, atf/tenet), each with provisioning and pipeline code the
+  other doesn't want. Merging them is a bigger, riskier job than aligning
+  their edges, and the parity check gets most of the anti-drift value for
+  far less. Revisit if the runners keep drifting.
