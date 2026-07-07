@@ -73,9 +73,33 @@ else in this contract: tests gate on environment properties. Pre-only
 tests appear as named skips in the post run and vice versa, which is
 accepted for the simpler taxonomy.
 
-Runner hooks (ATS's pre/post-hook executables, atf's `BeforeUpgrade`
-callback) remain harness-side machinery for setup and teardown around the
-flow; they are not part of this contract. Assertions live in tests.
+Assertions live in tests; setup and teardown live in hooks (next
+section).
+
+### Hooks
+
+Setup and teardown are app-specific just like assertions, and duplicate
+across harnesses the same way. The contract therefore defines portable
+hooks: optional executables in the conventional directory, invoked by the
+runner with the same environment as tests, plus `ATS_HOOK_STAGE` naming
+the point.
+
+| Hook | Runs |
+|---|---|
+| `tests/app/hooks/setup` | after the cluster is ready, before the app is deployed (for example: install prerequisites) |
+| `tests/app/hooks/teardown` | after all tests, before the harness tears anything down (for example: clean up external resources) |
+
+A missing hook is a no-op. A non-zero exit fails the run. Hooks gate on
+environment properties exactly like category-2 tests (`ATS_CLUSTER_TYPE`
+and friends); during upgrade flows they additionally receive
+`ATS_UPGRADE_STAGE` and the from/to versions.
+
+The boundary is the same as for tests: a portable hook only gets the app
+cluster's `KUBECONFIG`. Work that needs the harness's own machinery (MC
+access, App CR manipulation, framework state) stays in harness-native
+hooks: ATS's config-wired hook executables and atf's suite callbacks
+(`AfterClusterReady`, `BeforeUpgrade`), which remain available and are
+not part of this contract.
 
 ### Inputs
 
@@ -104,13 +128,17 @@ cosmetic gain. Read it as "app-testing", not as the harness's name.
 
 Before invoking the executor, a conforming runner guarantees:
 
-1. the app is deployed and settled (ATS: chart installed via Helm or a
+1. the `setup` hook, if present, ran after the cluster was ready and
+   before the app was deployed,
+2. the app is deployed and settled (ATS: chart installed via Helm or a
    GitOps engine; atf: App CR reconciled to `deployed`),
-2. all required variables above are exported,
-3. the executor is invoked once per applicable test type, in order:
+3. all required variables above are exported,
+4. the executor is invoked once per applicable test type, in order:
    `smoke`, then `functional`; for upgrade flows: `upgrade` with
    `ATS_UPGRADE_STAGE=pre`, then the upgrade is performed, then `upgrade`
-   with `ATS_UPGRADE_STAGE=post`.
+   with `ATS_UPGRADE_STAGE=post`,
+5. the `teardown` hook, if present, runs after the last test type, before
+   the harness's own teardown.
 
 "No tests for this type" is a pass, not a failure (Go: build constraints
 exclude all files; pytest: exit code 5). Test results are emitted as junit
@@ -161,9 +189,10 @@ belongs in category 3.
   built on pytest-helm-charts already read `KUBECONFIG`, so existing ATS
   tests of both languages are immediately reusable on workload clusters.
 - **app-test-suite** exports `ATS_UPGRADE_STAGE` to test processes in its
-  upgrade scenario (it already sets the equivalent for hooks), searches
-  `tests/app/` in addition to its current `tests/ats/` default, reads the
-  shared config keys, and emits junit via gotestsum. Its
+  upgrade scenario (it already sets the equivalent for hooks), discovers
+  the conventional hooks by path in addition to its config-wired ones,
+  searches `tests/app/` in addition to its current `tests/ats/` default,
+  reads the shared config keys, and emits junit via gotestsum. Its
   TEST_CONTRACT.md becomes a pointer to this RFC plus ATS-specific detail.
 - **clustertest** gains `wait.IsDeploymentReady(name, namespace)` so
   non-portable suites share the same readiness vocabulary.
