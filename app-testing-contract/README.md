@@ -167,8 +167,9 @@ no clusters, no chart installs, no App CRs.
 The prefix is `APP_TEST_`, which reads the same under either harness. ATS
 publishes these under the old `ATS_` prefix today; runners export both so
 nothing breaks, and new tests use `APP_TEST_`. Dual export isn't free (two
-names to know and grep for), so `ATS_` is deprecated and drops on the next
-contract version. Most names map straight across (`ATS_X` to `APP_TEST_X`);
+names to know and grep for), so `ATS_` is deprecated and will be removed in
+a later change once repos have migrated. Most names map straight across
+(`ATS_X` to `APP_TEST_X`);
 three are renamed because the old names were unclear:
 
 | Legacy | Canonical |
@@ -232,7 +233,6 @@ Harness-specific tests): a test that needs cloud identity also runs on an
 `tests/app/config.yaml` holds only what both harnesses need:
 
 ```yaml
-contractVersion: 1            # contract version this directory targets
 installNamespace: kube-system
 expectedTypes: [smoke, functional, upgrade]   # optional: types that must collect at least one test
 ```
@@ -288,7 +288,7 @@ that, so an `external` cluster with cloud identity passes the same gate. If
 what you need isn't in any contract variable, the test needs harness
 machinery, which is category 3.
 
-### Conformance, versioning, and ownership
+### Conformance and ownership
 
 Two runners, one contract, so they'll drift unless something checks. The
 contract ships a conformance suite: a fixture `tests/app/` (trivial app, one
@@ -308,10 +308,6 @@ observable, not the mechanism: settled means the app's own workloads are
 Available, and the parity fixture checks that neither runner starts tests
 early. `clustertest.wait.IsDeploymentReady` is the shared definition of
 ready.
-
-The contract is versioned. This is `v1`, declared as `contractVersion: 1`.
-A runner refuses a version it doesn't implement instead of guessing. A
-breaking change bumps the number, and the suite keeps a fixture per version.
 
 team-tenet owns the contract: this doc, the suite, and the call when the
 runners disagree. team-honeybadger owns ATS, team-bumblebee owns atf.
