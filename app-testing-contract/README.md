@@ -6,7 +6,7 @@ owners:
 - https://github.com/orgs/giantswarm/teams/team-honeybadger
 - https://github.com/orgs/giantswarm/teams/team-tenet
 state: review
-summary: Defines a harness-neutral contract for app tests so the same test files run under both app-test-suite (chart tests on kind) and apptest-framework (e2e on workload clusters). One conventional directory per repo, test types via build tags or pytest markers, inputs via KUBECONFIG and ATS_* env vars.
+summary: Defines a harness-neutral contract for app tests so the same test files run under both app-test-suite (chart tests on kind) and apptest-framework (e2e on workload clusters). One conventional directory per repo, test types via build tags or pytest markers, inputs via KUBECONFIG and APP_TEST_* env vars.
 ---
 
 # The app-testing contract
@@ -57,12 +57,12 @@ carry several types.
 
 Types answer "what kind of test"; lifecycle position is not a type. The
 upgrade flow runs `upgrade`-typed tests twice and tells them where they
-are via `ATS_UPGRADE_STAGE` (`pre` or `post`). The canonical asymmetric
+are via `APP_TEST_UPGRADE_STAGE` (`pre` or `post`). The canonical asymmetric
 upgrade test (seed a workload before, verify it survived after) branches
 or skips on the stage:
 
 ```go
-if os.Getenv("ATS_UPGRADE_STAGE") != "post" {
+if os.Getenv("APP_TEST_UPGRADE_STAGE") != "post" {
     t.Skip("verification runs after the upgrade")
 }
 ```
@@ -81,7 +81,7 @@ section).
 Setup and teardown are app-specific just like assertions, and duplicate
 across harnesses the same way. The contract therefore defines portable
 hooks: optional executables in the conventional directory, invoked by the
-runner with the same environment as tests, plus `ATS_HOOK_STAGE` naming
+runner with the same environment as tests, plus `APP_TEST_HOOK_STAGE` naming
 the point.
 
 | Hook | Runs |
@@ -90,9 +90,9 @@ the point.
 | `tests/app/hooks/teardown` | after all tests, before the harness tears anything down (for example: clean up external resources) |
 
 A missing hook is a no-op. A non-zero exit fails the run. Hooks gate on
-environment properties exactly like category-2 tests (`ATS_CLUSTER_TYPE`
+environment properties exactly like category-2 tests (`APP_TEST_CLUSTER_TYPE`
 and friends); during upgrade flows they additionally receive
-`ATS_UPGRADE_STAGE` and the from/to versions.
+`APP_TEST_UPGRADE_STAGE` and the from/to versions.
 
 The boundary is the same as for tests: a portable hook only gets the app
 cluster's `KUBECONFIG`. Work that needs the harness's own machinery (MC
@@ -109,20 +109,30 @@ no cluster creation, no chart install, no App CRs.
 | Variable | Required | Meaning |
 |---|---|---|
 | `KUBECONFIG` | yes | kubeconfig of the cluster the app is deployed on (never the MC) |
-| `ATS_TEST_TYPE` | yes | the type currently being run |
-| `ATS_RELEASE_NAME` | yes | Helm release name of the app under test |
-| `ATS_RELEASE_NAMESPACE` | yes | namespace the app is deployed into |
-| `ATS_CHART_VERSION` | yes | version of the chart under test |
-| `ATS_CLUSTER_TYPE` | yes | `kind`, `external`, or `capi` |
-| `ATS_CLUSTER_VERSION` | optional | Kubernetes server version |
-| `ATS_APP_CONFIG_FILE_PATH` | optional | values file the app was deployed with |
-| `ATS_UPGRADE_STAGE` | upgrade runs only | `pre` or `post`: which side of the upgrade this run is on |
-| `ATS_UPGRADE_FROM_VERSION` / `ATS_UPGRADE_TO_VERSION` | upgrade runs only | versions on either side of the upgrade |
-| `ATS_EXTRA_*` | optional | harness extras, for example `ATS_EXTRA_GITOPS_ENGINE` |
+| `APP_TEST_TEST_TYPE` | yes | the type currently being run |
+| `APP_TEST_RELEASE_NAME` | yes | Helm release name of the app under test |
+| `APP_TEST_RELEASE_NAMESPACE` | yes | namespace the app is deployed into |
+| `APP_TEST_CHART_VERSION` | yes | version of the chart under test |
+| `APP_TEST_CLUSTER_TYPE` | yes | `kind`, `external`, or `capi` |
+| `APP_TEST_KUBERNETES_VERSION` | optional | Kubernetes server version |
+| `APP_TEST_VALUES_FILE` | optional | values file the app was deployed with |
+| `APP_TEST_UPGRADE_STAGE` | upgrade runs only | `pre` or `post`: which side of the upgrade this run is on |
+| `APP_TEST_UPGRADE_FROM_VERSION` / `APP_TEST_UPGRADE_TO_VERSION` | upgrade runs only | versions on either side of the upgrade |
+| `APP_TEST_EXTRA_*` | optional | harness extras, for example `APP_TEST_EXTRA_GITOPS_ENGINE` |
 
-The `ATS_` prefix is kept as-is: it is the published contract of the
-existing implementation, and renaming would break every current test for
-cosmetic gain. Read it as "app-testing", not as the harness's name.
+The canonical prefix is `APP_TEST_`, neutral to both harnesses. The
+existing implementation publishes these variables under the legacy `ATS_`
+prefix; conforming runners export both, so no existing test breaks and
+dual export costs nothing ongoing. New and scaffolded tests use
+`APP_TEST_`. The mapping is mechanical (`ATS_X` becomes `APP_TEST_X`)
+with two exceptions renamed for clarity:
+
+| Legacy | Canonical |
+|---|---|
+| `ATS_APP_CONFIG_FILE_PATH` | `APP_TEST_VALUES_FILE` |
+| `ATS_CLUSTER_VERSION` | `APP_TEST_KUBERNETES_VERSION` |
+
+`KUBECONFIG` is unchanged: it is the Kubernetes-wide convention, not ours.
 
 ### Runner guarantees
 
@@ -135,8 +145,8 @@ Before invoking the executor, a conforming runner guarantees:
 3. all required variables above are exported,
 4. the executor is invoked once per applicable test type, in order:
    `smoke`, then `functional`; for upgrade flows: `upgrade` with
-   `ATS_UPGRADE_STAGE=pre`, then the upgrade is performed, then `upgrade`
-   with `ATS_UPGRADE_STAGE=post`,
+   `APP_TEST_UPGRADE_STAGE=pre`, then the upgrade is performed, then `upgrade`
+   with `APP_TEST_UPGRADE_STAGE=post`,
 5. the `teardown` hook, if present, runs after the last test type, before
    the harness's own teardown.
 
@@ -168,7 +178,7 @@ The contract covers the default case, not everything. Where a test goes:
    no gate. This should be the bulk.
 2. Asserts on the deployed app but is only meaningful in one environment:
    `tests/app/` plus a runtime skip on contract environment, for example
-   `if os.Getenv("ATS_CLUSTER_TYPE") != "kind" { t.Skip(...) }`. Skips
+   `if os.Getenv("APP_TEST_CLUSTER_TYPE") != "kind" { t.Skip(...) }`. Skips
    stay visible by name in both runners' output.
 3. Needs harness machinery (MC access, bundle installs, AWS/IRSA, cluster
    manipulation): a regular in-process apptest-framework suite under
@@ -188,8 +198,9 @@ belongs in category 3.
   Enabling facts: Ginkgo runs under plain `go test`, and pytest tests
   built on pytest-helm-charts already read `KUBECONFIG`, so existing ATS
   tests of both languages are immediately reusable on workload clusters.
-- **app-test-suite** exports `ATS_UPGRADE_STAGE` to test processes in its
-  upgrade scenario (it already sets the equivalent for hooks), discovers
+- **app-test-suite** exports the canonical `APP_TEST_*` names alongside
+  its legacy `ATS_*` ones, adds the upgrade stage variable for test
+  processes (hooks already get the equivalent), discovers
   the conventional hooks by path in addition to its config-wired ones,
   searches `tests/app/` in addition to its current `tests/ats/` default,
   reads the shared config keys, and emits junit via gotestsum. Its
