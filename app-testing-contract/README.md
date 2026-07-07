@@ -73,60 +73,47 @@ ignored.
 
 ### Test types
 
-A test declares its types via Go build tags or pytest markers. Types live
-on two independent axes; a test carries at most one from each.
+A test declares its type via a Go build tag or pytest marker. There are
+three peer types, matching ATS's existing `StepType`s; a test carries one.
 
-Depth (what kind of check), selected in every flow:
+| Type | Runs | Meaning |
+|---|---|---|
+| `smoke` | normal flow, first | fast, fail-fast sanity checks |
+| `functional` | normal flow, after smoke | full feature tests |
+| `upgrade` | upgrade flow, once after the upgrade | verifies the app still works, and seeded state survived, across an upgrade |
 
-| Type | Meaning |
-|---|---|
-| `smoke` | fast, fail-fast sanity checks, run first |
-| `functional` | full feature tests |
+`upgrade` is a peer type, not a modifier on the others. The upgrade flow
+does not re-run the `smoke` and `functional` suites before and after the
+upgrade; it runs only the `upgrade`-typed tests, and it runs them once,
+after the upgrade. This matches both harnesses: ATS's upgrade scenario
+runs the `upgrade` type only, and atf's upgrade suite runs its test
+function once after upgrading.
 
-Flow (which lifecycle the test participates in):
+The asymmetric case (state that must survive the upgrade) is split by
+concern: an imperative **pre-upgrade hook** seeds the state on the old
+version (create a pod, write a record), and an `upgrade`-typed test
+verifies it after the upgrade. The seeding is a side effect, so it is a
+hook, not a test that reruns; the verification is an assertion, so it is a
+test. The `upgrade` test can read `APP_TEST_UPGRADE_FROM_VERSION` /
+`APP_TEST_UPGRADE_TO_VERSION` if it needs the version pair. See Hooks below.
 
-| Type | Meaning |
-|---|---|
-| `upgrade` | also run during the upgrade flow, once before and once after the upgrade |
-
-The axes compose. `upgrade` selects tests *into* the upgrade flow; it does
-not replace their depth. A test tagged `smoke, upgrade` is a smoke check
-that also runs on both sides of an upgrade; a test with no `upgrade` tag
-never runs in the upgrade flow. The runner selects by the type of the
-current pass and never executes the same test twice within one pass, so
-a multi-tagged test runs once per pass it matches (in the normal flow, and
-each upgrade stage if tagged `upgrade`), never redundantly.
-
-The upgrade flow tells a test where it is via `APP_TEST_UPGRADE_STAGE`
-(`pre` or `post`). The canonical asymmetric upgrade test (seed a workload
-before, verify it survived after) branches or skips on the stage:
-
-```go
-if os.Getenv("APP_TEST_UPGRADE_STAGE") != "post" {
-    t.Skip("verification runs after the upgrade")
-}
-```
-
-This keeps the depth set identical to ATS's published contract (no
-migration for existing tests) and matches the principle used everywhere
-else in this contract: tests gate on environment properties, not on a
-lifecycle-specific type name. Pre-only tests appear as named skips in the
-post run and vice versa, which is accepted for the simpler taxonomy.
-
-Assertions live in tests; setup and teardown live in hooks (next
-section).
+Assertions live in tests; setup, teardown, and upgrade seeding live in
+hooks (next section).
 
 ### Hooks
 
-Setup and teardown are app-specific just like assertions, and duplicate
-across harnesses the same way. The contract therefore defines portable
-hooks: optional executables in the conventional directory, invoked by the
-runner with the same environment as tests, plus `APP_TEST_HOOK_STAGE` naming
-the point.
+Hooks do imperative work with a side effect (install a prerequisite, seed
+a pod, clean up an external resource); tests assert. Keeping the two
+separate is what lets the upgrade flow seed state without re-running a test
+suite. Setup, seeding, and teardown are app-specific just like assertions
+and duplicate across harnesses the same way, so the contract defines
+portable hooks: optional executables in the conventional directory, invoked
+by the runner with the same environment as tests.
 
 | Hook | Runs |
 |---|---|
 | `tests/app/hooks/setup` | after the cluster is ready, before the app is deployed (for example: install prerequisites) |
+| `tests/app/hooks/pre-upgrade` | upgrade flow only: after the previous version is deployed, before the upgrade (for example: create a pod or write a record whose survival an `upgrade` test then verifies) |
 | `tests/app/hooks/teardown` | after all tests, before the harness tears anything down (for example: clean up external resources) |
 
 A hook is any executable file at that path: a script with a shebang or a
@@ -138,8 +125,8 @@ harness-native hook.
 
 A missing hook is a no-op. A non-zero exit fails the run. Hooks gate on
 environment properties exactly like category-2 tests (`APP_TEST_CLUSTER_TYPE`
-and friends); during upgrade flows they additionally receive
-`APP_TEST_UPGRADE_STAGE` and the from/to versions.
+and friends); the `pre-upgrade` hook additionally receives
+`APP_TEST_UPGRADE_FROM_VERSION` / `APP_TEST_UPGRADE_TO_VERSION`.
 
 The boundary is the same as for tests: a portable hook only gets the app
 cluster's `KUBECONFIG`. Work that needs the harness's own machinery (MC
@@ -163,8 +150,7 @@ no cluster creation, no chart install, no App CRs.
 | `APP_TEST_CLUSTER_TYPE` | yes | cluster the app runs on: `kind` (local single-node, no cloud), `capi` (a CAPI workload cluster with cloud identity), or `external` (a pre-existing cluster the runner did not provision) |
 | `APP_TEST_KUBERNETES_VERSION` | optional | Kubernetes server version |
 | `APP_TEST_VALUES_FILE` | optional | values file the app was deployed with |
-| `APP_TEST_UPGRADE_STAGE` | upgrade runs only | `pre` or `post`: which side of the upgrade this run is on |
-| `APP_TEST_UPGRADE_FROM_VERSION` / `APP_TEST_UPGRADE_TO_VERSION` | upgrade runs only | versions on either side of the upgrade |
+| `APP_TEST_UPGRADE_FROM_VERSION` / `APP_TEST_UPGRADE_TO_VERSION` | upgrade flow only | versions on either side of the upgrade; available to the `pre-upgrade` hook and `upgrade`-typed tests |
 | `APP_TEST_EXTRA_*` | optional | harness extras, for example `APP_TEST_EXTRA_GITOPS_ENGINE` |
 
 The canonical prefix is `APP_TEST_`, neutral to both harnesses. The
@@ -184,19 +170,25 @@ with three exceptions renamed for clarity:
 
 ### Runner guarantees
 
-Before invoking the executor, a conforming runner guarantees:
+A conforming runner guarantees, before invoking the executor:
 
 1. the `setup` hook, if present, ran after the cluster was ready and
    before the app was deployed,
 2. the app is deployed and settled (ATS: chart installed via Helm or a
    GitOps engine; atf: App CR reconciled to `deployed`),
 3. all required variables above are exported,
-4. the executor is invoked once per applicable test type, in order:
-   `smoke`, then `functional`; for upgrade flows: `upgrade` with
-   `APP_TEST_UPGRADE_STAGE=pre`, then the upgrade is performed, then `upgrade`
-   with `APP_TEST_UPGRADE_STAGE=post`,
-5. the `teardown` hook, if present, runs after the last test type, before
+4. the `teardown` hook, if present, runs after the last test type, before
    the harness's own teardown.
+
+In the **normal flow**, the executor is invoked once per applicable test
+type, in order: `smoke`, then `functional`. `upgrade`-typed tests do not
+run here.
+
+In the **upgrade flow** (`upgrade: true`), the runner instead: deploys the
+previous version, runs the `pre-upgrade` hook if present, upgrades to the
+version under test, waits for it to settle, then invokes the executor once
+for the `upgrade` type. The `smoke` and `functional` suites are not
+re-run; the upgrade tests run once, after the upgrade.
 
 "No tests for this type" is a pass, not a failure (Go: build constraints
 exclude all files; pytest: exit code 5), because a repo may legitimately
@@ -354,11 +346,12 @@ behind is a bug against that runner, not a licence to fork the contract.
   built on pytest-helm-charts already read `KUBECONFIG`, so existing ATS
   tests of both languages are immediately reusable on workload clusters.
 - **app-test-suite** exports the canonical `APP_TEST_*` names alongside
-  its legacy `ATS_*` ones, adds the upgrade stage variable for test
-  processes (hooks already get the equivalent), discovers
-  the conventional hooks by path in addition to its config-wired ones,
-  searches `tests/app/` in addition to its current `tests/ats/` default,
-  reads the shared config keys, and emits junit via gotestsum. Its
+  its legacy `ATS_*` ones, stops running the `upgrade` type in a pre-upgrade
+  pass and runs it once post-upgrade (its existing `pre_upgrade`/
+  `post_upgrade` config hooks map onto the conventional `pre-upgrade` hook),
+  discovers the conventional hooks by path in addition to its config-wired
+  ones, searches `tests/app/` in addition to its current `tests/ats/`
+  default, reads the shared config keys, and emits junit via gotestsum. Its
   TEST_CONTRACT.md becomes a pointer to this RFC plus ATS-specific detail.
 - **clustertest** gains `wait.IsDeploymentReady(name, namespace)` so both
   runners and non-portable suites share the same readiness vocabulary, and
