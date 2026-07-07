@@ -109,7 +109,7 @@ no cluster creation, no chart install, no App CRs.
 | Variable | Required | Meaning |
 |---|---|---|
 | `KUBECONFIG` | yes | kubeconfig of the cluster the app is deployed on (never the MC) |
-| `APP_TEST_TEST_TYPE` | yes | the type currently being run |
+| `APP_TEST_TYPE` | yes | the type currently being run |
 | `APP_TEST_RELEASE_NAME` | yes | Helm release name of the app under test |
 | `APP_TEST_RELEASE_NAMESPACE` | yes | namespace the app is deployed into |
 | `APP_TEST_CHART_VERSION` | yes | version of the chart under test |
@@ -125,10 +125,11 @@ existing implementation publishes these variables under the legacy `ATS_`
 prefix; conforming runners export both, so no existing test breaks and
 dual export costs nothing ongoing. New and scaffolded tests use
 `APP_TEST_`. The mapping is mechanical (`ATS_X` becomes `APP_TEST_X`)
-with two exceptions renamed for clarity:
+with three exceptions renamed for clarity:
 
 | Legacy | Canonical |
 |---|---|
+| `ATS_TEST_TYPE` | `APP_TEST_TYPE` |
 | `ATS_APP_CONFIG_FILE_PATH` | `APP_TEST_VALUES_FILE` |
 | `ATS_CLUSTER_VERSION` | `APP_TEST_KUBERNETES_VERSION` |
 
