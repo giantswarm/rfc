@@ -6,7 +6,7 @@ owners:
 - https://github.com/orgs/giantswarm/teams/team-honeybadger
 - https://github.com/orgs/giantswarm/teams/team-tenet
 state: review
-summary: Defines a harness-neutral contract for app tests so the same test files run under both app-test-suite (chart tests on kind) and apptest-framework (e2e on workload clusters). One conventional directory per repo, test types via build tags or pytest markers, inputs via KUBECONFIG and APP_TEST_* env vars.
+summary: Defines a harness-neutral contract for app tests so the same test files run under both app-test-suite (fast chart tests per PR) and apptest-framework (e2e on workload clusters). One conventional directory per repo, test types via build tags or pytest markers, inputs via KUBECONFIG and APP_TEST_* env vars.
 ---
 
 # The app-testing contract
@@ -15,13 +15,17 @@ summary: Defines a harness-neutral contract for app tests so the same test files
 
 We test managed apps two ways, and we want to keep both:
 
-- **app-test-suite (ATS)** installs the chart on a kind cluster and runs
-  quick checks on every PR.
+- **app-test-suite (ATS)** installs the chart on a provided cluster (today
+  usually a local kind cluster) and runs quick checks on every PR. ATS is
+  dropping its built-in kind lifecycle
+  ([giantswarm/app-test-suite#675](https://github.com/giantswarm/app-test-suite/pull/675)),
+  so the cluster it runs against is increasingly whatever CI hands it.
 - **apptest-framework (atf)** creates a real workload cluster, installs the
   App CR, and runs the full suite nightly.
 
-kind is fast but can't do cloud identity, real storage, or upgrades; the
-workload cluster can. So the two are a fast/slow pair, not duplicates.
+A local kind cluster is fast but can't do cloud identity, real storage, or
+upgrades; a workload cluster can. So the two are a fast/slow pair, not
+duplicates.
 
 The trouble is writing the tests. ATS wants pytest or plain Go; atf wants
 Ginkgo. To cover both you write the same check twice in two styles, so most
@@ -30,11 +34,11 @@ people stuck on one aren't happy about it.
 
 This RFC doesn't dedupe existing tests; there aren't many to dedupe, for
 the reason above. It makes the two harnesses agree on how tests are written
-and run, so you write a check once and both run it: the kind-compatible
-part on every PR, everything nightly.
+and run, so you write a check once and both run it: what the PR cluster
+supports on every PR, everything nightly.
 
 ATS already has a test contract
-([docs/TEST_CONTRACT.md](https://github.com/giantswarm/app-test-suite/blob/master/docs/TEST_CONTRACT.md)),
+([docs/TEST_CONTRACT.md](https://github.com/giantswarm/app-test-suite/blob/main/docs/TEST_CONTRACT.md)),
 but it lives in the ATS repo and only ATS follows it. We lift it out, make
 it harness-neutral, and make atf follow it too. It stays independent of any
 test framework or language.
@@ -54,11 +58,16 @@ the executor from what's there:
 - `pyproject.toml`: `uv sync --frozen && uv run pytest -m <type>`
 - both, or neither in a non-empty directory: config error, stop.
 
-Dependencies are pinned and installed offline: Go from a committed `go.sum`
-(`-mod=readonly`), Python from a committed `uv.lock` (`--frozen`). No runner
-resolves versions from the network at test time; a missing or stale
-lockfile fails instead of quietly fetching. Same dependency set everywhere,
-and you can audit it.
+Dependencies are pinned from committed lockfiles (Go `go.sum`, Python
+`uv.lock`) and installed with the network off: the runner sets `GOPROXY=off`
+alongside `-mod=readonly` (or vendors `tests/app/vendor/`) and runs
+`uv sync --frozen --offline`, backed by a pre-warmed module/uv cache. The
+lockfile flags alone (`-mod=readonly`, `--frozen`) only freeze resolution,
+not fetching, so cutting the network is what makes a missing or stale entry
+fail loudly instead of quietly downloading. Both runners implement this:
+under this contract `tests/app/` is a separate module that atf builds at
+test time, so atf gains the same fetch point ATS already has. Same
+dependency set everywhere, and you can audit it.
 
 An empty `tests/app/` (no module, no project) isn't an opt-in and is
 skipped.
@@ -133,12 +142,12 @@ How the three points map today:
 | Contract hook | ATS | atf |
 |---|---|---|
 | `setup` (before deploy) | new pre-deploy point (its `--app-tests-pre-hook` fires after deploy) | `AfterClusterReady` (runs before install) |
-| `pre-upgrade` | `--upgrade-tests-upgrade-hook` at `PRE_UPGRADE` | `BeforeUpgrade` |
+| `pre-upgrade` | `--upgrade-tests-upgrade-hook` at `ATS_HOOK_STAGE=pre_upgrade` | `BeforeUpgrade` |
 | `teardown` (after tests) | `--app-tests-post-hook` | suite callback |
 
 A runner covers each point with either the file or the flag, not both.
-Anything not in that table (ATS's `POST_UPGRADE`, its pre/post test hooks)
-stays harness-native.
+Anything not in that table (ATS's `post_upgrade` stage, its pre/post test
+hooks) stays harness-native.
 
 Same boundary as tests: a hook only gets the app cluster's `KUBECONFIG`.
 Anything that needs harness internals (MC access, the App CR, framework
@@ -157,7 +166,8 @@ no clusters, no chart installs, no App CRs.
 | `APP_TEST_RELEASE_NAME` | yes | Helm release name of the app under test |
 | `APP_TEST_RELEASE_NAMESPACE` | yes | namespace the app is deployed into |
 | `APP_TEST_CHART_VERSION` | yes | version of the chart under test |
-| `APP_TEST_CLUSTER_TYPE` | yes | cluster the app runs on: `kind` (local single-node, no cloud), `capi` (a CAPI workload cluster with cloud identity), or `external` (a pre-existing cluster the runner did not provision) |
+| `APP_TEST_CLUSTER_TYPE` | yes | topology of the cluster the app runs on: `kind` (local single-node), `capi` (a CAPI workload cluster), or `external` (a cluster the runner did not provision). Describes shape, not capability; gate on `APP_TEST_CAPABILITIES` instead |
+| `APP_TEST_CAPABILITIES` | yes | comma-separated capabilities the cluster actually provides, e.g. `cloud-identity,persistent-storage,load-balancer`; empty is valid. The runner sets it from what it provisioned or was handed. This is what a test gates on |
 | `APP_TEST_KUBERNETES_VERSION` | optional | Kubernetes server version |
 | `APP_TEST_VALUES_FILE` | optional | values file the app was deployed with |
 | `APP_TEST_UPGRADE_STAGE` | upgrade flow only | `pre` or `post`: which side of the upgrade this `upgrade`-type run is on |
@@ -165,20 +175,27 @@ no clusters, no chart installs, no App CRs.
 | `APP_TEST_EXTRA_*` | optional | harness extras, for example `APP_TEST_EXTRA_GITOPS_ENGINE` |
 
 The prefix is `APP_TEST_`, which reads the same under either harness. ATS
-publishes these under the old `ATS_` prefix today; runners export both so
-nothing breaks, and new tests use `APP_TEST_`. Dual export isn't free (two
-names to know and grep for), so `ATS_` is deprecated and will be removed in
-a later change once repos have migrated. Most names map straight across
-(`ATS_X` to `APP_TEST_X`);
-three are renamed because the old names were unclear:
+publishes these under the old `ATS_` prefix today. Where a name maps
+straight across (`ATS_X` to `APP_TEST_X`, e.g. `ATS_RELEASE_NAME`,
+`ATS_CHART_VERSION`, `ATS_CLUSTER_TYPE`, `ATS_EXTRA_*`) the runner exports
+both, so nothing breaks and new tests use `APP_TEST_`. Dual export isn't
+free (two names to know and grep for), so `ATS_` is deprecated and will be
+removed in a later change once repos have migrated.
 
-| Legacy | Canonical |
-|---|---|
-| `ATS_TEST_TYPE` | `APP_TEST_TYPE` |
-| `ATS_APP_CONFIG_FILE_PATH` | `APP_TEST_VALUES_FILE` |
-| `ATS_CLUSTER_VERSION` | `APP_TEST_KUBERNETES_VERSION` |
+Four names are renamed, because the old ones were unclear or, for the
+upgrade stage, were never test-facing under one name to begin with:
 
-`KUBECONFIG` stays as-is; it's the standard name, not ours.
+| Legacy | Canonical | Note |
+|---|---|---|
+| `ATS_TEST_TYPE` | `APP_TEST_TYPE` | straight rename |
+| `ATS_APP_CONFIG_FILE_PATH` | `APP_TEST_VALUES_FILE` | straight rename |
+| `ATS_CLUSTER_VERSION` | `APP_TEST_KUBERNETES_VERSION` | straight rename |
+| `ATS_EXTRA_UPGRADE_TEST_STAGE` (tests) / `ATS_HOOK_STAGE` (hooks) | `APP_TEST_UPGRADE_STAGE` | value also changes: `pre_upgrade`/`post_upgrade` become `pre`/`post`. The runner does not alias the value, so existing upgrade tests reading the old one must update |
+
+`ATS_CHART_PATH` and `ATS_TEST_DIR` have no `APP_TEST_` equivalent; the
+contract doesn't expose them and they stay ATS-only. `APP_TEST_CAPABILITIES`
+is new, computed by the runner, with no `ATS_` predecessor. `KUBECONFIG`
+stays as-is; it's the standard name, not ours.
 
 ### Runner guarantees
 
@@ -186,8 +203,10 @@ Before the tests run, a conforming runner makes sure:
 
 1. the `setup` hook ran, if present, after the cluster was ready and before
    the app was deployed,
-2. the app is deployed and settled (ATS: Helm release installed, or via a
-   GitOps engine; atf: App CR at `deployed`),
+2. the app is deployed and settled: each runner first waits on its own
+   mechanism signal (ATS: Helm release installed, or via a GitOps engine;
+   atf: App CR at `deployed`), then on the shared gate `IsReleaseReady` (the
+   release's workloads Available) before any test runs,
 3. the required variables are exported,
 4. the `teardown` hook runs, if present, after the last test type and before
    the harness's own teardown.
@@ -209,24 +228,26 @@ zero tests fails. Results come out as junit XML (`gotestsum --junitfile`,
 
 ### Cadence and feedback latency
 
-kind can't do cloud identity, storage, or load balancers, so tests that
-need those only run nightly. Their result isn't tied to the PR that caused
-it: a PR can break a cloud-only path, pass PR CI, and fail that night
-against a batch of other commits.
+The PR cluster often lacks cloud identity, real storage, or load balancers,
+so tests that need those capabilities only run nightly on a workload
+cluster. Their result isn't tied to the PR that caused it: a PR can break a
+cloud-only path, pass PR CI, and fail that night against a batch of other
+commits.
 
 We accept that, but two things keep it from being a silent trap:
 
-1. A nightly-only test is a choice you can see. Gating a test off kind
-   (category 2) makes it invisible per-PR by design; the skip shows by name
-   and the collected counts show it didn't run, so it doesn't read as
-   coverage it isn't.
+1. A nightly-only test is a choice you can see. A test that gates on a
+   capability the PR cluster lacks (category 2) is invisible per-PR by
+   design; the skip shows by name and the collected counts show it didn't
+   run, so it doesn't read as coverage it isn't.
 2. You can pull the nightly flow forward. `/run` triggers the
    workload-cluster flow on a PR, so a cloud-path change can get its result
    now instead of that night.
 
-Where you can, gate on the capability you need rather than kind-vs-WC (see
-Harness-specific tests): a test that needs cloud identity also runs on an
-`external` cluster that has it.
+Gate on the capability you need (`APP_TEST_CAPABILITIES`), never on cluster
+type or harness (see Harness-specific tests): a test that needs cloud
+identity runs anywhere advertising `cloud-identity`, whether that's the
+nightly WC or a provided cluster that happens to have it.
 
 ### Shared configuration
 
@@ -262,10 +283,10 @@ The contract is for the common case. Where a test goes:
 
 1. Checks the deployed app, works anywhere: `tests/app/`, no gate. Most
    tests.
-2. Checks the deployed app but only makes sense in one environment:
-   `tests/app/` with a runtime skip, for example
-   `if os.Getenv("APP_TEST_CLUSTER_TYPE") != "kind" { t.Skip(...) }`. Skips
-   still show by name.
+2. Checks the deployed app but needs a capability not present everywhere:
+   `tests/app/` with a runtime skip on the capability, for example
+   `if !slices.Contains(caps, "cloud-identity") { t.Skip(...) }` where `caps`
+   comes from `APP_TEST_CAPABILITIES`. Skips still show by name.
 3. Needs harness machinery (MC access, bundle installs, AWS/IRSA, cluster
    manipulation): a normal atf suite under `tests/e2e/suites/`, which this
    RFC doesn't touch.
@@ -280,13 +301,16 @@ Gate on what the contract tells you about the environment, never on which
 harness is running. If a test needs to know the harness name, it's
 category 3.
 
-`APP_TEST_CLUSTER_TYPE` is about capability, not which harness. `kind`
-usually being ATS and `capi` usually being atf is a coincidence, and gating
-on it as a stand-in for the harness is wrong even when it happens to work.
-Gate on what you actually need: if a test needs cloud identity, check for
-that, so an `external` cluster with cloud identity passes the same gate. If
-what you need isn't in any contract variable, the test needs harness
-machinery, which is category 3.
+Gate on `APP_TEST_CAPABILITIES`, not on `APP_TEST_CLUSTER_TYPE`, and never
+on the harness. Cluster type is topology, not capability: `kind` usually
+being the PR runner and `capi` usually being the nightly one is a
+coincidence, and ATS moving to provided clusters
+([app-test-suite#675](https://github.com/giantswarm/app-test-suite/pull/675))
+breaks even that, since the PR runner can then be handed a cluster with
+cloud identity. Check the capability you actually need, so any cluster that
+advertises it, including an `external` one, passes the same gate. If what
+you need isn't a declared capability, the test needs harness machinery,
+which is category 3.
 
 ### Conformance and ownership
 
@@ -304,10 +328,15 @@ through both runners has to collect the same counts and end with the same
 result, or the suite fails. The known trap is guarantee 2, "settled": ATS
 gets there when the Helm release reports installed, atf when the App CR
 reads `deployed`, and those aren't the same moment. The contract pins the
-observable, not the mechanism: settled means the app's own workloads are
-Available, and the parity fixture checks that neither runner starts tests
-early. `clustertest.wait.IsDeploymentReady` is the shared definition of
-ready.
+observable, not the mechanism: settled means every workload the release
+created is ready, not that a status field flipped.
+`clustertest.wait.IsReleaseReady(name, namespace)` is the shared definition:
+it selects the release's objects by `app.kubernetes.io/instance` and waits
+for Deployments, StatefulSets and DaemonSets to be Available and Jobs to
+have succeeded. Each runner still waits on its own mechanism signal (Helm
+`installed`, App CR `deployed`) first; `IsReleaseReady` is the common gate
+on top, and the parity fixture checks that neither runner starts tests
+before it holds.
 
 team-tenet owns the contract: this doc, the suite, and the call when the
 runners disagree. team-honeybadger owns ATS, team-bumblebee owns atf.
@@ -318,7 +347,8 @@ is a bug in that runner, not a reason to fork.
 
 - **apptest-framework** gets a convention-runner: after the workload cluster
   and App CR are up, it grabs the WC kubeconfig
-  (`Framework.GetClusterKubeConfig`), writes it out, exports the env
+  (`framework.MC().GetClusterKubeConfig(ctx, name, namespace)` on the
+  clustertest MC client), writes it out, exports the env
   contract, picks the executor, and runs it per type. For upgrades it adds
   the pre run. Today it runs the suite once after the upgrade; now it also
   runs `upgrade` tests against the old version first
@@ -328,18 +358,22 @@ is a bug in that runner, not a reason to fork.
   and pytest tests built on pytest-helm-charts already read `KUBECONFIG`, so
   existing ATS tests in either language run on workload clusters as-is.
 - **app-test-suite** exports the `APP_TEST_*` names next to the old `ATS_*`
-  ones (including `APP_TEST_UPGRADE_STAGE`, which it already has pre/post
-  runs for), keeps its hook flags and also discovers the convention hooks by
-  path (stopping if a flag and a file point at the same one), and adds a
+  ones. It already runs `upgrade` tests both before and after the upgrade,
+  so `APP_TEST_UPGRADE_STAGE` is a rename of the stage it already tracks
+  (`ATS_EXTRA_UPGRADE_TEST_STAGE`), with the value normalized to
+  `pre`/`post`. It keeps its hook flags and also discovers the convention
+  hooks by path (stopping if a flag and a file point at the same one), and
+  adds a
   pre-deploy point for `setup`. Its `--app-tests-pre-hook` runs after
   deploy, so `setup` is a new call between `_ensure_cluster_prerequisites`
   and the install. It looks in `tests/app/` as well as today's `tests/ats/`,
   reads the shared config, and emits junit via gotestsum. Its upgrade
   pre/post behavior doesn't change. Its TEST_CONTRACT.md becomes a pointer
   here plus ATS-specific detail.
-- **clustertest** gets `wait.IsDeploymentReady(name, namespace)` so both
-  runners and the atf-native suites share one definition of ready, and the
-  parity check has one thing to assert against.
+- **clustertest** gets `wait.IsReleaseReady(name, namespace)` (release
+  objects selected by `app.kubernetes.io/instance`, all workload kinds
+  ready) so both runners and the atf-native suites share one definition of
+  ready, and the parity check has one thing to assert against.
 - **the on-demand trigger**: the workload-cluster pipeline runs on `/run`
   against a PR, not just nightly, so a cloud-path change can get its result
   without waiting.
