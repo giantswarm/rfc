@@ -330,10 +330,16 @@ gets there when the Helm release reports installed, atf when the App CR
 reads `deployed`, and those aren't the same moment. The contract pins the
 observable, not the mechanism: settled means every workload the release
 created is ready, not that a status field flipped.
-`clustertest.wait.IsReleaseReady(name, namespace)` is the shared definition:
-it selects the release's objects by `app.kubernetes.io/instance` and waits
-for Deployments, StatefulSets and DaemonSets to be Available and Jobs to
-have succeeded. Each runner still waits on its own mechanism signal (Helm
+`clustertest.wait.IsReleaseReady(name, namespace)` is the shared definition.
+It reuses clustertest's existing `AreAll*Ready` conditions rather than
+reimplementing readiness; the only thing missing today is scope, since those
+list cluster-wide, so they gain a label-selector argument and
+`IsReleaseReady` ANDs them over the release's objects
+(`app.kubernetes.io/instance=<name>`): Deployments, StatefulSets and
+DaemonSets Available, Jobs succeeded. Scoping matters because a workload
+cluster runs far more than the app under test, so an unscoped "all ready"
+would both stall on unrelated workloads and make the two runners observe
+different sets. Each runner still waits on its own mechanism signal (Helm
 `installed`, App CR `deployed`) first; `IsReleaseReady` is the common gate
 on top, and the parity fixture checks that neither runner starts tests
 before it holds.
@@ -370,10 +376,12 @@ is a bug in that runner, not a reason to fork.
   reads the shared config, and emits junit via gotestsum. Its upgrade
   pre/post behavior doesn't change. Its TEST_CONTRACT.md becomes a pointer
   here plus ATS-specific detail.
-- **clustertest** gets `wait.IsReleaseReady(name, namespace)` (release
-  objects selected by `app.kubernetes.io/instance`, all workload kinds
-  ready) so both runners and the atf-native suites share one definition of
-  ready, and the parity check has one thing to assert against.
+- **clustertest**: the existing `AreAll*Ready` conditions gain an optional
+  label-selector argument (matching the style of `AreNumNodesReady`, which
+  already takes `listOptions`), and a thin `wait.IsReleaseReady(name,
+  namespace)` ANDs them over `app.kubernetes.io/instance=<name>`. No new
+  readiness logic; both runners and the atf-native suites share one
+  definition of ready, and the parity check has one thing to assert against.
 - **the on-demand trigger**: the workload-cluster pipeline runs on `/run`
   against a PR, not just nightly, so a cloud-path change can get its result
   without waiting.
