@@ -139,12 +139,36 @@ environment properties exactly like category-2 tests (`APP_TEST_CLUSTER_TYPE`
 and friends); the `pre-upgrade` hook additionally receives
 `APP_TEST_UPGRADE_FROM_VERSION` / `APP_TEST_UPGRADE_TO_VERSION`.
 
+Convention discovery of these three paths is the portable, zero-wiring
+default a conforming runner must implement. A harness may *also* keep its
+own config-wired hook flags, so existing repos need no immediate move and
+harness-specific points stay available. Where a flag targets one of the
+three contract points, it and the convention hook are alternatives: if both
+are set for the same point, the runner fails fast (as with a directory that
+has both `go.mod` and `pyproject.toml`), so migration is "drop the file,
+remove the flag" in one change rather than a silent double-run. Only the
+convention path is a contract guarantee and exercised by the conformance
+suite; the flags are harness-native.
+
+How each harness supplies the three contract points today:
+
+| Contract hook | ATS | atf |
+|---|---|---|
+| `setup` (before deploy) | new pre-deploy point (its `--app-tests-pre-hook` fires after deploy) | `AfterClusterReady` (runs before install) |
+| `pre-upgrade` | `--upgrade-tests-upgrade-hook` at `PRE_UPGRADE` | `BeforeUpgrade` |
+| `teardown` (after tests) | `--app-tests-post-hook` | suite callback |
+
+Each runner satisfies a point either by discovering the convention file or
+through the mapped flag, not both at once. Points outside this table
+(ATS's `POST_UPGRADE` stage, its pre/post test hooks) stay harness-native.
+
 The boundary is the same as for tests: a portable hook only gets the app
 cluster's `KUBECONFIG`. Work that needs the harness's own machinery (MC
 access, App CR manipulation, framework state) stays in harness-native
-hooks: ATS's config-wired hook executables and atf's suite callbacks
-(`AfterClusterReady`, `BeforeUpgrade`), which remain available and are
-not part of this contract.
+hooks: ATS's config-wired hooks at points the contract does not cover (its
+pre/post *test* hooks, the `post-upgrade` stage) and atf's suite callbacks
+(`AfterClusterReady`, `BeforeUpgrade`), which remain available and are not
+part of this contract.
 
 ### Inputs
 
@@ -365,12 +389,16 @@ behind is a bug against that runner, not a licence to fork the contract.
   immediately reusable on workload clusters.
 - **app-test-suite** exports the canonical `APP_TEST_*` names alongside its
   legacy `ATS_*` ones (including `APP_TEST_UPGRADE_STAGE` for the pre/post
-  runs it already performs), discovers the conventional hooks by path in
-  addition to its config-wired ones (its `pre_upgrade` config hook maps onto
-  the conventional `pre-upgrade` hook), searches `tests/app/` in addition to
-  its current `tests/ats/` default, reads the shared config keys, and emits
-  junit via gotestsum. Its upgrade pre/post behavior is unchanged. Its
-  TEST_CONTRACT.md becomes a pointer to this RFC plus ATS-specific detail.
+  runs it already performs), keeps its existing hook flags and additionally
+  discovers the conventional hooks by path (failing fast if a flag and a
+  convention hook target the same point), and gains a pre-deploy hook point
+  for `setup`: its `--app-tests-pre-hook` fires after deploy, so `setup`
+  (before deploy, for prerequisites) is a new call between
+  `_ensure_cluster_prerequisites` and the chart install. It searches
+  `tests/app/` in addition to its current `tests/ats/` default, reads the
+  shared config keys, and emits junit via gotestsum. Its upgrade pre/post
+  behavior is unchanged. Its TEST_CONTRACT.md becomes a pointer to this RFC
+  plus ATS-specific detail.
 - **clustertest** gains `wait.IsDeploymentReady(name, namespace)` so both
   runners and non-portable suites share the same readiness vocabulary, and
   the settled-parity assertion has one definition to check against.
