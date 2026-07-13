@@ -6,7 +6,7 @@ owners:
 - https://github.com/orgs/giantswarm/teams/team-honeybadger
 - https://github.com/orgs/giantswarm/teams/team-tenet
 state: review
-summary: Defines a harness-neutral contract for app tests so the same test files run under both app-test-suite (fast chart tests per PR) and apptest-framework (e2e on workload clusters). One conventional directory per repo, test types via build tags or pytest markers, inputs via KUBECONFIG and APP_TEST_* env vars.
+summary: Defines a harness-neutral contract for app tests so the same test files run under both app-test-suite (fast chart tests per PR) and apptest-framework (e2e on workload clusters). One conventional directory per repo, test types via build tags or pytest markers, inputs via KUBECONFIG and APP_TEST_* env vars, prerequisite controllers declared in .apptest/config.yaml.
 ---
 
 # The app-testing contract
@@ -154,6 +154,69 @@ Anything that needs harness internals (MC access, the App CR, framework
 state) stays in a harness-native hook: ATS's config hooks for points we
 don't cover, or atf's `AfterClusterReady` / `BeforeUpgrade`.
 
+### Prerequisite controllers
+
+Some apps under test create custom resources — a Flux `Kustomization`, an
+Argo `Application`, an `ExternalSecret` — that do nothing until a controller
+is running to reconcile them. Only some apps need any given controller, and
+installing one is expensive, so the app declares the controllers it needs and
+the runner bootstraps exactly those before the app is deployed. There's no
+auto-detection: declaring is the opt-in, the same rule as everything else
+here.
+
+This is the declarative sibling of the `setup` hook. `setup` runs an
+app-specific script; a controller names something the runner already knows how
+to install. The declaration is shared, but the provider code that installs a
+named controller is each harness's own — a harness targeting kind and one
+targeting a workload cluster install it differently — so a controller only
+works on a harness that has a provider registered for that name.
+
+Controllers are declared in the shared `.apptest/config.yaml` (see Shared
+configuration):
+
+```yaml
+controllers:
+  - name: flux
+    semver: ">=2.0.0 <3.0.0"
+    harness:
+      - name: ats
+        valuesFile: flux-small.yaml
+      - name: atf
+        valuesFile: flux-full.yaml
+  - name: external-secrets
+    semver: "0.x"
+```
+
+- `name` (required): the controller's harness-neutral id. If the running
+  harness has no provider registered for it, the run fails.
+- `semver` (required): a version range with Masterminds/semver v3 semantics
+  (the same Flux `OCIRepository` and Helm `--version` use), resolved to the
+  highest version that satisfies it.
+- `harness` (optional): per-harness install values files, listed by harness
+  name rather than keyed by it, so the neutral file stays a list you extend,
+  not a map with harness names baked into its shape. Each `valuesFile` ends in
+  `.yaml`, sits beside `config.yaml` under `.apptest/`, and layers over the
+  controller's defaults. No entry for the running harness means defaults; a
+  named file that's missing or not `.yaml` fails the run.
+
+Order matters: controllers install in list order, each fully ready before the
+next, so one that depends on another goes after it. They install once per run
+and are shared across every type and both flows — a prerequisite is run
+infrastructure, not something per test.
+
+An already-present controller is reused. The runner checks the installed
+version: absent, it installs; present and within `semver`, it leaves it alone;
+present but outside `semver`, the run fails. The runner never upgrades,
+downgrades, or removes a controller it finds — the cluster may not be ours,
+and leaving controllers in place is also what makes the next run on the same
+cluster faster. A provider may run its own pre-install and post-install steps
+(create RBAC, wait for a webhook or a CRD to establish) around the install.
+
+Controllers are not capabilities. `APP_TEST_CAPABILITIES` is what a cluster
+already provides and a test gates on; a controller is something the runner
+adds to any cluster. When a bootstrapped controller is a gitops engine, the
+runner surfaces which one through `APP_TEST_EXTRA_GITOPS_ENGINE`.
+
 ### Inputs
 
 Tests get everything from the environment. They don't provision anything:
@@ -201,14 +264,16 @@ stays as-is; it's the standard name, not ours.
 
 Before the tests run, a conforming runner makes sure:
 
-1. the `setup` hook ran, if present, after the cluster was ready and before
-   the app was deployed,
-2. the app is deployed and settled: each runner first waits on its own
+1. the controllers declared in `.apptest/config.yaml`, if any, are
+   bootstrapped and ready, once per run, before anything is deployed,
+2. the `setup` hook ran, if present, after the controllers were ready and
+   before the app was deployed,
+3. the app is deployed and settled: each runner first waits on its own
    mechanism signal (ATS: Helm release installed, or via a GitOps engine;
    atf: App CR at `deployed`), then on the shared gate `IsReleaseReady` (the
    release's workloads Available) before any test runs,
-3. the required variables are exported,
-4. the `teardown` hook runs, if present, after the last test type and before
+4. the required variables are exported,
+5. the `teardown` hook runs, if present, after the last test type and before
    the harness's own teardown.
 
 Normal flow: run `smoke`, then `functional`. Upgrade tests don't run here.
@@ -222,7 +287,7 @@ and let it settle, run `upgrade` tests with `APP_TEST_UPGRADE_STAGE=pre`, run th
 build tags; pytest exits 5), since a repo may only have some types. It isn't
 silent, though: the runner reports how many tests it collected per type, so
 a mistyped tag (also zero) shows up instead of going green. Repos that want
-it strict list their expected types in `config.yaml`; a listed type with
+it strict list their expected types in `.apptest/config.yaml`; a listed type with
 zero tests fails. Results come out as junit XML (`gotestsum --junitfile`,
 `pytest --junitxml`).
 
@@ -251,11 +316,14 @@ nightly WC or a provided cluster that happens to have it.
 
 ### Shared configuration
 
-`tests/app/config.yaml` holds only what both harnesses need:
+Test *code* lives in `tests/app/`; shared *declarations* live in `.apptest/`.
+`.apptest/config.yaml` holds only what both harnesses need, and the controller
+values files (see Prerequisite controllers) sit beside it:
 
 ```yaml
 installNamespace: kube-system
 expectedTypes: [smoke, functional, upgrade]   # optional: types that must collect at least one test
+controllers: [ ... ]                          # optional: see Prerequisite controllers
 ```
 
 The upgrade flow is inferred, not configured: if the runner collects any
@@ -315,17 +383,18 @@ which is category 3.
 ### Conformance and ownership
 
 Two runners, one contract, so they'll drift unless something checks. The
-contract ships a conformance suite: a fixture `tests/app/` (trivial app, one
-test per type, a hook, a lockfile) and assertions on the env vars, ordering,
-exit codes, and lints above. A runner conforms only if it passes the suite
-in CI; ATS and atf both wire it in. New guarantees go into the suite in the
+contract ships a conformance suite: a fixture (trivial app, one test per
+type, a hook, a declared controller, a lockfile) and assertions on the env
+vars, ordering, exit codes, controller bootstrap, and lints above. A runner conforms only
+if it passes the suite in CI; ATS and atf both wire it in. New guarantees go into the suite in the
 same PR that adds them here.
 
 Passing per runner isn't enough: both can pass and still disagree on what a
 test sees, which is the drift that hurts (a smoke test that's green on PR
 and flaky at night). So the suite also checks parity: the same fixture
-through both runners has to collect the same counts and end with the same
-result, or the suite fails. The known trap is guarantee 2, "settled": ATS
+through both runners has to bootstrap the same controllers, collect the same
+counts, and end with the same result, or the suite fails. The known trap is
+guarantee 2, "settled": ATS
 gets there when the Helm release reports installed, atf when the App CR
 reads `deployed`, and those aren't the same moment. The contract pins the
 observable, not the mechanism: settled means every workload the release
@@ -373,8 +442,8 @@ is a bug in that runner, not a reason to fork.
   pre-deploy point for `setup`. Its `--app-tests-pre-hook` runs after
   deploy, so `setup` is a new call between `_ensure_cluster_prerequisites`
   and the install. It looks in `tests/app/` as well as today's `tests/ats/`,
-  reads the shared config, and emits junit via gotestsum. Its upgrade
-  pre/post behavior doesn't change. Its TEST_CONTRACT.md becomes a pointer
+  reads the shared `.apptest/config.yaml`, and emits junit via gotestsum. Its
+  upgrade pre/post behavior doesn't change. Its TEST_CONTRACT.md becomes a pointer
   here plus ATS-specific detail.
 - **clustertest**: the existing `AreAll*Ready` conditions gain an optional
   label-selector argument (matching the style of `AreNumNodesReady`, which
@@ -382,6 +451,14 @@ is a bug in that runner, not a reason to fork.
   namespace)` ANDs them over `app.kubernetes.io/instance=<name>`. No new
   readiness logic; both runners and the atf-native suites share one
   definition of ready, and the parity check has one thing to assert against.
+- **controllers**: both runners parse `.apptest/config.yaml`'s `controllers`
+  and bootstrap them before deploy — detect, install the `semver`-selected
+  version if absent, fail if a present one is out of range, wait until ready.
+  The declaration is shared; the provider that installs a given controller
+  name is per-harness. ATS lands the provider framework first and syncs its
+  existing providers in after, so until then a declared controller fails as
+  "unknown controller", which is the contract's behaviour for an unregistered
+  name.
 - **the on-demand trigger**: the workload-cluster pipeline runs on `/run`
   against a PR, not just nightly, so a cloud-path change can get its result
   without waiting.
@@ -403,9 +480,13 @@ is a bug in that runner, not a reason to fork.
   but requiring it would shut out the pytest repos and tie the contract to a
   framework for nothing. We standardize selection and inputs, not the
   framework.
-- **A `values: {ats: ..., e2e: ...}` map in the shared config.** No: it puts
-  harness names in the neutral file, which is the config version of gating a
-  test on the harness.
+- **A `values: {ats: ..., e2e: ...}` map for the app's deploy values.** No:
+  the app's values are harness-specific (a kind and a workload cluster want
+  different ones) and stay in each harness's own config, not the neutral file
+  — that would be the config version of gating a test on the harness. The
+  `controllers` section is the bounded exception: it names per-harness values
+  files, but as a `harness` list (the name is a field, not a map key) and only
+  for runner-bootstrapped infrastructure, not the app.
 - **One runner with two modes instead of two behind a contract.** One runner
   covering kind and workload clusters wouldn't need a contract at all. But
   the two modes line up with two mature codebases owned by two teams
