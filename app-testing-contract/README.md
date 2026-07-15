@@ -45,12 +45,52 @@ This goal of this RFC is not to dedupe existing tests. It's to define how the tw
 what environments they provide and what is the convention that, when respected, can allow to fit both
 frameworks with the same test code.
 
-## Decision
+## Decisions
 
-### The conventional directory
+### ATS and ATF
+
+We keep both frameworks, but specialize them to the two most frequent use cases:
+
+- `ats` is meant for rapid feedback testing on PRs and in local dev environments. It deploys the helm chart
+  under tests as fast as possible and starts testing the chart's functionality. It sacrifices all the possible
+  real cluster features to achieve this goal.
+- `atf` takes the opposite approach: it chooses environment realism over the time needed to execute the tests.
+  It creates a real workload cluster on a GS installation, installs the chart using the App Platform, and runs
+  the full suite as a batch run, preferably nightly.
+- we want a test development convention that will allow app maintainers to write tests once and run them under
+  both frameworks, with the same test code.
+
+### Test Development Convention
+
+#### Assumptions
+
+To avoid forcing a specific test framework or technology on test authors, we decided to make a convention that
+tests are executed as a separate process by the test frameworks. The only requirements are that:
+
+- we group all the tests into:
+  - **smoke**: very basic tests that check if the app is deployed and running, and if the main functionality
+    is working and worth even trying actual functional test. They should be fast, simple and reliable.
+  - **functional**: tests that check the actual functionality of the app, and that it behaves as expected.
+    They should be more complex and cover more scenarios than smoke tests.
+  - **upgrade**: tests that check if the app can be upgraded from a previous version, by default the last
+    stable version available in the OCI registry.
+- a single test can be of multiple types, for example a test that checks if the app is deployed and running
+  can be both smoke and functional; a test that checks if the main page of an app loads can (and probably
+  should) be functional and upgrade.
+- tests need to be runnable with `go test` (golang) or `pytest` (python), and are using test filtering to run
+  only the tests of a specific type (smoke, functional, upgrade). The test filtering is done with build tags
+  (golang) or markers (python).
+- all the information about the test environmenrt is passed to the tests via environment variables, and the
+  tests should not depend on any other external information (like a config file or a specific cluster setup).
+  The test frameworks are responsible for setting up the environment and passing the information to the tests.
+- exit code `0` means the test run passed, exit code `5` that the run was successful, but only because it
+  executed no test and any other non-zero exit code means the test run failed.
+- test developer can deliver hooks that are executed by the test frameworks (see below).
+
+#### The conventional directory
 
 Tests live in one directory: `tests/app/`. Any harness that deploys the app runs that directory the same way.
-Having the directory is the opt-in; there's nothing else to wire up.
+An empty `tests/app/` (no module, no project) isn't an opt-in and is skipped.
 
 It's either one Go module or one Python project, not both. The runner picks the executor from what's there:
 
@@ -58,17 +98,10 @@ It's either one Go module or one Python project, not both. The runner picks the 
 - `pyproject.toml`: `uv sync --frozen && uv run pytest -m <type>`
 - both, or neither in a non-empty directory: config error, stop.
 
-Dependencies are pinned from committed lockfiles (Go `go.sum`, Python `uv.lock`) and installed with the
-network off: the runner sets `GOPROXY=off` alongside `-mod=readonly` (or vendors `tests/app/vendor/`) and runs
-`uv sync --frozen --offline`, backed by a pre-warmed module/uv cache. The lockfile flags alone
-(`-mod=readonly`, `--frozen`) only freeze resolution, not fetching, so cutting the network is what makes a
-missing or stale entry fail loudly instead of quietly downloading. Both runners implement this: under this
-contract `tests/app/` is a separate module that atf builds at test time, so atf gains the same fetch point ATS
-already has. Same dependency set everywhere, and you can audit it.
+Dependencies are pinned from committed lockfiles (Go `go.sum`, Python `uv.lock`) and installed with
+readonly/frozen flags.
 
-An empty `tests/app/` (no module, no project) isn't an opt-in and is skipped.
-
-### Test types
+#### Test types
 
 Each test carries one type, set with a Go build tag or a pytest marker. There are three, the same ones ATS
 already has:
@@ -97,102 +130,45 @@ if os.Getenv("APP_TEST_UPGRADE_STAGE") != "post" {
 Seeding is a side effect, so it's a hook; checking is an assertion, so it's a test. Upgrade tests and the
 `pre-upgrade` hook also get `APP_TEST_UPGRADE_FROM_VERSION` / `APP_TEST_UPGRADE_TO_VERSION`.
 
-### Hooks
+#### Hooks
 
-Hooks do things with side effects (install a prerequisite, create a pod, clean up); tests check things.
-Splitting them is what lets the upgrade flow seed state without re-running a suite. Like tests, setup and
-teardown are per-app and get duplicated across harnesses, so the contract makes them portable too: optional
-executables in `tests/app/`, run with the same environment as tests.
+Hooks do things with side effects (install a prerequisite, create a pod, clean up); tests check things. Hooks
+are delivered as executables in the `tests/app/hooks/` directory, and are optional. They should be implemented
+in platform-independent way, preferably in bash or python. Hooks are executed by the test framework. Splitting
+them is what lets the upgrade flow seed state without re-running a suite. Hooks get the test information
+through environment variables, the same as tests. The hooks are:
 
-| Hook                          | Runs                                                                                                                                                               |
-| ----------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `tests/app/hooks/setup`       | after the cluster is ready, before the app is deployed (for example: install prerequisites)                                                                        |
-| `tests/app/hooks/pre-upgrade` | upgrade flow only: after the previous version is deployed, before the upgrade (for example: create a pod or write a record an `upgrade` test then checks survived) |
-| `tests/app/hooks/teardown`    | after all tests, before the harness tears anything down (for example: clean up external resources)                                                                 |
+| Hook                       | Runs                                                                                               |
+| -------------------------- | -------------------------------------------------------------------------------------------------- |
+| `tests/app/hooks/setup`    | after the cluster is ready, before the app is deployed (for example: install prerequisites, CRDs)  |
+| `tests/app/hooks/pre-run`  | Run before every test suite invocation, for each detected test types                               |
+| `tests/app/hooks/post-run` | Run after every test suite invocation, for each detected test types                                |
+| `tests/app/hooks/teardown` | after all tests, before the harness tears anything down (for example: clean up external resources) |
 
-A hook is any executable at that path: a script with a shebang or a built binary, run directly (not sourced).
-It runs out of process, so the one-language rule doesn't apply and you can write it in whatever fits. Keep it
-small; anything bigger is a test or a harness-native hook.
+A missing hook is ignored. A non-zero exit fails the test run.
 
-A missing hook does nothing. A non-zero exit fails the run. Hooks gate on the environment like category-2
-tests do; `pre-upgrade` also gets the from/to versions.
+#### Full Test Flow
 
-Convention discovery of those three paths is the default, and every runner has to implement it. That's the
-zero-wiring part. A harness can also keep its own hook flags, so existing repos don't have to move and
-harness-specific hooks still work. If a flag and a convention file point at the same contract hook, the runner
-stops (same as finding both `go.mod` and `pyproject.toml`), so migrating is "add the file, drop the flag" in
-one commit rather than running both. Only the convention path is guaranteed and checked by the conformance
-suite; the flags are each harness's own business.
+The test framework (`ats` or `atf`) runs the tests using this flow:
 
-How the three points map today:
+1. Test framework detects tests are present in `tests/app/`.
+1. Test framework prepares the cluster used for testing (installs tools or dependencies it needs to execute
+   tests).
+1. If present, the `setup` hook runs after the cluster is ready, before the app is deployed.
+1. The app is deployed using the passed helm chart and the installation is settled (chart install exists
+   cleanly).
+1. For each test type of `smoke`, `functional`, and `upgrade` (where `upgrade` tests are executed twice, first
+   for old version, then after the upgrade, for the new version), in this order:
+   1. `pre-run` hook runs for `type` tests (if present).
+   1. Tests are executed for `type` type, using either `go test` or `pytest`, depending on the detected module
+      type.
+   1. `post-run` hook runs for `type` tests (if present).
+   1. If it's an `upgrade` type test and the execution for `old` version succeeded, the app is upgraded to the
+      `new` version.
+1. If present, the `teardown` hook runs after all tests, before the harness tears anything down.
+1. The app is uninstalled.
 
-| Contract hook            | ATS                                                                  | atf                                       |
-| ------------------------ | -------------------------------------------------------------------- | ----------------------------------------- |
-| `setup` (before deploy)  | new pre-deploy point (its `--app-tests-pre-hook` fires after deploy) | `AfterClusterReady` (runs before install) |
-| `pre-upgrade`            | `--upgrade-tests-upgrade-hook` at `ATS_HOOK_STAGE=pre_upgrade`       | `BeforeUpgrade`                           |
-| `teardown` (after tests) | `--app-tests-post-hook`                                              | suite callback                            |
-
-A runner covers each point with either the file or the flag, not both. Anything not in that table (ATS's
-`post_upgrade` stage, its pre/post test hooks) stays harness-native.
-
-Same boundary as tests: a hook only gets the app cluster's `KUBECONFIG`. Anything that needs harness internals
-(MC access, the App CR, framework state) stays in a harness-native hook: ATS's config hooks for points we
-don't cover, or atf's `AfterClusterReady` / `BeforeUpgrade`.
-
-### Prerequisite controllers
-
-Some apps under test create custom resources — a Flux `Kustomization`, an Argo `Application`, an
-`ExternalSecret` — that do nothing until a controller is running to reconcile them. Only some apps need any
-given controller, and installing one is expensive, so the app declares the controllers it needs and the runner
-bootstraps exactly those before the app is deployed. There's no auto-detection: declaring is the opt-in, the
-same rule as everything else here.
-
-This is the declarative sibling of the `setup` hook. `setup` runs an app-specific script; a controller names
-something the runner already knows how to install. The declaration is shared, but the provider code that
-installs a named controller is each harness's own — a harness targeting kind and one targeting a workload
-cluster install it differently — so a controller only works on a harness that has a provider registered for
-that name.
-
-Controllers are declared in the shared `.apptest/config.yaml` (see Shared configuration):
-
-```yaml
-controllers:
-  - name: flux
-    semver: ">=2.0.0 <3.0.0"
-    harness:
-      - name: ats
-        valuesFile: flux-small.yaml
-      - name: atf
-        valuesFile: flux-full.yaml
-  - name: external-secrets
-    semver: "0.x"
-```
-
-- `name` (required): the controller's harness-neutral id. If the running harness has no provider registered
-  for it, the run fails.
-- `semver` (required): a version range with Masterminds/semver v3 semantics (the same Flux `OCIRepository` and
-  Helm `--version` use), resolved to the highest version that satisfies it.
-- `harness` (optional): per-harness install values files, listed by harness name rather than keyed by it, so
-  the neutral file stays a list you extend, not a map with harness names baked into its shape. Each
-  `valuesFile` ends in `.yaml`, sits beside `config.yaml` under `.apptest/`, and layers over the controller's
-  defaults. No entry for the running harness means defaults; a named file that's missing or not `.yaml` fails
-  the run.
-
-Order matters: controllers install in list order, each fully ready before the next, so one that depends on
-another goes after it. They install once per run and are shared across every type and both flows — a
-prerequisite is run infrastructure, not something per test.
-
-An already-present controller is reused. The runner checks the installed version: absent, it installs; present
-and within `semver`, it leaves it alone; present but outside `semver`, the run fails. The runner never
-upgrades, downgrades, or removes a controller it finds — the cluster may not be ours, and leaving controllers
-in place is also what makes the next run on the same cluster faster. A provider may run its own pre-install
-and post-install steps (create RBAC, wait for a webhook or a CRD to establish) around the install.
-
-Controllers are not capabilities. `APP_TEST_CAPABILITIES` is what a cluster already provides and a test gates
-on; a controller is something the runner adds to any cluster. When a bootstrapped controller is a gitops
-engine, the runner surfaces which one through `APP_TEST_EXTRA_GITOPS_ENGINE`.
-
-### Inputs
+#### Inputs
 
 Tests get everything from the environment. They don't provision anything: no clusters, no chart installs, no
 App CRs.
