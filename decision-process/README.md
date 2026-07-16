@@ -120,7 +120,7 @@ During review, decisions related to the content of the PR may come to light whic
 
 ### YYYY-MM-DD The decision, stated in the heading
 
-Context and reasoning behind the decision.
+Description and reasoning behind the decision.
 ```
 
 - Use the literal heading `## Decisions` and date-prefixed `### YYYY-MM-DD ...` entries. Do not rename them (e.g. "Decision log", "Resolved questions") — consistency is what makes them discoverable.
