@@ -91,8 +91,8 @@ tests are executed as a separate process by the test toolkits. The only requirem
 - all the information about the test environmenrt is passed to the tests via environment variables, and the
   tests should not depend on any other external information (like a config file or a specific cluster setup).
   The test toolkits are responsible for setting up the environment and passing the information to the tests.
-- exit code `0` means the test run passed, including the case where it executed no tests, and any other
-  non-zero exit code means the test run failed.
+- exit code `0` means the test run passed and at least 1 test was executed, exit code `5` means there was no
+  error, but no test was executed at all, and any other non-zero exit code means the test run failed.
 - test developer can deliver hooks that are executed by the test toolkits (see below).
 
 #### The conventional directory
@@ -235,24 +235,46 @@ We define the following capabilities, which the toolkit sets in `APP_TEST_CAPABI
 
 # TODO: define and complete the capabilites list
 
-### Shared configuration
+### Toolkit outputs
+
+Toolkits should let the test frameworks they execute to log to stdout/stderr, and should not filter or
+redirect the output. Test toolkit exit code `0` means the test run passed and at least 1 test was executed,
+exit code `5` means there was no error, but no test was executed at all, and any other non-zero exit code
+means the test run failed.
+
+### Shared toolkit configuration
+
+Test toolkits need to know some information about how to handle the helm chart under test, i.e. in which
+namespace it should be installed or what `values.yaml` file should be used. This information has to be easily
+set in CI/CD pipelines, where config files are not convenient when the configuration has to be dynamic. Thus,
+we propose a shared optional config file that both toolkits should use. Each of the config options in the file
+must accept environment variable overrides, as specified below. Each test toolkit should print the effective
+configuration it is using at the start of the toolkit run.
 
 Test _code_ lives in `tests/app/`; shared _configuration_ lives in `.apptest/`. `.apptest/config.yaml` holds
-only what both toolkits need, and the chart values files. The config schema is:
+only what both toolkits need, and the chart values files. The config schema is (with default values and
+respective env vars):
 
 ```yaml
-installNamespace: kube-system
-testTypes: [smoke, functional, upgrade] # optional: types that must collect at least one test
+releaseNamespace: default # APP_TEST_RELEASE_NAMESPACE
+testTypes: [smoke, functional, upgrade] # APP_TEST_TEST_TYPES="a,b,c" - normally autodetected
+chartConfig:
+  shared: # optional configuration files, applied and merged in the list order, shared between both toolkits
+    valueFiles:
+      - file1.yaml
+      - file2.yaml
+  toolkitSpecific: # mutually exclusive with chartConfig.shared
+    - name: ats # ATS reads its own entry
+      valueFiles:
+        - file1.yaml
+        - file2.yaml
+    - name: atf # apptest-framework reads its own entry
+      valueFiles:
+        - file1.yaml
+        - file2.yaml
 ```
 
-The one lint: a type in `expectedTypes` that collects zero tests fails the run. `expectedTypes` is optional;
-leave it out to keep the "no tests is fine" default. It's also how you make a type mandatory. List `upgrade`,
-and a typo'd tag (which collects zero) fails instead of quietly skipping the flow.
-
-Everything harness-specific stays in that harness's config: `.ats/main.yaml` (cluster types, catalogs,
-executor options) and `tests/e2e/config.yaml` (appCatalog, providers, MC options). Values files stay
-per-harness too; a kind cluster and a workload cluster legitimately want different values, and each harness
-loads them its own way.
+# TODO: just a config proopsal, discuss
 
 ## Alternatives considered
 
