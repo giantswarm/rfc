@@ -1,6 +1,6 @@
 ---
 creation_date: 2026-07-07
-issues: []j
+issues: []
 owners:
   - https://github.com/orgs/giantswarm/teams/team-bumblebee
   - https://github.com/orgs/giantswarm/teams/team-honeybadger
