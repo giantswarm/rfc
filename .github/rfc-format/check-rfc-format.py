@@ -55,6 +55,96 @@ ISSUE_URL_REGEX = re.compile(
 )
 OLD_RFC_NUMBER_IN_TITLE_REGEX = re.compile(r'RFC \d+\s*(-\s*)?')
 TRAILING_WHITESPACE_REGEX = re.compile(r'[ \t\v]+$', flags=re.MULTILINE)
+# Heading of a single decision entry inside the optional "## Decisions" section, e.g.
+# "### 2026-07-16 Stages are provider-specific". Date is required, title is captured separately.
+DECISION_HEADING_REGEX = re.compile(r'^### (\d{4}-\d{2}-\d{2})(?:\s+(.+?))?\s*$')
+
+
+def parse_decisions(content):
+    """Parse the optional "## Decisions" section, returning (decisions, problems).
+
+    Decisions are optional. If a "## Decisions" section is present, its entries must follow the
+    documented format (see decision-process/README.md): one "### YYYY-MM-DD Title" heading per
+    decision, each with a non-empty description. Fenced code blocks are ignored so that
+    documentation examples aren't parsed as real decisions.
+    """
+    problems = []
+    decisions = []
+    lines = content.splitlines()
+
+    def strip_fenced(numbered_lines):
+        in_fence = False
+        for item in numbered_lines:
+            if item[1].lstrip().startswith('```'):
+                in_fence = not in_fence
+                continue
+            if not in_fence:
+                yield item
+
+    section_starts = [i for i, line in strip_fenced(list(enumerate(lines))) if line.strip() == '## Decisions']
+    if not section_starts:
+        return decisions, problems
+    if len(section_starts) > 1:
+        problems.append('There must be at most one "## Decisions" section.')
+
+    # Collect the section body: everything after the heading until the next H2 (ignoring fences).
+    block = []
+    in_fence = False
+    for line in lines[section_starts[0] + 1:]:
+        if line.lstrip().startswith('```'):
+            in_fence = not in_fence
+        elif not in_fence and line.startswith('## '):
+            break
+        block.append(line)
+
+    # Split the block into decision entries by their "### " headings (ignoring fenced content).
+    # Anything before the first heading is preamble and must not carry decision content.
+    entries = []
+    preamble = []
+    in_fence = False
+    for line in block:
+        if line.lstrip().startswith('```'):
+            in_fence = not in_fence
+        elif not in_fence and line.startswith('### '):
+            entries.append([line, []])
+            continue
+        (entries[-1][1] if entries else preamble).append(line)
+
+    if any(line.strip() for line in preamble):
+        problems.append(
+            'Content under "## Decisions" must live inside a "### YYYY-MM-DD Title" entry, not before the first one.')
+    if not entries:
+        problems.append(
+            'A "## Decisions" section must contain at least one "### YYYY-MM-DD Title" entry, or be omitted entirely.')
+
+    for heading, body in entries:
+        match = DECISION_HEADING_REGEX.match(heading)
+        if not match:
+            problems.append(
+                'Each decision under "## Decisions" must use the heading format "### YYYY-MM-DD Title". '
+                f'Got: {heading!r}')
+            continue
+
+        date_str, title = match.group(1), (match.group(2) or '').strip()
+        try:
+            decision_date = datetime.date.fromisoformat(date_str)
+        except ValueError:
+            problems.append(f'Decision heading has an invalid date (want YYYY-MM-DD): {heading!r}')
+            continue
+        if not (2021 <= decision_date.year <= 2100):
+            problems.append(f'Decision heading date has an unexpected year: {heading!r}')
+        if not title:
+            problems.append(
+                f'Decision heading is missing a title after the date. The title should state the decision. '
+                f'Got: {heading!r}')
+
+        body_text = '\n'.join(body).strip()
+        if not body_text:
+            problems.append(f'Decision "{heading.strip()}" has no description below it.')
+
+        decisions.append({'date': date_str, 'title': title, 'content': body_text})
+
+    return decisions, problems
 
 
 def check_rfc(rfc_dir):
@@ -211,6 +301,10 @@ def check_rfc(rfc_dir):
         problems.append(
             'Could not find title. Please add a H1 heading (e.g. `# This is my RFC title`) after the YAML header.')
 
+    decisions, decision_problems = parse_decisions(rfc.content)
+    problems.extend(decision_problems)
+    rfc.metadata['decisions'] = decisions
+
     if problems:
         raise RfcFormatProblems(problems)
 
@@ -252,6 +346,7 @@ def main():
             # in the handbook.
             rfcs_json.append({
                 'creation_date': rfc.metadata['creation_date'].isoformat(),
+                'decisions': rfc.metadata['decisions'],
                 'markdown_content_without_title': rfc.metadata['markdown_content_without_title'],
                 'slug': entry_name,
                 'state': rfc.metadata['state'],

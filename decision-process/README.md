@@ -2,6 +2,7 @@
 creation_date: 2023-10-10
 issues:
 - https://github.com/giantswarm/giantswarm/issues/24661
+last_review_date: 2026-07-16
 owners:
 - https://github.com/orgs/giantswarm/teams/sig-architecture
 - https://github.com/orgs/giantswarm/teams/team-planeteers
@@ -109,6 +110,24 @@ Therefore, we will automatically render the merged RFCs into our [handbook](http
 - **Author merges the PR and notifies in `#news-*` or other Slack channels, linking to the [RFC list](https://handbook.giantswarm.io/docs/rfcs/) or directly to the rendered RFC page in the handbook.** The rendering result is not ready immediately after merging, but [a pull request on the handbook repo](https://github.com/giantswarm/handbook/pulls) with the rendered results should be opened automatically. You can merge it and the handbook will be updated after deployment (takes another few minutes). If things don't work, you can check the [`rfc` rendering trigger action](https://github.com/giantswarm/rfc/actions) and [`handbook` rendering action](https://github.com/giantswarm/handbook/actions) and notify SIG Docs about any problems.
 - **Once the decision is approved, plan for implementation.** Implementation really should not happen before approving a decision, unless it's a proof of feasability. If you already developed something, you present an RFC as if others still have the choice of saying no, but actually the decision was already taken – please avoid that.
 - **Amendments can be made to an RFC later, by means of a simple PR, consensus, and notification in Slack.** Please edit the existing RFC file and consider marking the changes as "amendment", for example using a new heading or paragraph. There should be a single file per decision, not multiple documents that need to be read and understood together. Replaced or old RFC files can remain as they are, in separate files, but marked as `state: obsolete` through a PR.
+
+### Recording decisions during review
+
+During review, decisions related to the content of the PR may come to light which are pertinent to the approval of the RFC. Record them at the bottom of the RFC **prior to approval** in a section that uses these headings **verbatim**, so decisions stay uniform across all RFCs and can be found and rendered automatically:
+
+```markdown
+## Decisions
+
+### YYYY-MM-DD The decision, stated in the heading
+
+Context and reasoning behind the decision.
+```
+
+- Use the literal heading `## Decisions` and date-prefixed `### YYYY-MM-DD ...` entries. Do not rename them (e.g. "Decision log", "Resolved questions") — consistency is what makes them discoverable.
+- The `###` title should **state the decision**, not just name the topic. Prefer `### 2026-07-16 Stages are provider-specific` over `### 2026-07-16 Stages`, so the heading alone summarises.
+- The `## Decisions` section is the **canonical** record. The RFC body may explain a decision in more depth, but the ruling itself lives here; if the two ever disagree, this section wins.
+
+This ensures that critical decisions related to the RFC and its later implementation are not left buried inside comments or Slack threads.
 
 ### State transitions
 
