@@ -223,11 +223,12 @@ stay ATS-only. `APP_TEST_CAPABILITIES` is new, computed by the runner, with no `
 
 #### Capabilities
 
-The cluster intended for PR testing is `kind`. As a simple cluster instance, it lacks features like cloud
-identity, real storage, or load balancers. Tests that need those capabilities should gate on the
-`APP_TEST_CAPABILITIES` and only run nightly on a real workload cluster.
+The cluster intended for PR testing with `ats` is `kind`. As a simple cluster instance, it lacks features like
+cloud identity, real storage, or load balancers. On the other hand, a "full" cluster, like created by `atf`,
+will probably be able to deliver some of these capabilities. To cope with these differences, tests that need
+those capabilities should gate on the `APP_TEST_CAPABILITIES` and only run nightly on a real workload cluster.
 
-We define the following capabilities, which the toolkit sets in `APP_TEST_CAPABILITIES`:
+We define the following capabilities, which a toolkit might set in `APP_TEST_CAPABILITIES`:
 
 - cloud-identity
 - persistent-storage
@@ -239,39 +240,49 @@ We define the following capabilities, which the toolkit sets in `APP_TEST_CAPABI
 
 Toolkits should let the test frameworks they execute to log to stdout/stderr, and should not filter or
 redirect the output. Test toolkit exit code `0` means the test run passed and at least 1 test was executed,
-exit code `5` means there was no error, but no test was executed at all, and any other non-zero exit code
-means the test run failed.
+exit code `5` means there was no error, but no test was executed at all (this is based on the `pytest`
+convention), and any other non-zero exit code means the test run failed.
 
 ### Shared toolkit configuration
 
 Test toolkits need to know some information about how to handle the helm chart under test, i.e. in which
-namespace it should be installed or what `values.yaml` file should be used. This information has to be easily
-set in CI/CD pipelines, where config files are not convenient when the configuration has to be dynamic. Thus,
-we propose a shared optional config file that both toolkits should use. Each of the config options in the file
-must accept environment variable overrides, as specified below. Each test toolkit should print the effective
-configuration it is using at the start of the toolkit run.
+namespace it should be installed or what `values.yaml` file should be used to render it. The test developer
+should be able to easily configure that and make sure that it's respected by toolkits. On the other hand, this
+configuration has to be easily set in CI/CD pipelines, where config files are not convenient to work with, as
+the configuration has to be dynamic. Thus, we propose a shared optional config file that both toolkits must
+use, but with overrides possible to set using environment variables, so that an integration with CI pipelines
+is easy (i.e. matrix builds). Each of the config options in the file must be loaded by a toolkit, but the
+toolkit also has to accept environment variable overrides, as specified below. Each test toolkit should print
+the effective configuration it is using at the start of the toolkit run.
 
-Test _code_ lives in `tests/app/`; shared _configuration_ lives in `.apptest/`. `.apptest/config.yaml` holds
-only what both toolkits need, and the chart values files. The config schema is (with default values and
-respective env vars):
+For a test suite, the test _code_ lives in `tests/app/`; the shared _configuration_ lives in
+`.apptest/config.yaml`. The file provides only what both toolkits can interpret. For each test toolkit, an
+override file might be created, with the name `.apptest/config.[TOOLKIT_NAME].yaml`, with the same schema as
+the main file. The toolkit specific config file acts as an override over the values loaded from the shared
+`config.yaml`.
+
+To sum up, the effective configuration is built by test toolkits in the following order, starting from the
+lowest priority:
+
+- `.apptest/config.yaml` (shared config file, optional)
+- `.apptest/config.[TOOLKIT_NAME].yaml` (toolkit specific config file, optional)
+- environment variables (highest priority)
+
+The reserved toolkit specific names and related overrides are:
+
+- `ats` - `.apptest/config.ats.yaml`
+- `atf` - `.apptest/config.atf.yaml`
+
+The proposed config schema is (including the default values and respective env vars for overrides):
 
 ```yaml
 releaseNamespace: default # APP_TEST_RELEASE_NAMESPACE
 testTypes: [smoke, functional, upgrade] # APP_TEST_TEST_TYPES="a,b,c" - normally autodetected
 chartConfig:
-  shared: # optional configuration files, applied and merged in the list order, shared between both toolkits
+  shared: # optional configuration files, applied by the toolkit in the list order
     valueFiles:
       - file1.yaml
       - file2.yaml
-  toolkitSpecific: # mutually exclusive with chartConfig.shared
-    - name: ats # ATS reads its own entry
-      valueFiles:
-        - file1.yaml
-        - file2.yaml
-    - name: atf # apptest-framework reads its own entry
-      valueFiles:
-        - file1.yaml
-        - file2.yaml
 ```
 
 # TODO: just a config proopsal, discuss
