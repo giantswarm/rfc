@@ -226,7 +226,7 @@ stay ATS-only. `APP_TEST_CAPABILITIES` is new, computed by the runner, with no `
 The cluster intended for PR testing with `ats` is `kind`. As a simple cluster instance, it lacks features like
 cloud identity, real storage, or load balancers. On the other hand, a "full" cluster, like created by `atf`,
 will probably be able to deliver some of these capabilities. To cope with these differences, tests that need
-those capabilities should gate on the `APP_TEST_CAPABILITIES` and only run nightly on a real workload cluster.
+those capabilities should gate on the `APP_TEST_CAPABILITIES`.
 
 We define the following capabilities, which a toolkit might set in `APP_TEST_CAPABILITIES`:
 
