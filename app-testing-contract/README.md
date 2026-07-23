@@ -34,7 +34,7 @@ We propose to keep both toolkits, but specialize them to the two most frequent u
   the cluster type.
 - **apptest-framework (ATF)** takes the opposite approach: it chooses environment realism over the time needed
   to execute the tests. It creates a real workload cluster, installs the chart using the App Platform, and
-  runs the full suite, preferably nightly.
+  runs the full suite.
 
 With this in mind, it's clear that to provide a comprehensive test coverage and to follow the "fail fast"
 principle, we need to use both toolkits.
