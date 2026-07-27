@@ -92,6 +92,8 @@ To enforce this and to disable the use of any undefined properties, the keyword 
 
 For objects deeper in the schema hierarchy, keyword `additionalProperties` SHOULD be set to `false`, too.
 
+An object whose properties come from a `$ref` is the one exception: there, `unevaluatedProperties` MUST be set to `false` instead of `additionalProperties`. See [R15](#r15).
+
 ### R4: Array item schema must be defined {#r4}
 
 The items schema for all array properties MUST be defined using the `items` keyword.
@@ -327,7 +329,21 @@ The JSON Schema keywords `if`, `then`, and `else` MUST NOT be used.
 
 ### R15: Avoid `unevaluatedProperties`, `unevaluatedItems` {#r15}
 
-The JSON Schema keywords `unevaluatedProperties` , `unevaluatedItems` MUST NOT be used.
+The JSON Schema keywords `unevaluatedProperties` , `unevaluatedItems` MUST NOT be used, with one exception:
+
+`unevaluatedProperties` MAY be set to `false` on a schema that also has `$ref`, in order to reject properties that the referenced schema does not define.
+
+This is the only way to close a `$ref`-ed object in draft 2020-12. `additionalProperties` only considers the `properties` and `patternProperties` that are its own *siblings* ([2020-12 core, section 10.3.2](https://json-schema.org/draft/2020-12/json-schema-core#section-10.3.2)) — never the properties pulled in through `$ref`. So `additionalProperties: false` next to a `$ref` does not tighten the schema, it rejects every field the referenced schema defines:
+
+```json
+"affinity": {
+  "$ref": "#/$defs/affinity",
+  "type": "object",
+  "unevaluatedProperties": false
+}
+```
+
+No other use of `unevaluatedProperties` is allowed — in particular not a subschema value, and not on a schema with no `$ref` to close. Outside this one shape the keyword remains hard to reason about, because what counts as "unevaluated" depends on annotations produced anywhere else in the schema.
 
 ### R16: Array items and tuple validation {#r16}
 
