@@ -92,7 +92,7 @@ To enforce this and to disable the use of any undefined properties, the keyword 
 
 For objects deeper in the schema hierarchy, keyword `additionalProperties` SHOULD be set to `false`, too.
 
-An object whose properties come from a `$ref` is the one exception: there, `unevaluatedProperties` MUST be set to `false` instead of `additionalProperties`. See [R15](#r15).
+An object whose properties come from a `$ref` is the one exception: `additionalProperties` MUST NOT be used there, since next to a `$ref` it rejects every property the referenced schema defines instead of constraining anything. Such an object SHOULD be closed with `unevaluatedProperties` set to `false` instead. See [R15](#r15).
 
 ### R4: Array item schema must be defined {#r4}
 
