@@ -1,12 +1,15 @@
 ---
 creation_date: 2025-12-11
 issues:
-- https://github.com/giantswarm/giantswarm/issues/24237
+  - https://github.com/giantswarm/giantswarm/issues/24237
 last_review_date: 2026-06-08
 owners:
-- https://github.com/orgs/giantswarm/teams/team-honeybadger
+  - https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: approved
-summary: We want to use flux and flux-operator's automatic upgrades capabilities to create automatic upgrades for different release stages, so we don't have to manually or through extra automation care about those rollouts.
+summary:
+  We want to use flux and flux-operator's automatic upgrades capabilities to create automatic upgrades for
+  different release stages, so we don't have to manually or through extra automation care about those
+  rollouts.
 ---
 
 # Using semVer tags for automatic app upgrades in different release stages
@@ -324,3 +327,13 @@ a few options possible:
 and then use the "rollback commit" solution, if we use the
 [image automation controller](https://github.com/giantswarm/image-automation-controller) for setting the chart
 version. This solution, however, requires constant manual approvals by a user and is not covered by this RFC.
+
+## Difference between the proposed semVer environment matching and environment propagation
+
+The current scope of the doc is to match the maturity (development stage) of the software with the maturity of
+the environment. This is different from the concept of "version propagation" between environments, which goal
+is to move exactly the same version of an app between environments based on the level of required trust in an
+app deployment. As there were questions about this, the below graph shows the difference between the two
+concepts.
+
+![image](./release_stages_propagation.png)
