@@ -72,7 +72,7 @@ patch release will be automatically deployed. That way we can automatically deli
 Now, if we want to expand this idea to multi-stage deployments, we can configure different stages with
 different semVer expressions. For example:
 
-- "dev", deploy any version of an app that matches a dev build tag of one branch, like `*-b2069581735t*`
+- "dev", deploy any version of an app that matches a dev build tag of one branch, like `*-b7b5b4fa7t*`
 - "testing", deploy any version of an app that matches tag `*-rc.*`
 - "stable", deploy any version of the app that matches tag `>=32.0.0` (this excludes `-*` tags, so
   pre-releases)
@@ -180,18 +180,18 @@ konfigure-operator-1.2.2-dev.teams-alignment-branch.2026-07-02.
 
 **The current schema.** Dev builds are tagged `[X.Y.Z]-b[CRC32_branch_name]t[YYYYMMDD][HHMMSS]c[commit_SHA]`.
 If the last stable tag in history is `1.9.1` and the branch name is `my-feature`, the build results in a tag
-like `1.9.2-b2069581735t20260127094959c1a2b3c4`. The parts are:
+like `1.9.2-b7b5b4fa7t20260127094959c1a2b3c4`. The parts are:
 
-- `b[CRC32_branch_name]` is the CRC32 checksum of the full, unsanitized branch name, in decimal (at most 10
-  digits). It pins a build to its branch with a fixed-width fingerprint, so no part of the tag needs
-  truncation. The algorithm is CRC-32/ISO-HDLC, the variant that Go's `hash/crc32.ChecksumIEEE` and Python's
-  `zlib.crc32` implement. Note that the POSIX `cksum` tool uses a different CRC-32 variant and returns a
-  different value. `gitsemver` provides a command that prints the checksum for a branch name, and the build
-  pipeline reports the checksum in the pull request. Example:
+- `b[CRC32_branch_name]` is the CRC32 checksum of the full, unsanitized branch name, in lowercase hex, always
+  padded to 8 digits. It pins a build to its branch with a fixed-width fingerprint, so no part of the tag
+  needs truncation. The algorithm is CRC-32/ISO-HDLC, the variant that Go's `hash/crc32.ChecksumIEEE` and
+  Python's `zlib.crc32` implement. Note that the POSIX `cksum` tool uses a different CRC-32 variant and
+  returns a different value. `gitsemver` provides a command that prints the checksum for a branch name, and
+  the build pipeline reports the checksum in the pull request. Example:
 
   ```sh
-  $ printf '%s' my-feature | python3 -c 'import sys, zlib; print(zlib.crc32(sys.stdin.buffer.read()))'
-  2069581735
+  $ printf '%s' my-feature | python3 -c 'import sys, zlib; print(f"{zlib.crc32(sys.stdin.buffer.read()):08x}")'
+  7b5b4fa7
   ```
 - `t[YYYYMMDD][HHMMSS]` is the current commit's commiter date converted to UTC (the date displayed with
   `git log --format='%ci'` format, not the author's date), without separators.
@@ -204,8 +204,8 @@ like `1.9.2-b2069581735t20260127094959c1a2b3c4`. The parts are:
 
 The result has these properties:
 
-- The pre-release part has a fixed length of 35 characters (`-` + `b` + 10 + `t` + 14 + `c` + 7), so a full tag
-  is about 40 to 45 characters. This leaves at least 18 characters for the strings that Helm templates add.
+- The pre-release part has a fixed length of 33 characters (`-` + `b` + 8 + `t` + 14 + `c` + 7), so a full tag
+  is about 38 to 43 characters. This leaves at least 20 characters for the strings that Helm templates add.
 - The pre-release part contains no `.` and no `-`. A truncation of the tag therefore cannot end on an invalid
   character, unless the added strings are so long that the cut lands inside the `X.Y.Z` part.
 - The pre-release part is a single alphanumeric identifier. For one branch the `b[CRC32]t` prefix is constant,
@@ -234,8 +234,8 @@ especially for versions comparisons.
   builds of the branch they are working on. This will match the behaviour we have in the `reservations`
   channel. As an example, a dev working on a `my-feature` branch of app `X` will reconfigure, as part of the
   reservation process, the app's semver filter on the chosen `testing` MC from the default `.*-rc\..*` to
-  `.*-b2069581735t.*` (in `OCIRepository`: `semver: "*-*"`, `semverFilter: ".*-b2069581735t.*"`), where
-  `2069581735` is the CRC32 checksum of the branch name `my-feature`. The change will have to be reversed once
+  `.*-b7b5b4fa7t.*` (in `OCIRepository`: `semver: "*-*"`, `semverFilter: ".*-b7b5b4fa7t.*"`), where
+  `7b5b4fa7` is the CRC32 checksum of the branch name `my-feature`. The change will have to be reversed once
   the testing is done. As this is a multi-step process prone to human error, we will provide a tool to execute
   it in one go.
 
@@ -279,14 +279,14 @@ following way:
 1. The above will be replaced with the following automation:
    1. For each branch named `[NAME]` other than `main`, every commit in this branch will by default trigger a
       build that will be tagged `X.Y.Z-bCRC32(NAME)tYYYYMMDDHHMMSScSHA`. Examples for a branch named
-      `my-feature`, whose CRC32 checksum is `2069581735`:
+      `my-feature`, whose CRC32 checksum is `7b5b4fa7`:
       1. A new commit in a new branch `my-feature` + last commit in the parent tree is `1.2.3` =
-         `1.2.4-b2069581735t20260112120959c1a2b3c4`
+         `1.2.4-b7b5b4fa7t20260112120959c1a2b3c4`
    1. If the branch name starts with the `nobuild/` prefix, builds are not automatically triggered, but a
       release can still be created by manually assigning a correct tag. This allows us to save resources on
       the build pipeline, OCI storage and release auto-upgrade processes.
       1. Example: there's a branch `nobuild/i-dont-care` and a developer creates a tag
-         `1.2.3-b2069581735t20260112120959c1a2b3c4`: the build is triggered and pushed to the OCI registry.
+         `1.2.3-b7b5b4fa7t20260112120959c1a2b3c4`: the build is triggered and pushed to the OCI registry.
 
 ### Note on promotion logic
 
@@ -329,7 +329,7 @@ We assume that the tags created on the dev branches have the format
 `[X.Y.Z]-b[CRC32_branch_name]t[YYYYMMDD][HHMMSS]c[commit_SHA]`.
 
 In general case, an application deployment for "dev" environments should be configured to accept any tag
-matching a dev build from a wanted branch, for example `.*-b2069581735t.*` for the branch `my-feature`.
+matching a dev build from a wanted branch, for example `.*-b7b5b4fa7t.*` for the branch `my-feature`.
 Applying this configuration is up to the developer, depending on the usage scenario.
 
 #### Working with "dev" stage on testing MCs
@@ -385,7 +385,7 @@ overflow the 63 character limit after Helm templates join it with the chart name
 cut the value at a `.` or a `-`, which makes it an invalid Kubernetes label value and breaks the deployment.
 
 We replace the branch name with the CRC32 checksum of the branch name and remove all separators from the
-pre-release part. This makes the pre-release part fixed-width (35 characters) and free of `.` and `-`. We keep
+pre-release part. This makes the pre-release part fixed-width (33 characters) and free of `.` and `-`. We keep
 a human-readable time stamp instead of an epoch time stamp, because it costs 4 characters and lets a developer
 tell at a glance whether the last build is deployed. We keep the commit hash, because it stays the primary
 identifier of the deployed source. We drop the `dev.` prefix, because the `-b` prefix already tells dev builds
