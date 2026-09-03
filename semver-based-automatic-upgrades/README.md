@@ -1,13 +1,16 @@
 ---
 creation_date: 2025-12-11
 issues:
-- https://github.com/giantswarm/giantswarm/issues/24237
-- https://github.com/giantswarm/giantswarm/issues/37079
+  - https://github.com/giantswarm/giantswarm/issues/24237
+  - https://github.com/giantswarm/giantswarm/issues/37079
 last_review_date: 2026-09-03
 owners:
-- https://github.com/orgs/giantswarm/teams/team-honeybadger
+  - https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: approved
-summary: We want to use flux and flux-operator's automatic upgrades capabilities to create automatic upgrades for different release stages, so we don't have to manually or through extra automation care about those rollouts.
+summary:
+  We want to use flux and flux-operator's automatic upgrades capabilities to create automatic upgrades for
+  different release stages, so we don't have to manually or through extra automation care about those
+  rollouts.
 ---
 
 # Using semVer tags for automatic app upgrades in different release stages
@@ -144,9 +147,9 @@ following tagging schema:
   (i.e. `1.9.1`)
 - For the "release candidate" stage, we introduce a new tag according to the recommended way of semVer
   tagging: `rc` suffixed tags formatted `-rc.N` (i.e. `1.9.2-rc.1`)
-- For `dev` builds, we want to build every commit of a non-`main` branch a developer is working on. The tag of
-  such a build must identify the branch and the commit it comes from, and the tags must sort correctly
-  according to semVer. The format is `[X.Y.Z]-b[CRC32_branch_name]t[YYYYMMDD][HHMMSS]c[commit_SHA]`. See
+- For `dev` builds, we want to build commits of a non-`main` branch a developer is working on. The tag of such
+  a build must identify the branch and the commit it comes from, and the tags must sort correctly according to
+  semVer. The format is `[X.Y.Z]-b[CRC32_branch_name]t[YYYYMMDD][HHMMSS]c[commit_SHA]`. See
   [Dev build tags](#dev-build-tags) below.
 
 #### Dev build tags
@@ -164,19 +167,25 @@ the date displayed with `git log --format='%ci'` format, not the author's date) 
 maintains correct lexicographic sort order. The commit hash is prefixed with a literal `h` so the part is
 always alphanumeric. To keep the tag inside the 63 character budget, the branch name is lowercased, sanitized
 to `[a-z0-9-]` and, when the tag overflows the budget, shortened by dropping its middle and inserting a `--`
-marker (e.g. `renovate-up--s-to-latest`). Example tag:
-`1.9.2-dev.my-feature.2026-01-27.09-49-59.h1a2b3c4`.
+marker (e.g. `renovate-up--s-to-latest`). Example tag: `1.9.2-dev.my-feature.2026-01-27.09-49-59.h1a2b3c4`.
 
-**Why we change it.** The branch name is the only variable-length part of the tag, so the schema stays inside
-the budget only by destroying the branch name, which is the part that makes the tag human-readable. Worse, the
-63 character budget is not enough. Helm helper templates join the tag with the chart name and other strings,
-so the final value overflows again and the chart truncates it a second time. The `.` and `-` characters inside
-the tag can then become the last character of the value, which makes it an invalid Kubernetes label value.
-This breaks real builds, see [issue #37079](https://github.com/giantswarm/giantswarm/issues/37079):
+**Why we have changed it.** Our tag generating tool, `gitsemver`, shortens the branch name when generating the
+version tag, so that the length is guarateed to be less than 63 characters. Still, we learned in practice,
+that this format brings certain problems. They are related to using the version tag inside helm charts as
+values of some other properties, like labels or annotation. In particular, the following can happen:
 
-```text
-konfigure-operator-1.2.2-dev.teams-alignment-branch.2026-07-02.
-```
+- The version tag is correctly used as a base value of another property, usually a label, but concatenated
+  with other strings, then trimmed to 63 characters. This seems correct, but can result in a value that ends
+  with a `.` or `-`, which is invalid for Kubernetes.
+- The version tag is used as a substring of another property, but without trimming it to 63 characters. This
+  can result in a value that is longer than 63 characters, which is also invalid for Kubernetes.
+
+This breaks real builds, see [issue #37079](https://github.com/giantswarm/giantswarm/issues/37079).
+
+The problems above mean we decided to sacrifice readability of the version tag in favor of a format that uses
+no special characters and instead of a full branch name, uses a fixed length hash. The commit hash is still
+appended at the end of the tag, so commit identification should be still easy. For identifying the branch, our
+tools will try to ease the lookup by providing full branch name as well where possigle.
 
 **The current schema.** Dev builds are tagged `[X.Y.Z]-b[CRC32_branch_name]t[YYYYMMDD][HHMMSS]c[commit_SHA]`.
 If the last stable tag in history is `1.9.1` and the branch name is `my-feature`, the build results in a tag
@@ -186,13 +195,7 @@ like `1.9.2-b7b5b4fa7t20260127094959c1a2b3c4`. The parts are:
   padded to 8 digits. It pins a build to its branch with a fixed-width fingerprint, so no part of the tag
   needs truncation. The algorithm is CRC-32/ISO-HDLC, the variant that Go's `hash/crc32.ChecksumIEEE` and
   Python's `zlib.crc32` implement. Note that the POSIX `cksum` tool uses a different CRC-32 variant and
-  returns a different value. `gitsemver` provides a command that prints the checksum for a branch name, and
-  the build pipeline reports the checksum in the pull request. Example:
-
-  ```sh
-  $ printf '%s' my-feature | python3 -c 'import sys, zlib; print(f"{zlib.crc32(sys.stdin.buffer.read()):08x}")'
-  7b5b4fa7
-  ```
+  returns a different value.
 - `t[YYYYMMDD][HHMMSS]` is the current commit's commiter date converted to UTC (the date displayed with
   `git log --format='%ci'` format, not the author's date), without separators.
 - `c[commit_SHA]` is the short (7 hex chars) git hash of the built commit. The commit hash is the primary
@@ -234,10 +237,10 @@ especially for versions comparisons.
   builds of the branch they are working on. This will match the behaviour we have in the `reservations`
   channel. As an example, a dev working on a `my-feature` branch of app `X` will reconfigure, as part of the
   reservation process, the app's semver filter on the chosen `testing` MC from the default `.*-rc\..*` to
-  `.*-b7b5b4fa7t.*` (in `OCIRepository`: `semver: "*-*"`, `semverFilter: ".*-b7b5b4fa7t.*"`), where
-  `7b5b4fa7` is the CRC32 checksum of the branch name `my-feature`. The change will have to be reversed once
-  the testing is done. As this is a multi-step process prone to human error, we will provide a tool to execute
-  it in one go.
+  `.*-b7b5b4fa7t.*` (in `OCIRepository`: `semver: "*-*"`, `semverFilter: ".*-b7b5b4fa7t.*"`), where `7b5b4fa7`
+  is the CRC32 checksum of the branch name `my-feature`. The change will have to be reversed once the testing
+  is done. As this is a multi-step process prone to human error, we will provide a tool to execute it in one
+  go.
 
 ### Note on tag format flexibility
 
@@ -329,8 +332,8 @@ We assume that the tags created on the dev branches have the format
 `[X.Y.Z]-b[CRC32_branch_name]t[YYYYMMDD][HHMMSS]c[commit_SHA]`.
 
 In general case, an application deployment for "dev" environments should be configured to accept any tag
-matching a dev build from a wanted branch, for example `.*-b7b5b4fa7t.*` for the branch `my-feature`.
-Applying this configuration is up to the developer, depending on the usage scenario.
+matching a dev build from a wanted branch, for example `.*-b7b5b4fa7t.*` for the branch `my-feature`. Applying
+this configuration is up to the developer, depending on the usage scenario.
 
 #### Working with "dev" stage on testing MCs
 
@@ -377,16 +380,6 @@ version. This solution, however, requires constant manual approvals by a user an
 
 ## Decisions
 
-### 2026-07-06 Dev build tags use `[X.Y.Z]-b[CRC32_branch_name]t[YYYYMMDD][HHMMSS]c[commit_SHA]`
+### 2026-09-03 Dev build tags use `[X.Y.Z]-b[CRC32_branch_name]t[YYYYMMDD][HHMMSS]c[commit_SHA]`
 
-The original dev tag schema `[X.Y.Z]-dev.[branch_name].[YYYY-MM-DD].[HH-MM-SS].h[commit_sha]` embeds the
-branch name, which is variable in length. Tags therefore need truncation, and the truncated result can still
-overflow the 63 character limit after Helm templates join it with the chart name. The second truncation can
-cut the value at a `.` or a `-`, which makes it an invalid Kubernetes label value and breaks the deployment.
-
-We replace the branch name with the CRC32 checksum of the branch name and remove all separators from the
-pre-release part. This makes the pre-release part fixed-width (33 characters) and free of `.` and `-`. We keep
-a human-readable time stamp instead of an epoch time stamp, because it costs 4 characters and lets a developer
-tell at a glance whether the last build is deployed. We keep the commit hash, because it stays the primary
-identifier of the deployed source. We drop the `dev.` prefix, because the `-b` prefix already tells dev builds
-apart from `-rc.N` releases.
+Motivation for that is discussed in the [Dev build tags](#dev-build-tags) section.
