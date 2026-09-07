@@ -252,30 +252,18 @@ def check_rfc(rfc_dir):
             'These are the affected lines:\n\n'
             f'{diff_whitespace}')
 
-    if 'issues' in rfc.metadata and rfc.metadata['issues'] is None:
-        # Prefer empty list when printing a patch diff below
-        rfc.metadata['issues'] = []
-    expected = frontmatter.dumps(
-        rfc,
-        # We want the front matter YAML header keys to be sorted alphabetically
-        sort_keys=True,
-        # Don't wrap long lines such as `summary: Sentence 1. Sentence 2. Sentence 3.` but keep them on one line.
-        # It would be annoying to ask from authors to get the exact line wrapping length correct or update their PR
-        # just because of some text wrapping differences.
-        width=1000,
-    ).rstrip('\n') + '\n'  # want exactly one newline at end of file
+    # The decision process only asks for the keys to be in alphabetical order. Do not compare against a
+    # re-serialized copy of the file: that would enforce one exact YAML style (list indentation, line folding,
+    # quoting, null vs. empty list) which the decision process does not ask for, and would reject valid YAML.
+    keys_in_file_order = [str(key) for key in rfc.metadata]
+    if keys_in_file_order != sorted(keys_in_file_order):
+        problems.append(
+            'Front matter YAML header keys must be in alphabetical order (please read '
+            'https://github.com/giantswarm/rfc/tree/main/decision-process#rfc-file-structure). Got: '
+            f'{", ".join(keys_in_file_order)}')
 
-    # Show diff without trailing whitespace since that was already checked above
-    expected = TRAILING_WHITESPACE_REGEX.sub('', expected)
-
-    diff = ''.join(difflib.unified_diff(
-        actual_whitespace_trimmed.splitlines(True),
-        expected.splitlines(True),
-        fromfile=readme_file_path,
-        tofile=f'{readme_file_path}.patched',
-    ))
-    if diff:
-        problems.append(f'Formatted output is different.\n\nPlease apply this patch:\n{diff}')
+    if not actual.endswith('\n') or actual.endswith('\n\n'):
+        problems.append('README.md must end with exactly one newline character.')
 
     # Find title (first H1 heading)
     markdown_content_lines = rfc.content.splitlines()
