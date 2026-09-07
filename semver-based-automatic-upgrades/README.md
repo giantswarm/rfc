@@ -1,11 +1,11 @@
 ---
 creation_date: 2025-12-11
 issues:
-  - https://github.com/giantswarm/giantswarm/issues/24237
-  - https://github.com/giantswarm/giantswarm/issues/37079
+- https://github.com/giantswarm/giantswarm/issues/24237
+- https://github.com/giantswarm/giantswarm/issues/37079
 last_review_date: 2026-09-03
 owners:
-  - https://github.com/orgs/giantswarm/teams/team-honeybadger
+- https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: approved
 summary:
   We want to use flux and flux-operator's automatic upgrades capabilities to create automatic upgrades for
