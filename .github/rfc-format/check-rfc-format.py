@@ -55,6 +55,9 @@ ISSUE_URL_REGEX = re.compile(
 )
 OLD_RFC_NUMBER_IN_TITLE_REGEX = re.compile(r'RFC \d+\s*(-\s*)?')
 TRAILING_WHITESPACE_REGEX = re.compile(r'[ \t\v]+$', flags=re.MULTILINE)
+# Matches the `python-frontmatter` library's own YAML front matter boundary, so we split the raw
+# text the same way it does when locating the front matter block below.
+FRONTMATTER_BOUNDARY_REGEX = re.compile(r'^-{3,}\s*$', re.MULTILINE)
 # Heading of a single decision entry inside the optional "## Decisions" section, e.g.
 # "### 2026-07-16 Stages are provider-specific". Date is required, title is captured separately.
 DECISION_HEADING_REGEX = re.compile(r'^### (\d{4}-\d{2}-\d{2})(?:\s+(.+?))?\s*$')
@@ -255,7 +258,18 @@ def check_rfc(rfc_dir):
     # The decision process only asks for the keys to be in alphabetical order. Do not compare against a
     # re-serialized copy of the file: that would enforce one exact YAML style (list indentation, line folding,
     # quoting, null vs. empty list) which the decision process does not ask for, and would reject valid YAML.
-    keys_in_file_order = [str(key) for key in rfc.metadata]
+    # Get the key list from the raw front matter text rather than from `rfc.metadata`: PyYAML resolves
+    # duplicate keys last-wins while parsing into a dict, so by that point duplicates are already gone.
+    _, front_matter_text, _ = FRONTMATTER_BOUNDARY_REGEX.split(actual, 2)
+    keys_in_file_order = [str(key_node.value) for key_node, _ in yaml.compose(front_matter_text).value]
+
+    duplicate_keys = {key for key in keys_in_file_order if keys_in_file_order.count(key) > 1}
+    if duplicate_keys:
+        problems.append(
+            'Front matter YAML header has duplicate keys (please read '
+            'https://github.com/giantswarm/rfc/tree/main/decision-process#rfc-file-structure): '
+            f'{", ".join(sorted(duplicate_keys))}')
+
     if keys_in_file_order != sorted(keys_in_file_order):
         problems.append(
             'Front matter YAML header keys must be in alphabetical order (please read '
