@@ -3,7 +3,7 @@ creation_date: 2025-12-11
 issues:
 - https://github.com/giantswarm/giantswarm/issues/24237
 - https://github.com/giantswarm/giantswarm/issues/37079
-last_review_date: 2026-09-03
+last_review_date: 2026-09-10
 owners:
 - https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: approved
@@ -75,7 +75,8 @@ patch release will be automatically deployed. That way we can automatically deli
 Now, if we want to expand this idea to multi-stage deployments, we can configure different stages with
 different semVer expressions. For example:
 
-- "dev", deploy any version of an app that matches a dev build tag of one branch, like `*-b7b5b4fa7t*`
+- "dev", deploy any version of an app that matches a dev build tag of one branch, with the filter
+  `^.*-r7b5b4fa7t[0-9]{14}h[0-9a-f]{7}$`
 - "testing", deploy any version of an app that matches tag `*-rc.*`
 - "stable", deploy any version of the app that matches tag `>=32.0.0` (this excludes `-*` tags, so
   pre-releases)
@@ -149,7 +150,7 @@ following tagging schema:
   tagging: `rc` suffixed tags formatted `-rc.N` (i.e. `1.9.2-rc.1`)
 - For `dev` builds, we want to build commits of a non-`main` branch a developer is working on. The tag of such
   a build must identify the branch and the commit it comes from, and the tags must sort correctly according to
-  semVer. The format is `[X.Y.Z]-b[CRC32_branch_name]t[YYYYMMDD][HHMMSS]c[commit_SHA]`. See
+  semVer. The format is `[X.Y.Z]-r[CRC32_branch_name]t[YYYYMMDD][HHMMSS]h[commit_SHA]`. See
   [Dev build tags](#dev-build-tags) below.
 
 #### Dev build tags
@@ -187,34 +188,48 @@ no special characters and instead of a full branch name, uses a fixed length has
 appended at the end of the tag, so commit identification should be still easy. For identifying the branch, our
 tools will try to ease the lookup by providing full branch name as well where possigle.
 
-**The current schema.** Dev builds are tagged `[X.Y.Z]-b[CRC32_branch_name]t[YYYYMMDD][HHMMSS]c[commit_SHA]`.
+**The current schema.** Dev builds are tagged `[X.Y.Z]-r[CRC32_branch_name]t[YYYYMMDD][HHMMSS]h[commit_SHA]`.
 If the last stable tag in history is `1.9.1` and the branch name is `my-feature`, the build results in a tag
-like `1.9.2-b7b5b4fa7t20260127094959c1a2b3c4`. The parts are:
+like `1.9.2-r7b5b4fa7t20260127094959h1a2b3c4`. The parts are:
 
-- `b[CRC32_branch_name]` is the CRC32 checksum of the full, unsanitized branch name, in lowercase hex, always
+- `r[CRC32_branch_name]` is the CRC32 checksum of the full, unsanitized branch name, in lowercase hex, always
   padded to 8 digits. It pins a build to its branch with a fixed-width fingerprint, so no part of the tag
   needs truncation. The algorithm is CRC-32/ISO-HDLC, the variant that Go's `hash/crc32.ChecksumIEEE` and
   Python's `zlib.crc32` implement. Note that the POSIX `cksum` tool uses a different CRC-32 variant and
   returns a different value.
 - `t[YYYYMMDD][HHMMSS]` is the current commit's commiter date converted to UTC (the date displayed with
   `git log --format='%ci'` format, not the author's date), without separators.
-- `c[commit_SHA]` is the short (7 hex chars) git hash of the built commit. The commit hash is the primary
+- `h[commit_SHA]` is the short (7 hex chars) git hash of the built commit. The commit hash is the primary
   identifier of the deployed source; the time stamp is a convenience that lets a developer tell at a glance if
   the last build is deployed.
-- The literal `b`, `t` and `c` prefixes separate the parts and make each of them alphanumeric. A pre-release
-  identifier that is all digits is compared numerically and forbids leading zeros, which breaks time stamps.
-- The schema drops the `dev.` prefix. The `-b` prefix already tells dev builds apart from `-rc.N` releases.
+- The literal `r` (ref), `t` (time) and `h` (hash) prefixes separate the parts and make each of them
+  alphanumeric. A pre-release identifier that is all digits is compared numerically and forbids leading
+  zeros, which breaks time stamps. None of the three letters is a hex digit, so a reader always sees where a
+  field ends.
+- The schema drops the `dev.` prefix. The `-r` prefix already tells dev builds apart from `-rc.N` releases.
 
 The result has these properties:
 
-- The pre-release part has a fixed length of 33 characters (`-` + `b` + 8 + `t` + 14 + `c` + 7), so a full tag
+- The pre-release part has a fixed length of 33 characters (`-` + `r` + 8 + `t` + 14 + `h` + 7), so a full tag
   is about 38 to 43 characters. This leaves at least 20 characters for the strings that Helm templates add.
 - The pre-release part contains no `.` and no `-`. A truncation of the tag therefore cannot end on an invalid
   character, unless the added strings are so long that the cut lands inside the `X.Y.Z` part.
-- The pre-release part is a single alphanumeric identifier. For one branch the `b[CRC32]t` prefix is constant,
+- The pre-release part is a single alphanumeric identifier. For one branch the `r[CRC32]t` prefix is constant,
   so semVer compares the fixed-width time stamps. The chronological sort order per branch is correct.
 - Two commits in the same second still produce two different tags, but the commit hash then decides their
   order, which is arbitrary.
+- A tag of the current schema sorts above a tag of the superseded schema at the same `X.Y.Z`, because `r` is
+  greater than `d`. A consumer therefore moves to the current schema at once.
+
+**How to select dev builds.** The `semverFilter` field of an `OCIRepository` holds a regular expression that
+is not anchored. Pin the width of every field in the filter, so that the filter can never match an `-rc.N`
+tag by accident. A loose filter like `.*-r.*` also matches `1.2.3-rc.1`, because `rc` starts with an `r`.
+
+- Any dev build: `^.*-r[0-9a-f]{8}t[0-9]{14}h[0-9a-f]{7}$`
+- Dev builds of one branch, here `my-feature`: `^.*-r7b5b4fa7t[0-9]{14}h[0-9a-f]{7}$`
+
+Do not select dev builds with a bare semVer range. Against an `-rc.N` tag at the same `X.Y.Z` the
+order depends on the first digit of the branch checksum: `0` to `b` sorts below the RC, `c` to `f` above it.
 
 ### The default matching scheme for apps
 
@@ -237,10 +252,11 @@ especially for versions comparisons.
   builds of the branch they are working on. This will match the behaviour we have in the `reservations`
   channel. As an example, a dev working on a `my-feature` branch of app `X` will reconfigure, as part of the
   reservation process, the app's semver filter on the chosen `testing` MC from the default `.*-rc\..*` to
-  `.*-b7b5b4fa7t.*` (in `OCIRepository`: `semver: "*-*"`, `semverFilter: ".*-b7b5b4fa7t.*"`), where `7b5b4fa7`
-  is the CRC32 checksum of the branch name `my-feature`. The change will have to be reversed once the testing
-  is done. As this is a multi-step process prone to human error, we will provide a tool to execute it in one
-  go.
+  `^.*-r7b5b4fa7t[0-9]{14}h[0-9a-f]{7}$` (in `OCIRepository`: `semver: "*-*"`,
+  `semverFilter: "^.*-r7b5b4fa7t[0-9]{14}h[0-9a-f]{7}$"`), where `7b5b4fa7` is the CRC32 checksum of the
+  branch name `my-feature`. The widths of the fields in the filter are strict, so the filter never matches an
+  `-rc.N` tag. The change will have to be reversed once the testing is done. As this is a multi-step process
+  prone to human error, we will provide a tool to execute it in one go.
 
 ### Note on tag format flexibility
 
@@ -281,15 +297,15 @@ following way:
    result in incorrect sorting of tags.
 1. The above will be replaced with the following automation:
    1. For each branch named `[NAME]` other than `main`, every commit in this branch will by default trigger a
-      build that will be tagged `X.Y.Z-bCRC32(NAME)tYYYYMMDDHHMMSScSHA`. Examples for a branch named
+      build that will be tagged `X.Y.Z-rCRC32(NAME)tYYYYMMDDHHMMSShSHA`. Examples for a branch named
       `my-feature`, whose CRC32 checksum is `7b5b4fa7`:
       1. A new commit in a new branch `my-feature` + last commit in the parent tree is `1.2.3` =
-         `1.2.4-b7b5b4fa7t20260112120959c1a2b3c4`
+         `1.2.4-r7b5b4fa7t20260112120959h1a2b3c4`
    1. If the branch name starts with the `nobuild/` prefix, builds are not automatically triggered, but a
       release can still be created by manually assigning a correct tag. This allows us to save resources on
       the build pipeline, OCI storage and release auto-upgrade processes.
       1. Example: there's a branch `nobuild/i-dont-care` and a developer creates a tag
-         `1.2.3-b7b5b4fa7t20260112120959c1a2b3c4`: the build is triggered and pushed to the OCI registry.
+         `1.2.3-r7b5b4fa7t20260112120959h1a2b3c4`: the build is triggered and pushed to the OCI registry.
 
 ### Note on promotion logic
 
@@ -329,11 +345,12 @@ be created from the `main` branch. A release is created by a developer by creati
 ### "dev" stage
 
 We assume that the tags created on the dev branches have the format
-`[X.Y.Z]-b[CRC32_branch_name]t[YYYYMMDD][HHMMSS]c[commit_SHA]`.
+`[X.Y.Z]-r[CRC32_branch_name]t[YYYYMMDD][HHMMSS]h[commit_SHA]`.
 
 In general case, an application deployment for "dev" environments should be configured to accept any tag
-matching a dev build from a wanted branch, for example `.*-b7b5b4fa7t.*` for the branch `my-feature`. Applying
-this configuration is up to the developer, depending on the usage scenario.
+matching a dev build from a wanted branch, for example `^.*-r7b5b4fa7t[0-9]{14}h[0-9a-f]{7}$` for the branch
+`my-feature`. The filter pins the width of every field, so it never matches an `-rc.N` tag. Applying this
+configuration is up to the developer, depending on the usage scenario.
 
 #### Working with "dev" stage on testing MCs
 
@@ -348,7 +365,7 @@ goes like this:
 1. Announce on slack on `#reservations` that the `testing` MC named `M` is being reserved for testing the dev
    version of app `A` using the dev branch `new-feature`.
 1. In GitOps repos, find the deployment manifest of the app `A` and change the accepted range of semVer from
-   `.*-rc\..*` to `.*-b[CRC32 of new-feature]t.*`.
+   `.*-rc\..*` to `^.*-r[CRC32 of new-feature]t[0-9]{14}h[0-9a-f]{7}$`.
 1. Work on the new feature. Each commit to the branch `new-feature` results in a build and automatic
    deployment to the configured MC `M`.
 1. When done, revert the commit from 2. in the GitOps repos and announce in `#reservations` that the work
@@ -382,4 +399,13 @@ version. This solution, however, requires constant manual approvals by a user an
 
 ### 2026-09-03 Dev build tags use `[X.Y.Z]-b[CRC32_branch_name]t[YYYYMMDD][HHMMSS]c[commit_SHA]`
 
-Motivation for that is discussed in the [Dev build tags](#dev-build-tags) section.
+Motivation for that is discussed in the [Dev build tags](#dev-build-tags) section. The decision of
+2026-09-10 replaces the three separator letters. Everything else that is decided here still holds.
+
+### 2026-09-10 Dev build tag separators are `r`, `t` and `h`
+
+`b` and `c` are hex digits. In a tag like `1.9.2-b7b5b4fa7t20260127094959c1a2b3c4` a reader cannot see where
+the branch checksum ends and where the commit hash starts. The separators are now `r` (ref), `t` (time) and
+`h` (hash), and none of the three is a hex digit. The field order, the field widths, the CRC-32/ISO-HDLC
+variant and the 33 character length of the pre-release part do not change. `gitsemver` generates tags in this
+format.
