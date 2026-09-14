@@ -1,11 +1,11 @@
 ---
 creation_date: 2025-12-11
 issues:
-- https://github.com/giantswarm/giantswarm/issues/24237
-- https://github.com/giantswarm/giantswarm/issues/37079
+  - https://github.com/giantswarm/giantswarm/issues/24237
+  - https://github.com/giantswarm/giantswarm/issues/37079
 last_review_date: 2026-09-10
 owners:
-- https://github.com/orgs/giantswarm/teams/team-honeybadger
+  - https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: approved
 summary:
   We want to use flux and flux-operator's automatic upgrades capabilities to create automatic upgrades for
@@ -203,9 +203,9 @@ like `1.9.2-r7b5b4fa7t20260127094959h1a2b3c4`. The parts are:
   identifier of the deployed source; the time stamp is a convenience that lets a developer tell at a glance if
   the last build is deployed.
 - The literal `r` (ref), `t` (time) and `h` (hash) prefixes separate the parts and make each of them
-  alphanumeric. A pre-release identifier that is all digits is compared numerically and forbids leading
-  zeros, which breaks time stamps. None of the three letters is a hex digit, so a reader always sees where a
-  field ends.
+  alphanumeric. A pre-release identifier that is all digits is compared numerically and forbids leading zeros,
+  which breaks time stamps. None of the three letters is a hex digit, so a reader always sees where a field
+  ends.
 - The schema drops the `dev.` prefix. The `-r` prefix already tells dev builds apart from `-rc.N` releases.
 
 The result has these properties:
@@ -218,18 +218,16 @@ The result has these properties:
   so semVer compares the fixed-width time stamps. The chronological sort order per branch is correct.
 - Two commits in the same second still produce two different tags, but the commit hash then decides their
   order, which is arbitrary.
-- A tag of the current schema sorts above a tag of the superseded schema at the same `X.Y.Z`, because `r` is
-  greater than `d`. A consumer therefore moves to the current schema at once.
 
 **How to select dev builds.** The `semverFilter` field of an `OCIRepository` holds a regular expression that
-is not anchored. Pin the width of every field in the filter, so that the filter can never match an `-rc.N`
-tag by accident. A loose filter like `.*-r.*` also matches `1.2.3-rc.1`, because `rc` starts with an `r`.
+is not anchored. Pin the width of every field in the filter, so that the filter can never match an `-rc.N` tag
+by accident. A loose filter like `.*-r.*` also matches `1.2.3-rc.1`, because `rc` starts with an `r`.
 
 - Any dev build: `^.*-r[0-9a-f]{8}t[0-9]{14}h[0-9a-f]{7}$`
 - Dev builds of one branch, here `my-feature`: `^.*-r7b5b4fa7t[0-9]{14}h[0-9a-f]{7}$`
 
-Do not select dev builds with a bare semVer range. Against an `-rc.N` tag at the same `X.Y.Z` the
-order depends on the first digit of the branch checksum: `0` to `b` sorts below the RC, `c` to `f` above it.
+Do not select dev builds with a bare semVer range. Against an `-rc.N` tag at the same `X.Y.Z` the order
+depends on the first digit of the branch checksum: `0` to `b` sorts below the RC, `c` to `f` above it.
 
 ### The default matching scheme for apps
 
@@ -399,8 +397,8 @@ version. This solution, however, requires constant manual approvals by a user an
 
 ### 2026-09-03 Dev build tags use `[X.Y.Z]-b[CRC32_branch_name]t[YYYYMMDD][HHMMSS]c[commit_SHA]`
 
-Motivation for that is discussed in the [Dev build tags](#dev-build-tags) section. The decision of
-2026-09-10 replaces the three separator letters. Everything else that is decided here still holds.
+Motivation for that is discussed in the [Dev build tags](#dev-build-tags) section. The decision of 2026-09-10
+replaces the three separator letters. Everything else that is decided here still holds.
 
 ### 2026-09-10 Dev build tag separators are `r`, `t` and `h`
 
