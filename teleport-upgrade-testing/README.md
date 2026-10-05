@@ -522,7 +522,7 @@ Implement automated testing and resource cleanup.
 - [teleport-operator repository](https://github.com/giantswarm/teleport-operator)
 - [mc-bootstrap repository](https://github.com/giantswarm/mc-bootstrap)
 - [tekton-resources repository](https://github.com/giantswarm/tekton-resources)
-- [Teleport Upgrade Documentation](https://goteleport.com/docs/management/operations/upgrading/)
+- [Teleport Upgrade Documentation](https://goteleport.com/docs/upgrading/)
 - [Teleport Version Compatibility](https://goteleport.com/docs/faq/#version-compatibility)
 
 ## Appendix: File changes summary
