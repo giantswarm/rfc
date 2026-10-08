@@ -5,7 +5,7 @@ issues:
 owners:
 - https://github.com/orgs/giantswarm/teams/team-to-be-decided
 state: review
-summary: A guide for how we use AI when we write for colleagues. Respect the reader's time, write intentionally for your intended audience, and own what your agent says. Posts in #awesome-box must be written by a human.
+summary: A guide for how we use AI when we write for colleagues. Respect the reader's time, write intentionally for your intended audience, and own what your agent says. Posts in #awesome-box, #random and #chat-x channels must be written by a human.
 ---
 
 # AI etiquette
@@ -72,6 +72,10 @@ When an agent writes the code, you don't learn what you would have learned by wr
 #### 5. Posts in `#awesome-box` must be written by a human
 
 `#awesome-box` is where we thank colleagues for great work. Recognition only counts if you write it yourself, so don't use AI to write `#awesome-box` posts.
+
+#### 6. Posts in #random and #chat-x channels must be written by a human
+
+`#random` and `#chat-x` channels are primarily for discussion between people regarding the topic of the channel, and people usually post there to elicit replies from other humans. These channels should not be for messages posted by agents.
 
 ### Alternative solutions
 
