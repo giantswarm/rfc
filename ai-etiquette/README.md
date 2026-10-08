@@ -90,7 +90,7 @@ Technical enforcement applies only to GitHub pull requests and issues. Slack gui
 
 1. Publish this guide in the handbook.
 2. Add a human summary section to the issue and pull request templates.
-3. Instruct agents how to write issues and pull requests in order to comply with these guidelines.
+3. Instruct agents how to write issues and pull requests in order to comply with these guidelines by modifying GS skills.
 4. Examine a central configuration to control the verbosity of Claude.
 5. Examine an "unslop" skill.
 6. Examine labels that show the audience of an issue (human or agent).
