@@ -3,16 +3,28 @@ on:
   push:
     branches:
       - main
+
+permissions: {}
+
 jobs:
   apply:
     name: Trigger handbook RFC rendering
     runs-on: ubuntu-latest
     steps:
-      - name: Trigger workflow in handbook repo
-        uses: convictional/trigger-workflow-and-wait@v1.6.5
+      # A repository_dispatch needs contents:write on the target repository, which the
+      # giantswarm-release App has. handbook's render-rfcs-pr.yaml listens for it
+      # (giantswarm/giantswarm#2280: no taylorbot token any more).
+      - name: Generate giantswarm-release token for handbook
+        id: app-token
+        uses: actions/create-github-app-token@64ab729a6294000f5aa4a4bc0b73d1f32bc45510 # v3.3.0
         with:
+          client-id: ${{ secrets.RELEASE_BOT_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_BOT_PRIVATE_KEY }}
           owner: giantswarm
-          repo: handbook
-          github_token: ${{ secrets.TAYLORBOT_GITHUB_ACTION }}
-          workflow_file_name: render-rfcs-pr.yaml
-          ref: main
+          repositories: handbook
+          permission-contents: write
+
+      - name: Trigger RFC rendering in handbook
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: gh api repos/giantswarm/handbook/dispatches -f event_type=render-rfcs
