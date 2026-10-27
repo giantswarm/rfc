@@ -1,6 +1,10 @@
 ---
 creation_date: 2022-09-07
+last_review_date: 2026-10-27
+owners:
+- https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: approved
+summary: Giant Swarm keeps name candidates (5 to 8 letters `a-z`, never used before) in the public `installation-names` repository. Customers claim a name with a pull request that removes it from that list. Names should not hint at the customer's company name.
 ---
 
 # Assigning installation names
