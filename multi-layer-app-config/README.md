@@ -1,8 +1,10 @@
 ---
 creation_date: 2022-06-20
+last_review_date: 2026-10-27
 owners:
 - https://github.com/orgs/giantswarm/teams/team-honeybadger
 state: approved
+summary: Extend the App CR with an `extraConfigs` list of ConfigMaps and Secrets, each with a `priority` that places it before, between, or after the `config` and `userConfig` layers. `app-operator` merges all layers on top of the catalog values in priority order, with list order breaking ties.
 ---
 
 # Multi layer app configs
