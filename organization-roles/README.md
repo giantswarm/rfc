@@ -8,321 +8,269 @@ owners:
 - https://github.com/orgs/giantswarm/teams/team-bumblebee
 - https://github.com/orgs/giantswarm/teams/team-shield
 state: review
-summary: One set of roles per capability and level, bound per Organization, with a RoleBinding in the Organization namespace as the only source of membership. Every runtime check asks the API server; the one place that needs a list of members is a reader package in the operator. organization-operator absorbs rbac-operator, and every platform adds its roles through labelled, aggregated ClusterRoles. Observability joins in a follow-up.
+summary: One way to say who belongs to an Organization and what they may do there. Membership is a RoleBinding in the Organization namespace, roles are named per capability and level, and one operator (organization-operator, absorbing rbac-operator) manages them. Every platform plugs its roles in through labelled ClusterRoles. We start with the agent platform, then migrate the KaaS roles. Nothing changes for customers until they opt in.
 ---
 
 # Organization roles: one membership source, one operator
 
-## Objective
+## TL;DR
 
-Make "person X has role R in Organization O" mean one thing on the platform, so that the KaaS platform and the agent platform share one membership source and one role vocabulary, and so that a new platform has one pattern to follow.
+- Today, "who belongs to an Organization" is answered differently by every product. Group lists live in nine places. A customer cannot make someone admin of one Organization without making them admin of all of them.
+- We propose one rule: a person has a role in an Organization when a RoleBinding in that Organization's namespace says so. Nothing else holds a list of people.
+- Roles get one naming scheme, `<capability>:<level>`, for example `cluster:admin` or `agent-platform:user`. Each platform ships its own roles; the operator combines them into `organization:user`, `organization:editor`, `organization:admin` and `platform:admin`.
+- Checks happen in two ways only: ask the API server (`SubjectAccessReview`), or, where a system cannot ask (workload clusters), read the bindings through one reader package in the operator.
+- We do it in two steps. Step 1 is the agent platform alone: the workspace, cluster and toolchain managers drop their own lists and use the `agent-platform:*` roles. Step 2 merges rbac-operator into organization-operator and adds the KaaS roles.
+- Customers lose nothing. Their admin group, their automation ServiceAccounts and their existing bindings keep working. New roles arrive next to the old ones, and old names are removed only after nobody uses them.
+- Observability joins later, through its own RFC by Atlas.
+- Four questions need an answer before approval (see [Still to decide](#still-to-decide)).
 
-This RFC covers the management cluster, the workload clusters it creates, and the agent platform. Observability is described as a follow-up (see [Follow-up: observability](#follow-up-observability)).
+## The problem, in plain words
 
-## Background
+A customer has two teams, Payments and Search, each with its own Organization. They want Alice to be admin of Payments and nothing else. Today they cannot do that cleanly:
 
-This section describes what exists today. Every statement comes from code on `main` as of 2026-10-27; the sources are in the [appendix](#appendix-a-role-inventory). Diagrams and the full inventory are also on the [Miro board](https://miro.com/app/board/uXjVEVa-IFw=).
+- The customer's admin group is set in installation values. rbac-operator binds it to `cluster-admin` on the whole management cluster and in every Organization namespace. Alice is either admin everywhere or not admin.
+- If the customer writes a RoleBinding for Alice in `org-payments`, three different programs read it and draw their own conclusions: rbac-operator (read access to releases and catalogs), dex-operator (admin on the workload clusters), cluster-manager (admin on new clusters). dex-operator reads it wrong: it treats a read-only binding as an admin binding.
+- The agent platform has its own roles, `agent-platform:user`, `editor` and `admin`, bound by hand. Its managers do not use them: workspace-manager keeps a list of groups and emails, toolchain-manager keeps a list of owners, cluster-manager reads the KaaS `cluster-admin` bindings itself.
+- What "an Organization namespace" is depends on the program: some look for the label `giantswarm.io/organization`, some for the `org-` name prefix, one accepts any string.
+- Even the group name is spelled differently: Dex prefixes it with the connector name, some workload clusters add `oidc:`, and kagent adds its own prefix.
 
-### Identity: where a subject comes from
+So a new product has no pattern to follow, each product invents its own, and the customer has to learn all of them.
 
-Every installation runs its own Dex (`dex-app`), configured by dex-operator. A person signs in through one connector: `giantswarm-github` or `giantswarm-ad` for Giant Swarm staff, `customer-<name>` for the customer's identity provider (Entra ID, GitHub, or any Dex connector type). The token carries `email` as the username and `groups` as the group list.
+## How it works today
 
-Our Dex fork prefixes every group with the connector ID, so a group is spelled `giantswarm-ad:giantswarm-admins` or `customer:giantswarm:Employees`. This is a Giant Swarm convention, not an OIDC standard; upstream Dex declined the feature. The management cluster API server sets no further prefix. Some workload clusters add `oidc:` through structured authentication, and kagent re-applies a prefix of its own. That is why one RoleBinding subject can be spelled three ways.
+Every installation has one Dex. A person signs in through a connector (`giantswarm-github`, `giantswarm-ad`, or the customer's own). The token names the person by email and lists their groups as `<connector>:<group>`, for example `customer:platform-admins`. That token is what the management cluster, muster, kagent, Backstage and the workload clusters see.
 
-```mermaid
-flowchart LR
-  subgraph IdP["Customer or Giant Swarm identity provider"]
-    GH[GitHub team]
-    AD[Entra ID group]
-    LDAP[LDAP or other]
-  end
-  subgraph Dex["Dex, one per installation"]
-    C1[giantswarm-github]
-    C2[giantswarm-ad]
-    C3[customer-*]
-  end
-  GH --> C1
-  AD --> C2
-  LDAP --> C3
-  Dex -->|"groups = connectorId:group<br/>username = email"| TOK[id_token]
-  TOK --> API[MC API server]
-  TOK --> MUS[muster]
-  TOK --> KAG[kagent, re-applies a groups prefix]
-  TOK --> BS[Backstage, RFC 8693 exchange per installation]
-  TOK --> WC[Workload cluster API, optional oidc: prefix]
-  TEL[Teleport, GitHub team giantswarm/employees] -->|system:masters, impersonate any user or role| API
-  CERT[kubectl-gs client certificate] --> WC
-  SA[ServiceAccount tokens: automation, Flux, agents, machine callers] --> API
-```
-
-A RoleBinding subject can therefore be a `Group` (connector-prefixed), a `User` (the email), or a `ServiceAccount`. Three paths bypass Dex: Teleport for Giant Swarm staff, kubectl-gs client certificates for workload clusters (any group, for whoever can read the cluster CA Secret), and ServiceAccount tokens.
-
-### Who accesses the platform today
-
-| Who | Signs in through | What binds them | What they get | Scope |
-|---|---|---|---|---|
-| Customer admin | Dex, customer connector | `write_all` groups in rbac-operator values | `cluster-admin` on the whole MC and in every Organization namespace, `write-organizations`, `crossplane-edit`, AWS role identities, cluster-admin on every workload cluster | Installation |
-| Customer reader | Dex | `read_all_groups` (defined in rbac-operator, never set by shared-configs) | `read-all` cluster-wide | Installation |
-| Organization member | Dex | A RoleBinding the customer creates in `org-<name>` (`read-all`, `write-in-cluster-ns`, `cluster-admin`) | That role, plus derived read access to the Organization, releases and catalogs | One Organization |
-| Customer CI | ServiceAccount token | `automation` in `default` and in every `org-*`, created by rbac-operator | `cluster-admin` in its Organization, plus cluster-wide extras (silences, policy exceptions, client certificates, Crossplane, chart lookups) | Installation |
-| Flux | ServiceAccount | RoleBindingTemplates | `cluster-admin` in every Organization namespace | Installation |
-| Giant Swarm admin | Dex, GS connector | `giantswarm.write_all` groups | `cluster-admin` cluster-wide | Installation |
-| Giant Swarm staff | Teleport | Teleport `giantswarm` role | `system:masters` on every MC and WC, may impersonate any user or role | Fleet |
-| Backstage user | Dex, exchanged per installation | Their own Dex groups | Whatever their bindings allow; Backstage runs as the person | Per person |
-| Agent platform user | Dex | `agent-platform:platform-user` bound to `system:authenticated` in `kagent`; `agent-platform:user/editor/admin` bound by hand in `org-*` | Run platform agents; per-Organization rights only where someone created a binding | Platform tenant, Organization |
-| Slack user | Slack, linked to Dex via muster | klaus-gateway thread grants and channel allowlist, then the person's own token | Talk to an agent as themselves | Per thread |
-| Agent | ServiceAccount token | `system:serviceaccount:org-<name>:<agent>` (T9 decision on giantswarm#36698) | Reviewed as the agent and as the person; both must allow | One Organization |
-| Workspace member | Dex | workspace-manager's own list of groups, emails and domains | Create and use Workspaces, which all live in the `kagent` namespace | Not Organization-aware |
-| Workload cluster user | WC Dex or OIDC | `rbac-bootstrap` bindings composed by dex-operator and cluster-manager from the Organization's `cluster-admin` bindings, or customer overrides | `cluster-admin` on the cluster | One cluster |
-
-### Where membership is decided today
+Three paths bypass Dex: Teleport for Giant Swarm staff (`system:masters` everywhere), client certificates for workload clusters, and ServiceAccount tokens (customer CI, Flux, machine callers).
 
 ```mermaid
 flowchart LR
-  A[RoleBindings in org namespaces] --> K[kagent, agent-manager, muster]
-  A --> W1[dex-operator: WC admin groups]
-  A --> W2[cluster-manager: WC admin users and groups]
-  A --> R[rbac-operator derived grants]
-  B[rbac-operator values: write_all groups] --> M[MC cluster-admin, every org namespace]
-  B --> W1
-  B --> X[crossplane-edit, write-organizations, AWS role identity]
-  D[workspace-manager list: groups, emails, domains] --> WS[Workspaces]
-  D2[toolchain-manager owners] --> TC[Toolchain sources]
-  E[agent-platform values: platform users, editors, platform team] --> PT[Platform tenant, muster editors]
-  F[klaus-gateway allowlist and thread grants] --> S[Slack agents]
-  I[Teleport GitHub team] --> T[system:masters on MC and WC]
-  J[rbac-bootstrap defaults and customer overrides] --> W3[WC bindings]
+  P[Person] -->|signs in| Dex["Dex (one per installation)"]
+  Dex -->|"token: email + connector:group"| T[id_token]
+  T --> MC[Management cluster API]
+  T --> AP[Agent platform: muster, kagent, Backstage]
+  T --> WC[Workload cluster API]
+  GS[Giant Swarm staff] -->|Teleport| MC
+  CI[Customer CI, Flux, agents] -->|ServiceAccount token| MC
 ```
 
-Four things follow from this picture:
+Who decides what that person may do:
 
-1. **Group lists live in nine places**, counted in the appendix. The same Giant Swarm groups are repeated in four or more value keys and differ per installation.
-2. **Three readers already derive membership from Organization RoleBindings**: rbac-operator (derived read grants), dex-operator (workload-cluster admin groups), and cluster-manager (workload-cluster admin users and groups at creation). dex-operator's filter has a bug: a RoleBinding to any ClusterRole counts, so a `read-all` subject becomes a workload-cluster admin.
-3. **An Organization namespace is defined three ways**: by the label `giantswarm.io/organization` (kagent, agent-manager's reconciler, the agent-platform chart), by the `org-` name prefix (rbac-operator, muster, Backstage, agent-manager's workload-cluster target), or not at all (workspace-manager's free-form string).
-4. **A customer cannot make someone admin of one Organization** without making them admin of all of them, because the admin group is bound by installation values.
+| Question | Answered by | Where the list lives |
+|---|---|---|
+| Is this person a customer admin? | rbac-operator | Installation values (`write_all` groups) |
+| May they read this Organization? | rbac-operator, from any RoleBinding in the namespace | The RoleBinding |
+| Are they admin on the Organization's workload clusters? | dex-operator and cluster-manager, from `cluster-admin` RoleBindings | The RoleBinding, plus the `write_all` groups |
+| May they run this agent? | kagent, by asking the API server | The RoleBinding |
+| May they write MCP servers? | muster, with the person's own token | A RoleBinding in muster's namespace |
+| May they use this Workspace? | workspace-manager | Its own list of groups, emails and domains |
+| May they add a toolchain? | toolchain-manager | Its own list |
+| Who sees the platform's agents? | The agent-platform chart | `system:authenticated` |
 
-### Special cases that must keep working
+The full inventory, with sources, is in [Appendix A](#appendix-a-everything-that-grants-access-today).
 
-These exist today and the proposal must not break them.
+## What we propose
 
-- `org-giantswarm` is protected: no customer admin binding, and only `flux-system` or same-namespace ServiceAccounts through RoleBindingTemplates.
-- Namespaces with the legacy `customer` label are still treated as Organization namespaces.
-- Cluster namespaces (`giantswarm.io/organization` plus `giantswarm.io/cluster`) exist on older installations. rbac-operator resolves their Organization by name, then by the annotation `ui.giantswarm.io/original-organization-name`.
-- Organization names starting with `default`, `kube-`, `monitoring`, `gatekeeper` or `draughtsman` are refused.
-- On CAPA, customer admins hold `write-aws-cluster-role-identity`. Where Crossplane is installed, customer admins and every automation ServiceAccount hold `crossplane-edit`.
-- Flux controllers hold `cluster-admin` in every Organization namespace through the `flux-namespace-reconciler` template.
-- happa and Backstage discover a person's Organizations through `get` on each `organizations/<name>`, not through `list`. rbac-operator grants that `get` to every subject bound in the namespace.
-- Teleport refuses to impersonate customer groups, so Backstage's Clusters page checks access with `SubjectAccessReview`.
-- Workload clusters: `rbac-bootstrap` is on for AWS and Azure and off for EKS (cloud access entries govern there). A customer's `rbacBootstrap` values replace the whole binding list, which drops the Giant Swarm `view` bindings. kubectl-gs client certificates can carry any group, including `system:masters`.
-- Agent platform: the platform tenant is the `kagent` namespace, bound to `system:authenticated` (which includes every ServiceAccount). Session shares, workspace grants, klaus-gateway thread grants and channel allowlists are runtime grants, not membership. `models.<domain>` accepts any Dex token with audience `dex-k8s-authenticator` for any model.
+### One rule for membership
 
-### Drift found on the way
+"Alice has role R in Organization O" means: there is a RoleBinding in `org-O` that binds Alice, or one of her groups, to R. That is the only place membership is written.
 
-- `write-flux-resources` has a misspelled API group and is bound to nobody.
-- `read_all_groups` is a rbac-operator value that shared-configs never passes.
-- `write-silences` covers only the legacy v1alpha1 Silence group and is bound only to the automation ServiceAccount.
-- The agent-platform values say `tenants.platform.users` binds `agent-platform:user`; the template binds `platform-user`.
-- `kamaji-datastore-manager` is bound to every automation ServiceAccount but no definition of the role was found.
-- The docs recipe for an automation token expects a token Secret that no longer exists.
-- Ten security findings were reviewed and eight confirmed in code. They are tracked through the security process, not here. Some are prerequisites below.
+Every program that needs an answer gets it in one of two ways:
 
-## Proposal
-
-### One membership source, one reader
-
-"Person X has role R in Organization O" means exactly one thing: a RoleBinding in `org-O` that binds X, or one of X's groups, to R.
-
-There are two kinds of consumer, and only two:
-
-- **Runtime checks** ask the API server with `SubjectAccessReview`. kagent, agent-manager, muster and Backstage already do. workspace-manager joins once Workspaces live in the Organization namespace.
-- **Projections** need a list: a workload cluster's admin bindings cannot be looked up on the management cluster at request time. One package in the operator, the membership reader, answers "subjects holding role R in Organization O", resolving aggregated roles and RoleBindingTemplates. It returns Users, Groups and ServiceAccounts. It replaces the three readers that exist today and removes dex-operator's filter bug. Organization status holds no copy of the membership.
-
-No other component keeps a list of people.
+1. **Ask the API server.** A `SubjectAccessReview` asks "may this user do this verb on this resource in this namespace". kagent, agent-manager, muster and Backstage already work this way. workspace-manager and toolchain-manager will.
+2. **Read the bindings through the operator.** A workload cluster cannot ask the management cluster at request time; its admin list has to be written into it. One package in the operator, the membership reader, answers "who holds role R in Organization O". It replaces the three programs that each read the bindings today, and it reads them correctly.
 
 ```mermaid
 flowchart LR
-  RB["RoleBinding in org-O<br/>subject: Group, User or ServiceAccount<br/>roleRef: capability:level"]
-  RB --> SAR[SubjectAccessReview]
-  SAR --> K[kagent, agent-manager, muster, Backstage]
-  SAR --> WM[workspace-manager, after Workspaces move]
-  RB --> PM["membership reader<br/>(package in the operator)"]
-  PM --> DO[dex-operator: WC admin bindings]
-  PM --> CM[cluster-manager: WC admin bindings at creation]
-  RB --> AS[API server: kubectl, Flux, CI tokens]
-  RB --> DG[operator: derived read grants]
+  RB["RoleBinding in org-O<br/>Alice or her group → role"]
+  RB -->|SubjectAccessReview| A[kagent, agent-manager, muster, Backstage,<br/>workspace-manager, toolchain-manager]
+  RB -->|membership reader| B[dex-operator and cluster-manager:<br/>workload cluster admins]
+  RB -->|plain RBAC| C[kubectl, Flux, CI tokens]
 ```
 
-What stays outside membership, unchanged: kagent session shares, workspace grants, klaus-gateway thread grants and channel allowlists, and data-source checks that use the person's own GitHub or GitLab access.
+Runtime grants stay what they are and are not membership: sharing a session, granting a Slack thread, allowing a channel.
 
-### Roles per capability and level
+### One naming scheme for roles
 
-Role names keep the existing `capability:level` form. Every role is a ClusterRole bound per Organization namespace.
+Roles are ClusterRoles named `<capability>:<level>`, bound per Organization namespace. Each platform owns its capability.
 
-| Role | Grants | Replaces today | Owner |
-|---|---|---|---|
-| `agent-platform:user` / `:editor` / `:admin` | Run agents; write agents, workspaces and remote MCP servers; manage models, model keys, egress and connector credentials | The existing roles, muster `mcpserver-editor` and `workflow-editor`, the workspace-manager list | Bumblebee |
-| `agent-platform:agent` | What an agent needs about itself: its Agent, its Sessions, its memory. Bound to `system:serviceaccounts:org-<name>`. Not aggregated into any admin role. | kagent's default actor policy | Bumblebee |
-| `cluster:user` / `:editor` / `:admin` | See the Organization's clusters and apps; create and upgrade clusters and install apps; cluster-admin on the Organization's workload clusters, client certificates and policy exceptions. No Secrets below admin. | `read-in-cluster-ns`, `write-in-cluster-ns`, the `cluster-admin` RoleBinding in the Organization namespace | Shield (Honeybadger for apps) |
-| `organization:user` / `:editor` / `:admin` | Aggregates of every capability role at that level. `organization:admin` may bind only catalogue roles: no `escalate`, no `serviceaccounts/token`, no `pods/exec`. | Ad hoc bindings; the customer admin RoleBinding per namespace | Shield |
-| `platform:admin` | Every capability admin in every Organization, plus creating Organizations | New. Offered next to `write_all`, which stays as it is | Shield |
-| `platform:auditor` | Read everything except Secrets and ConfigMaps, plus policy reports | `read-all` | Shield |
-| Personas: KaaS Platform User, Non-Tech User, Security Auditor | Aggregated from the capability roles, for example Non-Tech User = `agent-platform:user` | Ad hoc bindings | Shield; each platform labels its roles |
+| Role | What it allows | Owner |
+|---|---|---|
+| `agent-platform:user` / `editor` / `admin` | Run agents; write agents, workspaces, toolchains and MCP servers; manage models, keys and credentials | Bumblebee |
+| `agent-platform:agent` | What a running agent may do about itself. New; see [Still to decide](#still-to-decide) | Bumblebee |
+| `cluster:user` / `editor` / `admin` | See the Organization's clusters and apps; create and upgrade clusters and install apps; full admin on the Organization's workload clusters | Shield (apps: Honeybadger) |
+| `organization:user` / `editor` / `admin` | Everything the capability roles allow at that level, combined | Shield |
+| `platform:admin` | `organization:admin` in every Organization, plus creating Organizations | Shield |
+| `platform:auditor` | Read everything except Secrets and ConfigMaps | Shield |
+
+The `organization:*` and `platform:*` roles are Kubernetes [aggregated ClusterRoles](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#aggregated-clusterroles): the operator builds them from every capability role that carries the matching label. A platform adds a capability by shipping a labelled ClusterRole in its own chart. No change to the operator.
 
 ```mermaid
 flowchart BT
-  APU[agent-platform:user] --> OU[organization:user]
-  CU[cluster:user] --> OU
-  APE[agent-platform:editor] --> OE[organization:editor]
-  CE[cluster:editor] --> OE
-  APA[agent-platform:admin] --> OA[organization:admin]
-  CA[cluster:admin] --> OA
+  CU[cluster:user] --> OU[organization:user]
+  AU[agent-platform:user] --> OU
+  CE[cluster:editor] --> OE[organization:editor]
+  AE[agent-platform:editor] --> OE
+  CA[cluster:admin] --> OA[organization:admin]
+  AA[agent-platform:admin] --> OA
   OA --> PA[platform:admin, every Organization]
-  APU --> NT[persona: Non-Tech User]
-  AG[agent-platform:agent] -.->|not aggregated| OA
-  PAU[platform:auditor]
-  WA[customer write_all, unchanged] -.->|separate decision| PA
 ```
 
-Finer roles come later by splitting a role and aggregating the parts back under the same name, so existing bindings keep working.
+An `organization:admin` may create RoleBindings in their Organization, but only to catalogue roles. Kubernetes enforces this through the `bind` verb limited by `resourceNames`; the operator keeps that list current. No catalogue role grants `escalate` or `serviceaccounts/token`.
 
-The derived read grants stay: every subject bound to anything in an Organization namespace keeps `get` on its Organization and read access to releases and catalogs. That is how the portals list a person's Organizations, and it also covers Roles a customer writes themselves (see Decisions). Aggregation cannot express "whoever is bound to anything", so the operator keeps doing it.
+Finer roles can come later: split a role, and aggregate the parts back under the old name, so existing bindings keep working.
 
-The customer `write_all` groups keep their cluster-wide `cluster-admin`. Narrowing that is a Shield security decision on its own. `platform:admin` is the narrower role an installation can bind instead, through a RoleBindingTemplate.
+### One operator
 
-The automation ServiceAccounts and their cluster-wide extras are carried over unchanged. One guard applies to the whole catalogue: no role grants `serviceaccounts/token` or `escalate`, so an Organization admin cannot mint the automation token. That is already true of `agent-platform:admin`.
-
-### Merge organization-operator and rbac-operator
-
-Both operators are owned by Shield and work on the same objects. organization-operator (v2.x) is on controller-runtime. rbac-operator has moved its RoleBindingTemplate controller to controller-runtime ([rbac-operator#683](https://github.com/giantswarm/rbac-operator/pull/683)); its four other controllers still run on operatorkit ([roadmap#3056](https://github.com/giantswarm/roadmap/issues/3056)). We finish that migration by moving those controllers into organization-operator.
+rbac-operator and organization-operator are both Shield's and both manage Organizations and their RBAC. organization-operator already runs on controller-runtime. rbac-operator has moved one of its five controllers ([rbac-operator#683](https://github.com/giantswarm/rbac-operator/pull/683)); the other four still run on operatorkit ([roadmap#3056](https://github.com/giantswarm/roadmap/issues/3056)). We move those four into organization-operator and retire rbac-operator.
 
 ```mermaid
 flowchart LR
-  subgraph today["rbac-operator 1.2"]
-    D1[default-namespace]
-    D2[rbac]
-    D3[cluster-namespace]
-    D4[crossplane]
-    D5[RoleBindingTemplate]
+  subgraph rbac["rbac-operator (retired)"]
+    R1[Customer admin bindings]
+    R2[Automation ServiceAccounts]
+    R3[Derived read grants]
+    R4[RoleBindingTemplate]
+    R5[Cluster namespaces, Crossplane]
   end
-  subgraph merged["organization-operator"]
-    M1[Organization: namespace, label, read role, derived grants]
-    M2[RoleBindingTemplate, same API]
-    M3[Catalogue: aggregated roles, bind resourceNames]
-    M4[membership reader]
+  subgraph org["organization-operator"]
+    O1[Organization: namespace, label, bindings]
+    O2[Role catalogue and aggregation]
+    O3[Membership reader]
+    O4[RoleBindingTemplate]
   end
-  D5 --> M2
-  D1 --> M1
-  D2 --> M1
-  D3 -->|while cluster namespaces exist| M1
-  D4 --> M3
+  R1 --> O1
+  R2 --> O1
+  R3 --> O1
+  R4 --> O4
+  R5 --> O1
 ```
 
-- **CRDs.** `Organization` (`security.giantswarm.io`) and `RoleBindingTemplate` (`auth.giantswarm.io`) keep their API groups and versions. No consumer changes.
-- **Carried over unchanged.** RoleBindingTemplate; the `automation` ServiceAccounts with their bindings; the Flux bindings (scope reviewed, see Prerequisites); release and catalog read grants; the derived grants; `write-organizations`; the Crossplane and CAPA bindings; app-operator RBAC in cluster namespaces while those exist; the `org-giantswarm` protection; the legacy `customer` label.
+The CRDs do not change: `Organization` stays in `security.giantswarm.io`, `RoleBindingTemplate` in `auth.giantswarm.io`.
 
-### The contract a platform follows
+What the merged operator does for each Organization:
 
-The merged operator is what every platform reuses. It relies on Kubernetes [aggregated ClusterRoles](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#aggregated-clusterroles) and the [`bind` verb](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#restrictions-on-role-binding-creation-or-update), not on a new API.
+1. Creates the namespace with the label `giantswarm.io/organization`. That label is the one and only definition of an Organization namespace.
+2. Creates the Organization's read role and the derived grants: everyone bound in the namespace may `get` the Organization and read releases and catalogs. This is how happa and Backstage list a person's Organizations.
+3. Applies the RoleBindingTemplates that match.
+4. Keeps the `bind` list of `organization:admin` in sync with the labelled roles.
 
-1. A platform ships its ClusterRoles in its own chart, named `<capability>:<level>`. Each carries the label `organization.giantswarm.io/role: "true"` and the `organization.giantswarm.io/aggregate-to-<level>` labels of the roles it joins. `user` roles also carry `rbac.authorization.k8s.io/aggregate-to-view` and `editor` roles `aggregate-to-edit`, so the built-in `view`, `edit` and `admin` roles keep working for customers who bind those.
-2. The operator owns the aggregated roles: `organization:*`, `platform:*` and the personas. A labelled role joins them with no change to the operator. The operator ignores a labelled role whose name is not `<capability>:<level>` with a known level.
-3. The operator keeps the `bind` `resourceNames` of `organization:admin` in sync with the labelled roles. Kubernetes' escalation checks do the rest.
-4. For each Organization, the operator creates the namespace with the `giantswarm.io/organization` label (the only definition of an Organization namespace), the `organization-<org>-read` role, the derived grants, and the default bindings from RoleBindingTemplates.
-5. Runtime checks use `SubjectAccessReview`. Projections use the membership reader.
+### What stays exactly as it is
 
-The test of this design: Bumblebee adds `agent-platform:*`, and later Atlas adds `observability:*`, with changes to their own charts only.
+- The customer `write_all` groups keep `cluster-admin` on the whole management cluster. Narrowing that is a separate security decision. `platform:admin` is offered next to it for installations that want a narrower admin.
+- The `automation` ServiceAccounts, in `default` and in every Organization namespace, with all their current bindings.
+- RoleBindingTemplate, with the same API.
+- Flux bindings, Crossplane and CAPA bindings, the `org-giantswarm` protection, the legacy `customer` label, and cluster namespaces while they exist.
+- Teleport and the Giant Swarm staff groups.
+- Session shares, workspace grants, klaus-gateway grants and allowlists.
 
-### Workload clusters
+## Two steps: agent platform first, then KaaS
 
-A workload cluster's admin bindings are composed from the Organization's `cluster:admin` bindings through the membership reader, in both places that write them today: dex-operator (`<cluster>-default-auth-config`) and cluster-manager (at creation). The `rbac-bootstrap` format already takes users and groups, so `User` subjects are projected too. Customer `rbacBootstrap` overrides stay; the operator should keep the Giant Swarm `view` bindings when a customer overrides the list. Client certificates require `cluster:admin`.
-
-## Follow-up: observability
-
-Observability is not Organization-shaped today: a `GrafanaOrganization` holds its own group lists and several tenants, nothing links a tenant to an Organization, `org_mapping` is written only on management clusters, the Teleport sign-in path makes staff Admin of two Grafana organizations regardless of those lists, and writing into a tenant is open to anyone who can label a workload. Mapping Organizations onto Grafana organizations and tenants is a product decision for Atlas.
-
-This RFC gives Atlas the contract: ship `observability:viewer/editor/admin` with the labels above, and project Grafana roles through the membership reader. The mapping rule, the Teleport path and tenant write scoping are theirs to decide in a follow-up RFC.
-
-## Capability check
-
-Every capability we have today and where it goes. "Decide" rows need an answer before approval.
-
-| Today | In this proposal | Status |
-|---|---|---|
-| RoleBindingTemplate | Same CRD, merged operator | Kept |
-| Customer `write_all` groups: cluster-admin cluster-wide and per Organization | Unchanged. `platform:admin` offered next to it | Kept |
-| `read-all` | `platform:auditor` | Mapped |
-| Automation ServiceAccounts with cluster-wide extras | Unchanged | Kept |
-| Flux as cluster-admin in Organization namespaces | A per-Organization Flux ServiceAccount at editor level; Giant Swarm-owned Flux objects get their own | Changed |
-| Derived grants: Organization `get`, releases, catalogs for every bound subject | Kept in the operator | Kept |
-| `read-in-cluster-ns`, `write-in-cluster-ns`, app-operator RBAC in cluster namespaces | `cluster:user` / `cluster:editor`; kept while cluster namespaces exist | Mapped |
-| App configuration Secrets written through `write-in-cluster-ns` | `cluster:editor` has no Secrets. Options: External Secrets or SOPS only, or create without read | **Decide** |
-| `write-organizations` | Kept, next to `platform:admin` | Kept |
-| `write-client-certificates`, kubectl-gs client certificates | `cluster:admin` only | Mapped |
-| `write-aws-cluster-role-identity`, `crossplane-edit` | Carried over for `write_all`; a capability role if an owner wants one | Kept |
-| Workload-cluster admin from dex-operator and cluster-manager | From `cluster:admin` bindings, through the membership reader, users included | Changed |
-| Customer `rbacBootstrap` overrides | Kept; Giant Swarm `view` bindings preserved | Kept |
-| Do workload-cluster roles follow Organization bindings or stay per cluster | | **Decide** |
-| `agent-platform:platform-user` for every signed-in person in `kagent` | Kept. Whether `system:authenticated` (which includes ServiceAccounts) stays the subject | **Decide** |
-| muster `mcpserver-viewer`, `mcpserver-editor`, `workflow-editor` | `agent-platform:user` and `:editor` | Mapped |
-| Agent identity and the both-must-allow rule | `agent-platform:agent` | Mapped |
-| Machine callers and session readers (TokenReview allowlists) | Unchanged | Kept |
-| workspace-manager members by group, email and domain | RoleBindings, once Workspaces move. Domain membership is dropped; an IdP group per domain replaces it | Changed |
-| toolchain-manager owners | A RoleBinding on toolchain sources in the platform tenant | Changed |
-| Session shares, workspace grants, klaus-gateway grants and allowlists | Unchanged, not membership | Kept |
-| `models.<domain>` open to any Dex token; API keys reach every model | Out of scope here; tracked in giantswarm#37742 | Open |
-| Grafana roles, tenants, silences, Alertmanager configuration | Follow-up RFC by Atlas | Follow-up |
-| Teleport and Giant Swarm staff groups | Unchanged | Kept |
-
-## Prerequisites
-
-Before any new role ships:
-
-0. dex-operator's binding filter is fixed and its projection includes users.
-1. Workload-cluster admin bindings come only from `cluster:admin` bindings, through the membership reader, in dex-operator and cluster-manager.
-2. In Organization namespaces, Flux runs only as the Organization's Flux ServiceAccount: `--default-service-account`, `--no-cross-namespace-refs`, and a stricter `flux-multi-tenancy` policy. Without this, editor is the same as admin.
-3. One definition of an Organization namespace, the label. muster, Backstage, agent-manager's workload-cluster target and rbac-operator's key package drop the `org-` prefix rule.
-4. One group spelling: the Dex connector-prefixed form. kagent stops re-applying a prefix; `oidc:` bindings on workload clusters are rewritten, with a report per installation.
-5. Workspaces move to the Organization namespace.
-
-## Migration
+The agent platform is the smaller, younger surface and already has the roles. Its managers are the problem: workspace-manager, toolchain-manager and cluster-manager each decide access on their own, apart from the platform's RBAC. We fix that first, inside Bumblebee's charts, without touching rbac-operator. Then Shield does the operator merge and the KaaS roles with a working example to copy.
 
 ```mermaid
-flowchart TD
-  S0[0. dex-operator filter fix, users added] --> S1[1. Merged operator, same behaviour; retire rbac-operator]
-  S1 --> S2[2. Catalogue and aggregated roles next to today's roles]
-  S2 --> S3[3. platform:admin available through RoleBindingTemplate]
-  S3 --> S4[4. Consumers move to SubjectAccessReview or the reader]
-  S4 --> S5[5. Old role names removed after one cycle with no bindings]
+flowchart LR
+  subgraph step1["Step 1: agent platform (Bumblebee)"]
+    A1[Label agent-platform:* for aggregation]
+    A2[workspace-manager: list → SubjectAccessReview on Workspaces]
+    A3[toolchain-manager: owners → SubjectAccessReview on toolchain sources]
+    A4[cluster-manager: own binding read → SubjectAccessReview, reader later]
+    A5[muster, Backstage, agent-manager: label, not org- prefix]
+  end
+  subgraph step2["Step 2: KaaS (Shield)"]
+    B1[Merge rbac-operator into organization-operator]
+    B2[Ship cluster:*, organization:*, platform:*]
+    B3[Membership reader; dex-operator and cluster-manager use it]
+    B4[Old role names removed after one cycle unused]
+  end
+  step1 --> step2
 ```
 
-1. Ship the merged operator with the current behaviour and retire rbac-operator.
-2. Ship the catalogue and aggregated roles next to today's roles. Existing role names aggregate into the new ones, so current bindings keep working.
-3. Offer `platform:admin` through a RoleBindingTemplate for installations that want a narrower admin than `write_all`.
-4. Move each consumer: dex-operator and cluster-manager to the reader; muster and workspace-manager to `SubjectAccessReview`. Remove their group-list values.
+**Step 1, agent platform.** Everything here is a Bumblebee chart or binary:
+
+1. The `agent-platform:*` ClusterRoles get the aggregation labels. Nothing consumes them yet; they are ready for Step 2.
+2. workspace-manager moves Workspaces into the Organization namespace and replaces its `organizations` list with a `SubjectAccessReview` on `workspaces` in that namespace. Domain membership goes; a customer who used it binds an IdP group instead.
+3. toolchain-manager replaces its `owners` list with a `SubjectAccessReview` on toolchain sources in the platform tenant, bound to `agent-platform:editor`.
+4. cluster-manager stops reading `cluster-admin` RoleBindings itself. Until the membership reader exists, it asks the API server whether the caller holds `cluster-admin` in the Organization; in Step 2 it switches to the reader.
+5. muster, Backstage and agent-manager recognise an Organization namespace by the label only. kagent stops adding a groups prefix.
+6. The agentlab two-Organization proof (giantswarm/agentlab#166) is extended: a person bound in one Organization gets exactly that Organization's agents, Workspaces and toolchains, and is refused on the other's.
+
+After Step 1, every agent-platform decision is an API-server decision on the `agent-platform:*` roles. No list of people remains in Bumblebee's code.
+
+**Step 2, KaaS.** Shield's work, using Step 1 as the template:
+
+1. Merge the four remaining rbac-operator controllers into organization-operator, same behaviour, and retire rbac-operator.
+2. Ship `cluster:*`, `organization:*`, `platform:*` and `platform:auditor` next to the old names. Old names aggregate into the new ones.
+3. Add the membership reader. dex-operator and cluster-manager use it for workload-cluster admins.
+4. Offer `platform:admin` through a RoleBindingTemplate for installations that want it.
 5. Remove old role names after one release cycle with no bindings left.
+
+## What changes for customers
+
+**Nothing, until they opt in.** The new roles ship next to the existing ones. Existing role names (`read-all`, `write-in-cluster-ns`, `cluster-admin` in an Organization namespace) aggregate into the new roles, so every binding a customer has today keeps working.
+
+What they gain, when they want it:
+
+- They can bind `organization:admin` to Alice in `org-payments`, and Alice is admin of Payments only: its clusters, its apps, its agents, its workload clusters.
+- They can bind `cluster:user` to a team that should see clusters without touching them, instead of copying the recipe from our docs.
+- Alice, as `organization:admin`, can create her own RoleBindings in `org-payments` to any catalogue role, without a ticket to Giant Swarm.
+- They can write their own Roles inside their Organization namespace, limited to rights they already hold.
+- One `kubectl get rolebindings -n org-payments` shows every member of Payments, for every platform.
+
+What they need to do, and when:
+
+| Step | What the customer sees | What they do |
+|---|---|---|
+| Step 1 ships | Workspaces and toolchains follow the `agent-platform:*` bindings. A customer who listed people by email or domain in workspace-manager values gets a report of who loses access | Bind those people or an IdP group to `agent-platform:user` in the Organization |
+| Merged operator ships | Nothing changes | Nothing |
+| New KaaS roles ship | New ClusterRoles appear; old ones still work | Nothing, or start binding the new roles |
+| Workload-cluster admins come from `cluster:admin` only | A group bound to `read-all` in an Organization is no longer admin on its workload clusters (it never should have been). We send a report per installation listing affected bindings before the change | Rebind that group to `cluster:admin` if it was intended |
+| Group spelling is unified | Bindings that use the `oidc:` prefix on workload clusters are rewritten. We send a report per installation | Review the report |
+| Old role names are removed | One release cycle after no binding uses them | Nothing, if they migrated |
+
+Customer CI that uses an `automation` token is not affected. Customers who override `rbacBootstrap` on their workload clusters keep their overrides.
+
+## What changes for Giant Swarm teams
+
+| Team | Step | What they do |
+|---|---|---|
+| Bumblebee | 1 | Label `agent-platform:*`; move workspace-manager, toolchain-manager and cluster-manager to `SubjectAccessReview` and remove their lists; make muster, Backstage and agent-manager use the label; stop kagent re-applying a groups prefix; move Workspaces into the Organization namespace; extend the agentlab proof |
+| Shield | 2 | Merge the four rbac-operator controllers into organization-operator; ship `cluster:*`, `organization:*`, `platform:*`; fix dex-operator's binding filter and make it read users as well as groups; add the membership reader and move dex-operator and cluster-manager to it |
+| Honeybadger | 2 | Define what `cluster:editor` may do with apps and app configuration Secrets (see below) |
+| Atlas | later | An RFC of their own: `observability:*` roles and how an Organization maps to Grafana organizations and tenants |
+
+Atlas is not in this RFC because observability is not Organization-shaped yet: a `GrafanaOrganization` holds its own group lists and several tenants, nothing links a tenant to an Organization, and the Teleport sign-in makes staff Admin of two Grafana organizations regardless. Deciding that mapping is a product decision, not a side effect of this RFC.
+
+## What must be true before Step 2 ships
+
+1. dex-operator's binding filter is fixed, and it projects users as well as groups. (The bug today: any binding to any ClusterRole counts as admin.)
+2. Workload-cluster admins come only from `cluster:admin` bindings, through the membership reader.
+3. Flux in Organization namespaces runs only as the Organization's Flux ServiceAccount (`--default-service-account`, `--no-cross-namespace-refs`, a stricter `flux-multi-tenancy` policy). Without this, an editor who can write a Flux object is an admin.
+4. Every program uses the label to recognise an Organization namespace (done for the agent platform in Step 1; the operator's own key package follows).
+5. One group spelling, the Dex form `<connector>:<group>`.
+
+## Still to decide
+
+1. **App configuration Secrets.** Today `write-in-cluster-ns` lets an editor read and write the Secrets that configure apps. `cluster:editor` has no Secrets. Options: External Secrets or SOPS only, or create-without-read. Owner: Honeybadger.
+2. **Workload-cluster roles.** Do `cluster:user` and `cluster:editor` also mean something on the workload cluster itself, or only on the management cluster? Owner: Shield.
+3. **The agent role.** An agent runs as a ServiceAccount, but today every agent in an Organization shares the WorkerPool's ServiceAccount, and kagent does not review an agent as a subject. The T9 proposal on giantswarm#36698 (review a call as the person and as the agent, both must allow) needs one ServiceAccount per agent first. Owner: Bumblebee.
+4. **`system:authenticated` as the platform tenant's subject.** It includes every ServiceAccount on the cluster. Keep, or bind a narrower group? Owner: Bumblebee.
 
 ## Alternatives considered
 
-- **A relationship store (OpenFGA or similar).** Rejected in the agent-permissions plan (giantswarm/bumblebee-plans#78): a second source of truth next to Kubernetes RBAC.
-- **A membership CRD on the Organization.** Rejected: it would be a copy of the RoleBindings and would need its own authorizer.
-- **A `giantswarm:` prefix on role names.** Not needed: Kubernetes reserves only `system:`, discovery is by label, and the existing `agent-platform:*` bindings are few. The operator guards against malformed names instead.
-- **Replacing `write_all` with `platform:admin` now.** Deferred: it changes what every customer admin can do outside Organization namespaces and needs a security decision of its own.
-
-## Open questions
-
-- Do we need a team below the Organization, or is the Organization the team and the cost centre?
-- Do workload-cluster roles follow Organization bindings, or stay per cluster?
-- Who should see the Shared Org and the `giantswarm` tenant? (Carried to the observability follow-up.)
-- MCP server and workspace app grants differ, and there is no per-agent limit yet. Does that need a role?
+- **A relationship store (OpenFGA or similar).** Rejected in the agent-permissions plan (giantswarm/bumblebee-plans#78): it would be a second source of truth next to Kubernetes RBAC.
+- **A members list on the Organization CR.** Rejected: a copy of the RoleBindings that would need its own authorizer.
+- **A `giantswarm:` prefix on role names.** Not needed. Kubernetes reserves only `system:`, discovery is by label, and the existing `agent-platform:*` bindings are few. The operator ignores a labelled role whose name is malformed.
+- **Replacing `write_all` with `platform:admin` now.** Deferred: it changes what customer admins can do outside Organization namespaces and needs a security decision of its own.
+- **Doing KaaS first.** Rejected: the operator merge is the larger change, and the agent platform already has the roles. Starting there gives Shield a working example and removes the lists that hurt customers today.
 
 ## References
 
-- [Authorization in the platform API](https://docs.giantswarm.io/tutorials/access-management/authorization/) (today's documented roles and automation)
-- [Agent permissions PRD](https://github.com/giantswarm/bumblebee-plans/blob/main/agent-permissions/PRD.md) (giantswarm/bumblebee-plans#78)
-- [Human permissions on agents](https://github.com/giantswarm/giantswarm/issues/36698), including the T9 decision on agent identity
+- [Authorization in the platform API](https://docs.giantswarm.io/tutorials/access-management/authorization/): today's documented roles and automation
+- [Agent permissions PRD](https://github.com/giantswarm/bumblebee-plans/blob/main/agent-permissions/PRD.md), giantswarm/bumblebee-plans#78
+- [Human permissions on agents](https://github.com/giantswarm/giantswarm/issues/36698), including the T9 proposal on agent identity
 - [rbac-operator migration to kubebuilder](https://github.com/giantswarm/roadmap/issues/3056), [rbac-operator#683](https://github.com/giantswarm/rbac-operator/pull/683)
 - Kubernetes: [aggregated ClusterRoles](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#aggregated-clusterroles), [restrictions on role binding creation](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#restrictions-on-role-binding-creation-or-update)
-- [Miro board](https://miro.com/app/board/uXjVEVa-IFw=): inventory with sources, drift, and the earlier role proposals
+- [Miro board](https://miro.com/app/board/uXjVEVa-IFw=): inventory with sources, drift, earlier proposals
 
 ## Decisions
 
@@ -340,7 +288,7 @@ A split role is aggregated back under its old name, so existing bindings keep wo
 
 ### 2026-10-27 Role names keep the capability:level form without a gs: prefix
 
-This matches the existing `agent-platform:*` roles. Discovery is by label; the operator ignores malformed names.
+This matches the existing `agent-platform:*` roles. Discovery is by label.
 
 ### 2026-10-27 Harnesses stay in the kagent namespace for everyone
 
@@ -358,45 +306,105 @@ Every subject bound in an Organization namespace keeps `get` on the Organization
 
 This RFC covers the management cluster, workload clusters and the agent platform. Atlas maps Organizations onto Grafana organizations and tenants in their own RFC.
 
-## Appendix A: role inventory
+### 2026-10-27 The agent platform goes first
 
-Every role and membership list that exists today. Source is `repo:path` on `main`, 2026-10-27.
+Step 1 aligns the agent platform's managers on the `agent-platform:*` roles inside Bumblebee's charts. Step 2 merges the operators and adds the KaaS roles.
 
-| Role or list | System | Grants | Subjects come from | Organization-aware | Source |
+## Appendix A: everything that grants access today
+
+From code on `main`, 2026-10-27. Source is `repo:path`.
+
+| Role or list | System | Grants | Subjects come from | Per Organization? | Source |
 |---|---|---|---|---|---|
-| `Organization` CR and `org-<name>` namespace | KaaS MC | Namespace with the `giantswarm.io/organization` label; spec is empty | Whoever holds `write-organizations` | Per org | organization-operator |
-| `write-all-customer-group` (ClusterRoleBinding) | KaaS MC | `cluster-admin` on the whole MC | `oidc.customer.write_all_groups` | Installation | rbac-operator: defaultnamespace/resource/usergroups |
-| `write-all-customer-group` (RoleBinding in every org namespace) | KaaS MC | `cluster-admin` | Same groups | Installation | rbac-operator: rbac/resource/namespaceauth |
-| `write-all-giantswarm-group` | KaaS MC | `cluster-admin` | `oidc.giantswarm.write_all_groups` | Installation | rbac-operator: usergroups |
-| `read-all`, `read-all-customer-group` | KaaS MC | get, list, watch on everything except Secrets and ConfigMaps | customer `write_all` and `read_all` groups | Installation | rbac-operator: clusterroles |
-| `write-organizations` | KaaS MC | All verbs on Organizations | customer `write_all`, `default/automation` | Installation | rbac-operator: usergroups |
-| `organization-<org>-read` | KaaS MC | `get` on that Organization | Every subject bound in the org namespace | Per org | rbac-operator: externalresources |
-| `read-in-cluster-ns`, `write-in-cluster-ns` | KaaS MC | Marker roles; apps, ConfigMaps and Secrets in cluster namespaces | Copied from `read-all` and `cluster-admin` bindings | Per org | rbac-operator: clusternamespace |
-| `read-releases`, `read-default-catalogs` | KaaS MC | Read releases and catalogs | Every subject bound in any org namespace | Per org | rbac-operator: externalresources |
-| `automation` ServiceAccount | KaaS MC | `cluster-admin` per org; cluster-wide `write-silences`, `write-policy-exceptions`, `write-client-certificates`, `cluster-app-chart-lookups`, `kamaji-datastore-manager`, `crossplane-edit`; `patch-charts` | Fixed; token minted by anyone admin in the namespace | Installation | rbac-operator: automationsa, rbac/resource/automation |
-| `write-flux-resources` | KaaS MC | Flux CRs (API group misspelled) | Nobody | Not aware | rbac-operator: clusterroles |
-| `RoleBindingTemplate` | KaaS MC | Any RoleBinding stamped into matching Organizations | Whoever writes the template | Per org | rbac-operator: rolebindingtemplate |
-| Flux bindings | KaaS MC | `cluster-admin` in every org namespace, `crd-controller` | Flux controller ServiceAccounts | Not aware | rbac-operator: fluxauth |
-| `crossplane-edit` | KaaS MC | Crossplane edit | customer `write_all`, every automation SA | Installation | rbac-operator: crossplane |
-| app-operator RBAC per cluster namespace | KaaS MC | Apps and catalogs for that namespace's app-operator | Operator-internal | Not aware | rbac-operator: clusternamespace |
-| WC admin bindings | Workload cluster | `cluster-admin` | `write_all` groups plus Group subjects bound in the org namespace | Per org | dex-operator: pkg/auth/auth.go |
-| WC admin bindings at creation | Workload cluster | `cluster-admin` | Creator plus `cluster-admin` subjects in the org namespace | Per org | cluster-manager: internal/tools/cluster_rbac.go |
-| `view-0`, `cluster-reader` | Workload cluster | view plus nodes, PVs, CRDs | Four hard-coded GS groups | Not aware | cluster chart: rbac-bootstrap |
-| Customer `rbacBootstrap` values | Workload cluster | Anything | Customer values, replace the list whole | Per org | cluster chart |
-| kubectl-gs client certificates | Workload cluster | Any group | Whoever reads the cluster CA Secret | Per org | kubectl-gs: cmd/login |
-| Teleport `giantswarm` role | Fleet | `system:masters`, impersonate any user or role | GitHub team `giantswarm/employees` | Not aware | teleport-fleet |
-| `agent-platform:user/editor/admin` | Agent platform | See and run agents; write agents; models, egress, RoleBindings | RoleBindings created by hand per org | Per org | agent-platform: connectivity/templates/tenants |
-| `agent-platform:platform-user`, editors in `kagent` | Agent platform | Platform agents for everyone; platform team edits | `tenants.platform.users`, `.editors`, `tenants.platformTeam` | Platform tenant | agent-platform: tenants/platform-tenant.yaml |
+| `Organization` CR and `org-<name>` namespace | KaaS MC | Namespace with the `giantswarm.io/organization` label; spec is empty | Whoever holds `write-organizations` | Yes | organization-operator |
+| `write-all-customer-group` (ClusterRoleBinding) | KaaS MC | `cluster-admin` on the whole MC | `oidc.customer.write_all_groups` | No | rbac-operator: defaultnamespace/resource/usergroups |
+| `write-all-customer-group` (RoleBinding in every org namespace) | KaaS MC | `cluster-admin` | Same groups | No | rbac-operator: rbac/resource/namespaceauth |
+| `write-all-giantswarm-group` | KaaS MC | `cluster-admin` | `oidc.giantswarm.write_all_groups` | No | rbac-operator: usergroups |
+| `read-all`, `read-all-customer-group` | KaaS MC | get, list, watch on everything except Secrets and ConfigMaps | customer `write_all` and `read_all` groups (`read_all` is never set by shared-configs) | No | rbac-operator: clusterroles |
+| `write-organizations` | KaaS MC | All verbs on Organizations | customer `write_all`, `default/automation` | No | rbac-operator: usergroups |
+| `organization-<org>-read` | KaaS MC | `get` on that Organization | Every subject bound in the org namespace | Yes | rbac-operator: externalresources |
+| `read-in-cluster-ns`, `write-in-cluster-ns` | KaaS MC | Marker roles; apps, ConfigMaps and Secrets in cluster namespaces | Copied from `read-all` and `cluster-admin` bindings | Yes | rbac-operator: clusternamespace |
+| `read-releases`, `read-default-catalogs` | KaaS MC | Read releases and catalogs | Every subject bound in any org namespace | Yes | rbac-operator: externalresources |
+| `automation` ServiceAccount | KaaS MC | `cluster-admin` per org; cluster-wide `write-silences`, `write-policy-exceptions`, `write-client-certificates`, `cluster-app-chart-lookups`, `kamaji-datastore-manager`, `crossplane-edit`; `patch-charts` | Fixed; token minted by anyone admin in the namespace | No | rbac-operator: automationsa, rbac/resource/automation |
+| `write-flux-resources` | KaaS MC | Flux CRs (API group misspelled) | Nobody | No | rbac-operator: clusterroles |
+| `RoleBindingTemplate` | KaaS MC | Any RoleBinding stamped into matching Organizations | Whoever writes the template | Yes | rbac-operator: rolebindingtemplate |
+| Flux bindings | KaaS MC | `cluster-admin` in every org namespace, `crd-controller` | Flux controller ServiceAccounts | No | rbac-operator: fluxauth |
+| `crossplane-edit` | KaaS MC | Crossplane edit | customer `write_all`, every automation SA | No | rbac-operator: crossplane |
+| app-operator RBAC per cluster namespace | KaaS MC | Apps and catalogs for that namespace's app-operator | Operator-internal | No | rbac-operator: clusternamespace |
+| WC admin bindings | Workload cluster | `cluster-admin` | `write_all` groups plus Group subjects bound in the org namespace (filter bug: any ClusterRole counts) | Yes | dex-operator: pkg/auth/auth.go |
+| WC admin bindings at creation | Workload cluster | `cluster-admin` | Creator plus `cluster-admin` subjects in the org namespace | Yes | cluster-manager: internal/tools/cluster_rbac.go |
+| `view-0`, `cluster-reader` | Workload cluster | view plus nodes, PVs, CRDs | Four hard-coded GS groups | No | cluster chart: rbac-bootstrap |
+| Customer `rbacBootstrap` values | Workload cluster | Anything | Customer values, replace the list whole | Yes | cluster chart |
+| kubectl-gs client certificates | Workload cluster | Any group | Whoever reads the cluster CA Secret | Yes | kubectl-gs: cmd/login |
+| Teleport `giantswarm` role | Fleet | `system:masters`, impersonate any user or role | GitHub team `giantswarm/employees` | No | teleport-fleet |
+| `agent-platform:user/editor/admin` | Agent platform | See and run agents; write agents; models, egress, RoleBindings | RoleBindings created by hand per org | Yes | agent-platform: connectivity/templates/tenants |
+| `agent-platform:platform-user`, editors in `kagent` | Agent platform | Platform agents for everyone; platform team edits | `tenants.platform.users` (`system:authenticated`), `.editors`, `tenants.platformTeam` | Platform tenant | agent-platform: tenants/platform-tenant.yaml |
 | muster `mcpserver-viewer`, `mcpserver-editor`, `workflow-editor` | Agent platform | List and write MCPServers and Workflows | `tenants.platform.users`, muster `rbac.*.subjects` | Platform tenant | muster chart |
-| kagent authorizer, sessions, shares | Agent platform | SubjectAccessReview per call; share tokens | Kubernetes RBAC plus runtime shares | Per org | kagent-upstream: go/core/pkg/auth |
+| kagent authorizer, sessions, shares | Agent platform | SubjectAccessReview per call; share tokens | Kubernetes RBAC plus runtime shares | Yes | kagent-upstream: go/core/pkg/auth |
+| WorkerPool and Flux ServiceAccounts per org | Agent platform | Flux SA bound to the tenant Flux ClusterRole; WorkerPool SA has no binding | Copied by agent-manager's tenant reconciler | Yes | agent-manager: internal/tenants |
 | Machine callers, session readers | Agent platform | ServiceAccount allowlists by TokenReview | agent-platform values | Platform | kagent-extensions, kagent |
-| workspace-manager organizations | Agent platform | Create and use Workspaces | Groups, emails, domains in values | Not aware | workspace-manager: internal/workspace/access.go |
-| toolchain-manager owners | Agent platform | Approve toolchain sources | Groups and emails in values | Not aware | toolchain-manager: internal/sources |
-| klaus-gateway allowlist, thread grants, allowed callers | Agent platform | Who may talk to an agent in Slack | Channel IDs, runtime grants, SA list | Not aware | klaus-gateway: pkg/channels/slack |
-| `models.<domain>` JWT policy, llmRouting API keys | Agent platform | Any model | Any Dex token with the audience; API keys | Not aware | agent-platform: connectivity |
-| Backstage permission policy | Portal | Allow all; data access as the person | Sign-in resolver | Not aware | backstage: packages/backend |
-| Dex group prefix | Identity | Groups become `connectorId:group` | Connector IDs | Not aware | giantswarm/dex: server/handlers.go |
-| `GrafanaOrganization` Admin, Editor, Viewer | Observability | Grafana org role | Group strings in `spec.rbac` | Not aware | observability-operator |
-| Default Grafana orgs: Giant Swarm, Shared Org, Giant Swarm Security | Observability | Shared Org viewer for everyone | shared-configs values | Installation | shared-configs |
-| Grafana Teleport sign-in | Observability | Admin of Shared Org and Giant Swarm | Any valid Teleport token | Not aware | shared-configs: grafana |
-| Tenant write, Silences, Alertmanager config | Observability | Ship data into a tenant; silence; configure | Anyone who can label a workload or create the object | Not aware | observability-operator, silence-operator |
+| workspace-manager organizations | Agent platform | Create and use Workspaces (all in `kagent`) | Groups, emails, domains in values | No | workspace-manager: internal/workspace/access.go |
+| toolchain-manager owners | Agent platform | Approve toolchain sources | Groups and emails in values | No | toolchain-manager: internal/sources |
+| klaus-gateway allowlist, thread grants, allowed callers | Agent platform | Who may talk to an agent in Slack | Channel IDs, runtime grants, SA list | No | klaus-gateway: pkg/channels/slack |
+| `models.<domain>` JWT policy, llmRouting API keys | Agent platform | Any model | Any Dex token with the audience; API keys | No | agent-platform: connectivity |
+| Backstage permission policy | Portal | Allow all; data access as the person | Sign-in resolver | No | backstage: packages/backend |
+| Dex group prefix | Identity | Groups become `connectorId:group` | Connector IDs | No | giantswarm/dex: server/handlers.go |
+| `GrafanaOrganization` Admin, Editor, Viewer | Observability | Grafana org role | Group strings in `spec.rbac` | No | observability-operator |
+| Default Grafana orgs: Giant Swarm, Shared Org, Giant Swarm Security | Observability | Shared Org viewer for everyone | shared-configs values | No | shared-configs |
+| Grafana Teleport sign-in | Observability | Admin of Shared Org and Giant Swarm | Any valid Teleport token | No | shared-configs: grafana |
+| Tenant write, Silences, Alertmanager config | Observability | Ship data into a tenant; silence; configure | Anyone who can label a workload or create the object | No | observability-operator, silence-operator |
+
+## Appendix B: special cases that must keep working
+
+- `org-giantswarm` is protected: no customer admin binding, and only `flux-system` or same-namespace ServiceAccounts through RoleBindingTemplates.
+- Namespaces with the legacy `customer` label are still Organization namespaces.
+- Cluster namespaces (`giantswarm.io/organization` plus `giantswarm.io/cluster`) exist on older installations. The Organization is resolved by name, then by the annotation `ui.giantswarm.io/original-organization-name`.
+- Organization names starting with `default`, `kube-`, `monitoring`, `gatekeeper` or `draughtsman` are refused.
+- On CAPA, customer admins hold `write-aws-cluster-role-identity`. Where Crossplane is installed, customer admins and every automation ServiceAccount hold `crossplane-edit`.
+- happa and Backstage discover a person's Organizations through `get` on each `organizations/<name>`, not through `list`.
+- Teleport refuses to impersonate customer groups, so Backstage's Clusters page checks access with `SubjectAccessReview`.
+- Workload clusters: `rbac-bootstrap` is on for AWS and Azure and off for EKS. A customer's `rbacBootstrap` values replace the whole binding list, which drops the Giant Swarm `view` bindings. kubectl-gs client certificates can carry any group, including `system:masters`.
+- The platform tenant (`kagent` namespace) is bound to `system:authenticated`, which includes every ServiceAccount.
+- `models.<domain>` accepts any Dex token with audience `dex-k8s-authenticator` for any model (giantswarm#37742).
+
+## Appendix C: drift found on the way
+
+- `write-flux-resources` has a misspelled API group and is bound to nobody.
+- `read_all_groups` is a rbac-operator value that shared-configs never passes.
+- `write-silences` covers only the legacy v1alpha1 Silence group and is bound only to the automation ServiceAccount.
+- The agent-platform values say `tenants.platform.users` binds `agent-platform:user`; the template binds `platform-user`.
+- `kamaji-datastore-manager` is bound to every automation ServiceAccount but no definition of the role was found.
+- The docs recipe for an automation token expects a token Secret that no longer exists.
+- Ten security findings were reviewed and eight confirmed in code. They are tracked through the security process, not here.
+
+## Appendix D: capability check
+
+Every capability we have today and where it goes.
+
+| Today | In this proposal | Status |
+|---|---|---|
+| RoleBindingTemplate | Same CRD, merged operator | Kept |
+| Customer `write_all` groups | Unchanged; `platform:admin` offered next to it | Kept |
+| `read-all` | `platform:auditor` | Mapped |
+| Automation ServiceAccounts with cluster-wide extras | Unchanged | Kept |
+| Flux as cluster-admin in Organization namespaces | Per-Organization Flux ServiceAccount at editor level | Changed |
+| Derived grants (Organization `get`, releases, catalogs) | Kept in the operator | Kept |
+| `read-in-cluster-ns`, `write-in-cluster-ns`, app-operator RBAC | `cluster:user` / `cluster:editor`; kept while cluster namespaces exist | Mapped |
+| App configuration Secrets through `write-in-cluster-ns` | `cluster:editor` has no Secrets | Decide |
+| `write-organizations` | Kept, next to `platform:admin` | Kept |
+| `write-client-certificates`, client certificates | `cluster:admin` only | Mapped |
+| `write-aws-cluster-role-identity`, `crossplane-edit` | Carried over for `write_all` | Kept |
+| Workload-cluster admin from dex-operator and cluster-manager | From `cluster:admin` bindings, through the reader, users included | Changed |
+| Customer `rbacBootstrap` overrides | Kept; Giant Swarm `view` bindings preserved | Kept |
+| Workload-cluster roles follow Organization bindings? | | Decide |
+| `agent-platform:platform-user` for every signed-in person | Kept; the subject is to decide | Decide |
+| muster `mcpserver-viewer`, `mcpserver-editor`, `workflow-editor` | `agent-platform:user` and `:editor` | Mapped |
+| Agent as a subject | `agent-platform:agent`; needs one ServiceAccount per agent first | Decide |
+| Machine callers and session readers | Unchanged | Kept |
+| workspace-manager members by group, email and domain | `SubjectAccessReview` on Workspaces in the Organization namespace; domain membership replaced by an IdP group | Changed (Step 1) |
+| toolchain-manager owners | `SubjectAccessReview` on toolchain sources, `agent-platform:editor` | Changed (Step 1) |
+| cluster-manager reads `cluster-admin` bindings itself | `SubjectAccessReview` in Step 1, membership reader in Step 2 | Changed |
+| Session shares, workspace grants, klaus-gateway grants | Unchanged, not membership | Kept |
+| `models.<domain>` open to any Dex token | Out of scope; giantswarm#37742 | Open |
+| Grafana roles, tenants, silences, Alertmanager | Follow-up RFC by Atlas | Follow-up |
+| Teleport and Giant Swarm staff groups | Unchanged | Kept |
