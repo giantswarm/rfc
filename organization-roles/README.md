@@ -296,10 +296,6 @@ Atlas is not in this RFC because observability is not Organization-shaped yet: a
 - Kubernetes: [aggregated ClusterRoles](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#aggregated-clusterroles), [restrictions on role binding creation](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#restrictions-on-role-binding-creation-or-update), [structured authentication configuration](https://kubernetes.io/docs/reference/access-authn-authz/authentication/#using-authentication-configuration)
 - [Miro board](https://miro.com/app/board/uXjVEVa-IFw=): inventory with sources, drift, earlier proposals
 
-## Decisions
-
-None yet. Decisions reached during review are recorded here with their date.
-
 ## Appendix A: everything that grants access today
 
 From code on `main`, 2026-10-27. Source is `repo:path`.
