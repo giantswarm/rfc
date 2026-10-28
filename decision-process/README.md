@@ -6,7 +6,7 @@ last_review_date: 2026-07-16
 owners:
 - https://github.com/orgs/giantswarm/teams/sig-architecture
 - https://github.com/orgs/giantswarm/teams/team-planeteers
-- https://github.com/orgs/giantswarm/teams/team-team
+- https://github.com/orgs/giantswarm/teams/team-up
 state: approved
 summary: This contains the explicit procedure to follow for creating an RFC and having it reviewed. Introduce a structured YAML header for the Markdown file. List of RFCs gets rendered in the handbook.
 ---
