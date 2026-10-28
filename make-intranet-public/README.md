@@ -1,6 +1,11 @@
 ---
 creation_date: 2022-10-18
+last_review_date: 2026-10-27
+owners:
+- https://github.com/orgs/giantswarm/teams/sig-docs
+- https://github.com/orgs/giantswarm/teams/team-team
 state: approved
+summary: Move intranet content that is fine to share into a new public `handbook` repository, served at `handbook.giantswarm.io`, and keep only private content in the `intranet`. The `intranet` search covers both. Doc owners move content when needed at first, then by default for all non-critical docs.
 ---
 
 # Making parts of the intranet public
