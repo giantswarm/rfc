@@ -1,6 +1,11 @@
 ---
 creation_date: 2021-07-19
+last_review_date: 2026-10-27
+owners:
+- https://github.com/orgs/giantswarm/teams/team-phoenix
+- https://github.com/orgs/giantswarm/teams/team-tenet
 state: approved
+summary: Follow the upstream Cluster API model with one version of each controller per management cluster, instead of label-versioned operators in immutable releases. Operators only change infrastructure when a CR changes, and sensible defaults in CR templates replace defaulting and validating admission controllers. Create additional management clusters with CAPI where customers can test major upgrades ahead of time.
 ---
 
 # Road to Cluster API (over the potholes)
