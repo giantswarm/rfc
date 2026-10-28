@@ -1,6 +1,10 @@
 ---
 creation_date: 2022-07-08
+last_review_date: 2026-10-27
+owners:
+- https://github.com/orgs/giantswarm/teams/team-team
 state: approved
+summary: Every regular SIG meeting needs an agenda, a driver, and a note taker, and is canceled if the agenda is empty. Each SIG keeps one long-lived notes document in a shared format, newest notes on top. Drivers review the agenda at least 60 minutes ahead and cover PSAs before discussion topics.
 ---
 
 # SIG Meeting Improvement Initiative
