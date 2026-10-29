@@ -17,7 +17,7 @@ summary: Per-Organization roles for the agent platform. Three roles, agent-platf
 
 - The agent platform needs per-Organization roles. Today nobody can be made admin of the agent platform in one Organization without also getting workload-cluster kubeconfigs and the Organization's `automation` ServiceAccount.
 - We want three roles, `agent-platform:user`, `agent-platform:editor` and `agent-platform:admin`, bound per Organization namespace, and a way of doing it that other teams can reuse for their own capabilities later.
-- A person has a role in an Organization when a RoleBinding in that Organization's namespace says so. No other list of people.
+- A person has a role in an Organization when a RoleBinding in that Organization's namespace says so.
 - Roles are ClusterRoles named `<capability>:<level>` and labelled so an operator knows which ones it may bind. Decisions outside the Kubernetes API are a `SubjectAccessReview` with a fixed verb and resource, which is what kagent-extensions does today.
 - Two questions need Shield's answer before the rest is written: one operator for the bindings, and how admin-written Secrets can live in an Organization namespace next to the workload-cluster kubeconfigs. If the shared namespace cannot be made safe, the fallback is a Bumblebee operator with an `org-<name>-agents` namespace per Organization.
 
