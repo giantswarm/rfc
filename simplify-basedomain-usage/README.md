@@ -1,6 +1,11 @@
 ---
 creation_date: 2023-05-31
-state: approved
+last_review_date: 2026-10-27
+owners:
+- https://github.com/orgs/giantswarm/teams/team-phoenix
+- https://github.com/orgs/giantswarm/teams/team-tenet
+state: obsolete
+summary: Proposes a `giantswarm.io/dns-zone` annotation on `Cluster` CRs for operators that reconcile clusters, and passing `baseDomain` explicitly in `default-apps-*` values instead of the `cluster-values` ConfigMap. No decision was recorded, and the global `baseDomain` value was changed to `global.connectivity.baseDomain` at least in cluster charts.
 ---
 
 # Simplify `baseDomain` usage in our applications
