@@ -48,7 +48,7 @@ Because `PolicyExceptions` are in-cluster resources, they have several advantage
 - Giant Swarm is able to create very flexible policy exceptions, for example, a sweeping emergency exception from a bad customer policy
 - additional optional controls about exceptions can be enforced by Kyverno itself, for example:
   - requiring cryptographic signatures of `PolicyExceptions`
-  - limiting the scope of a `PolicyException`, as in these several [examples](https://kyverno.io/policies/other/policy-for-exceptions/policy-for-exceptions/)
+  - limiting the scope of a `PolicyException`, as in these several [examples](https://github.com/kyverno/policies/tree/fdf9286f25eff1dcf5e83db1eb53f84572df11cc/other/m-q/policy-for-exceptions)
 
 Under this model, whenever a resource requires an exception to a configured Kyverno policy, a `PolicyException` can be created by an end user, a security team, a platform team, Giant Swarm, or others, in accordance with cluster RBAC.
 
@@ -156,7 +156,7 @@ In the proposed setup, this can be achieved by:
     - `PolicyException` creation by their approved automation in any namespace
     - `PolicyException` creation by any RBAC-approved entity only in specific namespaces
     - A combination of the above
-  - Optionally, deploying additional policies ([examples](https://kyverno.io/policies/other/policy-for-exceptions/policy-for-exceptions/)) to limit the scope of the `PolicyExceptions`
+  - Optionally, deploying additional policies ([examples](https://github.com/kyverno/policies/tree/fdf9286f25eff1dcf5e83db1eb53f84572df11cc/other/m-q/policy-for-exceptions)) to limit the scope of the `PolicyExceptions`
 
 This is the recommended approach for most customers, and is the direction in which Team Shield intends to build future automation to simplify exceptions for Giant Swarm applications.
 
@@ -170,7 +170,7 @@ In the proposed setup, a customer can enable this model by:
 
 - Granting users the `PolicyException` creation permission in namespaces where they are intended to work, and
 - Disabling the Shield-provided Kyverno Cluster Policy to allow `PolicyException` creation in all namespaces, and
-  - Optionally, deploying additional policies ([examples](https://kyverno.io/policies/other/policy-for-exceptions/policy-for-exceptions/)) to limit the scope of the `PolicyExceptions` (e.g. so that users can't create an exception with effects beyond their namespace)
+  - Optionally, deploying additional policies ([examples](https://github.com/kyverno/policies/tree/fdf9286f25eff1dcf5e83db1eb53f84572df11cc/other/m-q/policy-for-exceptions)) to limit the scope of the `PolicyExceptions` (e.g. so that users can't create an exception with effects beyond their namespace)
 
 #### Hybrid Exception Models
 
