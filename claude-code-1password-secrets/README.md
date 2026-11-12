@@ -53,11 +53,14 @@ Create a script (e.g., `~/bin/run-claude.sh`) that:
 
 ```sh
 #!/usr/bin/env sh
+VAULT=ai-jonas
+
 set -e
 PROJECT_DIR="$(realpath .)"
 if [ -d "$1" ]
 then
     PROJECT_DIR="$(realpath "$1")"
+    shift
 fi
 
 if [ "$PROJECT_DIR" = "$(realpath "$HOME")" -o "$PROJECT_DIR" = "$(realpath /)" ]
@@ -66,19 +69,18 @@ then
     exit 1
 fi
 
-# GH_TOKEN and similar below contain only paths into the 1Password vault assigned to the service account
-vault=ai-jonas
-account_token="$(op item get --vault 'Employee' "service-account-token-$vault" --reveal --fields credential)"
+# GH_TOKEN and similar below contain only paths into 
+account_token="$(op item get --vault 'Employee' "service-account-token-$VAULT" --reveal --fields credential)"
 
 temp_passwd="$(mktemp)"
 trap 'rm -f "$temp_passwd"' EXIT
 getent passwd "$(id -u)" >> "$temp_passwd"
 
 # Ensure bind directories exist
-for dir in .m2 .gradle go .npm .java .cache/pip .cache/helm .cache/go .cache/go-build .local/share/claude; do
-    mkdir -p "$HOME/$dir"
-done
+{ for dir in .m2 .gradle go .npm .java .cache/pip .cache/helm .cache/go .cache/go-build .local/share/claude; do echo "$HOME/$dir"; done; } | xargs mkdir -p
 
+# Export here to avoid it being visible on the command line
+export OP_SERVICE_ACCOUNT_TOKEN "$account_token"
 exec bwrap \
     --tmpfs /tmp \
     --unshare-user-try \
@@ -107,8 +109,10 @@ exec bwrap \
     --ro-bind "$HOME/bin" "$HOME/bin" \
     --bind "$HOME/.gitconfig" "$HOME/.gitconfig" \
     --bind "$PROJECT_DIR" "$PROJECT_DIR" \
+    --bind "$HOME/.gam" "$HOME/.gam" \
     --bind "$HOME/.claude" "$HOME/.claude" \
     --bind "$HOME/.claude.json" "$HOME/.claude.json" \
+    --bind "$HOME/.claude/.credentials.json" "$HOME/.claude/.credentials.json" \
     --ro-bind "$HOME/.agents" "$HOME/.agents" \
     --bind "$HOME/.local/share/claude" "$HOME/.local/share/claude" \
     --bind "$HOME/.m2" "$HOME/.m2" \
@@ -120,15 +124,17 @@ exec bwrap \
     --bind "$HOME/.cache/helm" "$HOME/.cache/helm" \
     --bind "$HOME/.cache/go" "$HOME/.cache/go" \
     --bind "$HOME/.cache/go-build" "$HOME/.cache/go-build" \
+    --bind "$HOME/.cache/uv" "$HOME/.cache/uv" \
     --bind "$SSH_AUTH_SOCK" "$SSH_AUTH_SOCK" \
-    --setenv "OP_SERVICE_ACCOUNT_TOKEN" "$account_token" \
-    --setenv "GH_TOKEN" "op://$vault/OPSCTL_GITHUB_TOKEN/password" \
-    --setenv "GITHUB_TOKEN" "op://$vault/OPSCTL_GITHUB_TOKEN/password" \
-    --setenv "OPSCTL_GITHUB_TOKEN" "op://$vault/OPSCTL_GITHUB_TOKEN/password" \
+    --setenv "DRATA_TOKEN" "op://$VAULT/DRATA_UTILITY_ACCESS/notesPlain" \
+    --setenv "GH_TOKEN" "op://$VAULT/OPSCTL_GITHUB_TOKEN/password" \
+    --setenv "GITHUB_TOKEN" "op://$VAULT/OPSCTL_GITHUB_TOKEN/password" \
+    --setenv "OPSCTL_GITHUB_TOKEN" "op://$VAULT/OPSCTL_GITHUB_TOKEN/password" \
     --setenv "SSH_AUTH_SOCK" "$SSH_AUTH_SOCK" \
     --setenv "SSH_ASKPASS" "$SSH_ASKPASS" \
     --setenv "DO_NOT_TRACK" "true" \
     --setenv "CLAUDE_CODE_NO_FLICKER" "1" \
+    --setenv "BUN_OPTIONS" "${BUN_OPTIONS:+$BUN_OPTIONS } --preload $HOME/bin/no-agent-summary.js" \
     --proc /proc \
     --dev /dev \
     --share-net \
@@ -139,7 +145,7 @@ exec bwrap \
     --ro-bind /dev/null "$PROJECT_DIR/.env" \
     --ro-bind /dev/null "$PROJECT_DIR/.env.local" \
     --ro-bind /dev/null "$PROJECT_DIR/.env.production" \
-    "$(command -v claude)"
+    "$(command -v claude)" "$@"
 ```
 
 Make the script executable:
