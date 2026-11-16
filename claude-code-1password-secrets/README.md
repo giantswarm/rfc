@@ -79,9 +79,8 @@ getent passwd "$(id -u)" >> "$temp_passwd"
 # Ensure bind directories exist
 { for dir in .m2 .gradle go .npm .java .cache/pip .cache/helm .cache/go .cache/go-build .local/share/claude; do echo "$HOME/$dir"; done; } | xargs mkdir -p
 
-# Export here to avoid it being visible on the command line
-export OP_SERVICE_ACCOUNT_TOKEN "$account_token"
-exec bwrap \
+# Export token here to avoid it being visible on the command line
+exec env "OP_SERVICE_ACCOUNT_TOKEN=$account_token" bwrap \
     --tmpfs /tmp \
     --unshare-user-try \
     --uid $(id -u) \
